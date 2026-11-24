@@ -1,13 +1,15 @@
-import { DELIVERY_SYSTEM } from "@/lib/delivery-system";
+import { useDeliveryStore } from "@/store/delivery";
 import { useMemo } from "react";
 
 export function DeliveryZones() {
-  const zones = useMemo(() => DELIVERY_SYSTEM.getZones(), []);
+  const zones = useMemo(() => useDeliveryStore.getState().zones, []);
+
+  const session = useDeliveryStore((s) => s.session);
 
   return (
     <group>
       {zones.map((zone) => {
-        const isActive = zone.id === DELIVERY_SYSTEM.getSession().targetZone?.id;
+        const isActive = zone.id === session.targetZone?.id;
         const color = zone.type === "pickup" ? "#22c55e" : isActive ? "#f59e0b" : "#3b82f6";
         const emissive = zone.type === "pickup" ? "#22c55e" : isActive ? "#f59e0b" : "#1e40af";
 

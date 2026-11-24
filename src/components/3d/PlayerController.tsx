@@ -1,6 +1,5 @@
-import { DELIVERY_SYSTEM } from "@/lib/delivery-system";
 import { touchInput } from "@/lib/touch";
-import { useDeliveryUIStore } from "@/store/delivery-ui";
+import { useDeliveryStore } from "@/store/delivery";
 import { useGameStateStore } from "@/store/gamestate";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
@@ -40,24 +39,31 @@ export const playerState = {
   isOnFoot: () => onFoot,
 };
 
-// ── Shared interaction handler ────────────────────────────────────
+/**
+ * `handleInteract` — panggil store.interact(now).
+ * Pulang true jika delivery zone ada (apa-apa pun action),
+ * supaya motor swap DILARANG.
+ * Pulang false jika tiada delivery zone → benarkan motor swap.
+ */
 function handleInteract(): boolean {
-  const deliveryResult = DELIVERY_SYSTEM.checkInteract();
-  if (deliveryResult) {
-    const ui = useDeliveryUIStore.getState();
-    const session = DELIVERY_SYSTEM.getSession();
+  const now = Date.now();
+  const { result, payload } = useDeliveryStore.getState().interact(now);
 
-    if (deliveryResult.action === "pickup") {
-      ui.setHasPacket(true);
-      ui.setTrackingNumber(session.trackingNumber);
-      ui.setInteractionMessage(deliveryResult.message);
-      return true; // delivery handled, skip motor swap
+  if (result) {
+    const session = useDeliveryStore.getState().session;
+
+    if (result.action === "pickup") {
+      // Apply reward/xp to game store
+      const gs = useGameStateStore.getState();
+      if (gs.player && payload) {
+        gs.addMoney(payload.reward);
+        gs.addXP(payload.xpReward);
+      }
+      return true;
     }
-    if (deliveryResult.action === "deliver") {
-      ui.setHasPacket(false);
-      ui.setTrackingNumber(null);
-      ui.setCompleteMessage(deliveryResult.message);
-      ui.setInteractionMessage("");
+
+    if (result.action === "deliver") {
+      // Apply reward/xp to game store
       const gs = useGameStateStore.getState();
       if (gs.player) {
         gs.addMoney(session.reward);
@@ -65,10 +71,13 @@ function handleInteract(): boolean {
       }
       return true;
     }
-    ui.setInteractionMessage(deliveryResult.message);
-    return true; // something happened (even "nothing" message), don't swap motor
+
+    // "nothing" atau "blocked" → jangan swap motor
+    return true;
   }
-  return false; // no delivery interaction, allow motor swap
+
+  // Tiada delivery zone → benarkan motor swap
+  return false;
 }
 
 // ── Component ─────────────────────────────────────────────────────
@@ -100,8 +109,8 @@ export function PlayerController() {
       e.preventDefault();
 
       // Priority: delivery interaction first
-      const handled = handleInteract();
-      if (handled) return;
+      const delivered = handleInteract();
+      if (delivered) return;
 
       // Fallback: motor swap
       if (onFoot) {
@@ -131,7 +140,7 @@ export function PlayerController() {
     const dt = Math.min(delta, 0.05);
 
     // ── Sync player position to delivery system ───────────────
-    DELIVERY_SYSTEM.setPlayerPosition({ x: pos.x, z: pos.z });
+    useDeliveryStore.getState().setPlayerPosition({ x: pos.x, z: pos.z });
 
     // ── Gather input from keyboard + touch ────────────────────
     let inputForward = 0;

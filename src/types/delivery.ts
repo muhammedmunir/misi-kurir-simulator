@@ -19,9 +19,14 @@ export interface DeliverySession {
   nearbyZone: DeliveryZone | null;
   cooldownUntil: number;
   deliveredAt: number | null;
+  // UI message fields
+  completeMessage: string | null;
+  completeMessageTime: number | null;
+  interactionMessage: string | null;
+  interactionMessageTime: number | null;
 }
 
 export interface DeliveryResult {
-  action: "pickup" | "deliver" | "nothing";
+  action: "pickup" | "deliver" | "nothing" | "blocked";
   message: string;
 }

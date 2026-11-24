@@ -65,14 +65,24 @@ export function createSession(): DeliverySession {
     nearbyZone: null,
     cooldownUntil: 0,
     deliveredAt: null,
+    completeMessage: null,
+    completeMessageTime: null,
+    interactionMessage: null,
+    interactionMessageTime: null,
   };
 }
 
 /**
- * `tick` — panggil setiap frame. Uruskan auto-reset dan cooldown.
+ * `tick` — panggil setiap frame. Uruskan auto-reset, cooldown,
+ * dan pembersihan mesej selesai selepas 4000ms.
  * Mengembalikan session baharu (stateless, pure).
  */
-export function tickSession(session: DeliverySession, now: number, autoResetMs = 5000): DeliverySession {
+export function tickSession(
+  session: DeliverySession,
+  now: number,
+  autoResetMs = 5000,
+  messageClearMs = 4000,
+): DeliverySession {
   const next = { ...session };
 
   // Auto-reset: complete → idle selepas autoResetMs
@@ -82,6 +92,27 @@ export function tickSession(session: DeliverySession, now: number, autoResetMs =
     next.reward = 0;
     next.xpReward = 0;
     next.deliveredAt = null;
+    next.cooldownUntil = 0;
+  }
+
+  // Padam completeMessage selepas 4000ms
+  if (
+    next.completeMessage != null &&
+    next.completeMessageTime != null &&
+    now - next.completeMessageTime >= messageClearMs
+  ) {
+    next.completeMessage = null;
+    next.completeMessageTime = null;
+  }
+
+  // Padam interactionMessage selepas 3000ms
+  if (
+    next.interactionMessage != null &&
+    next.interactionMessageTime != null &&
+    now - next.interactionMessageTime >= 3000
+  ) {
+    next.interactionMessage = null;
+    next.interactionMessageTime = null;
   }
 
   return next;
@@ -91,6 +122,9 @@ export function tickSession(session: DeliverySession, now: number, autoResetMs =
  * `interact` — panggil apabila pengguna menekan E.
  * Mengembalikan { result, session } atau `null` jika disekat.
  * Tiada side-effect: RNG, ID, tracking-number diterima sebagai argumen.
+ *
+ * "blocked" = cooldown aktif → E tidak boleh buat apa-apa
+ * "nothing"  = zon ada tapi tiada aksi yang sah
  */
 export function interact(
   session: DeliverySession,
@@ -99,14 +133,20 @@ export function interact(
   createId: () => string,
   createTrackingNumber: (prefix: string) => string,
   rng: () => number,
-): { result: DeliveryResult | null; session: DeliverySession } | null {
-  // Sektakan jika masih dalam cooldown
+): { result: DeliveryResult; session: DeliverySession } {
+  // Sektakan jika masih dalam cooldown → "blocked"
   if (now < session.cooldownUntil) {
-    return null;
+    return {
+      result: { action: "blocked", message: "Tunggu sebentar..." },
+      session,
+    };
   }
 
   if (!nearbyZone) {
-    return null;
+    return {
+      result: { action: "nothing", message: "Tiada zon berdekatan" },
+      session,
+    };
   }
 
   const zone = nearbyZone;
@@ -119,6 +159,7 @@ export function interact(
     const xpReward = 25 + Math.floor(rng() * 25);
     const trackingNumber = createTrackingNumber("MSK");
     const packetId = createId();
+    const message = `Pilih paket dari ${zone.name}`;
 
     const newSession: DeliverySession = {
       ...session,
@@ -129,30 +170,37 @@ export function interact(
       reward,
       xpReward,
       hasPacket: true,
-      cooldownUntil: now + 500, // 500ms cooldown selepas ambil
+      cooldownUntil: now + 500,
+      interactionMessage: message,
+      interactionMessageTime: now,
     };
 
     return {
-      result: { action: "pickup", message: `Pilih paket dari ${zone.name}` },
+      result: { action: "pickup", message },
       session: newSession,
     };
   }
 
   // Hantar paket
   if (zone.type === "delivery" && session.hasPacket && zone.id === session.targetZone?.id) {
+    const reward = session.reward;
+    const xpReward = session.xpReward;
+    const message = `Penghantaran selesai! +Rp ${reward.toLocaleString("id-ID")} | +${xpReward} XP`;
+
     const newSession: DeliverySession = {
       ...session,
       state: "complete",
       hasPacket: false,
       deliveredAt: now,
-      cooldownUntil: now + 1000, // 1s cooldown selepas hantar
+      cooldownUntil: now + 1000,
+      completeMessage: message,
+      completeMessageTime: now,
+      interactionMessage: null,
+      interactionMessageTime: null,
     };
 
     return {
-      result: {
-        action: "deliver",
-        message: `Penghantaran selesai! +Rp ${session.reward.toLocaleString("id-ID")} | +${session.xpReward} XP`,
-      },
+      result: { action: "deliver", message },
       session: newSession,
     };
   }
@@ -171,26 +219,5 @@ export function interact(
   };
 }
 
-// ── Backward-compatible shim (DEPRECATED) ───────────────────────
-//
-// Fail komponen yang lain masih mengimport DELIVERY_SYSTEM.
-// Shim ini menggunakan Zustand store baharu di bawah siling.
-// Kami akan mengemas kini satu-per-satu hingga shim boleh dibuang.
-
-import { useDeliveryStore } from "@/store/delivery";
-
-export const DELIVERY_SYSTEM = {
-  getSession: (): DeliverySession => useDeliveryStore.getState().session,
-  getZones: (): DeliveryZone[] => DELIVERY_ZONES,
-  getPlayerPosition: () => useDeliveryStore.getState().playerPos,
-  setPlayerPosition: (pos: { x: number; z: number }) => useDeliveryStore.getState().setPlayerPosition(pos),
-  setNearbyZone: (zone: DeliveryZone | null) => useDeliveryStore.getState().setNearbyZone(zone),
-  resetSession: () => useDeliveryStore.getState().reset(),
-  checkInteract: (): DeliveryResult | null => {
-    const store = useDeliveryStore.getState();
-    const now = Date.now();
-    const result = store.interact(now);
-    if (!result || !result.result) return null;
-    return result.result;
-  },
-};
+// Semua komponen sudah guna useDeliveryStore.
+// Shim ini sudah boleh dibuang (2025-11-24).

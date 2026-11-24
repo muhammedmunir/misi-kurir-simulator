@@ -1,5 +1,5 @@
-import { DELIVERY_SYSTEM } from "@/lib/delivery-system";
 import { findNearbyInteractable } from "@/lib/delivery-utils";
+import { useDeliveryStore } from "@/store/delivery";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import type { Group } from "three";
@@ -11,15 +11,16 @@ export function InteractionPrompt() {
   useFrame(() => {
     if (!groupRef.current) return;
 
-    const playerPos = DELIVERY_SYSTEM.getPlayerPosition();
+    const playerPos = useDeliveryStore.getState().playerPos;
     if (!playerPos) {
       groupRef.current.visible = false;
       currentZoneIdRef.current = null;
       return;
     }
 
-    const zone = findNearbyInteractable(playerPos, DELIVERY_SYSTEM.getZones());
-    DELIVERY_SYSTEM.setNearbyZone(zone);
+    const zones = useDeliveryStore.getState().zones;
+    const zone = findNearbyInteractable(playerPos, zones);
+    useDeliveryStore.getState().setNearbyZone(zone);
 
     if (!zone) {
       groupRef.current.visible = false;

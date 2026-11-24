@@ -1,6 +1,5 @@
 import { saveGame } from "@/lib/idb";
 import { useDeliveryStore } from "@/store/delivery";
-import { useDeliveryUIStore } from "@/store/delivery-ui";
 import { useSceneStore } from "@/store/game";
 import { useGameStateStore } from "@/store/gamestate";
 import { Scene } from "@/types/scene";
@@ -10,11 +9,13 @@ export function HUD() {
   const navigate = useSceneStore((s) => s.navigate);
   const currentScene = useSceneStore((s) => s.currentScene);
   const player = useGameStateStore((s) => s.player);
-  const interactionMessage = useDeliveryUIStore((s) => s.interactionMessage);
-  const completeMessage = useDeliveryUIStore((s) => s.completeMessage);
-  const hasPacket = useDeliveryStore((s) => s.session.hasPacket);
-  const trackingNumber = useDeliveryStore((s) => s.session.trackingNumber);
-  const targetZone = useDeliveryStore((s) => s.session.targetZone);
+  const session = useDeliveryStore((s) => s.session);
+
+  const hasPacket = session.hasPacket;
+  const trackingNumber = session.trackingNumber;
+  const targetZone = session.targetZone;
+  const interactionMessage = session.interactionMessage;
+  const completeMessage = session.completeMessage;
 
   const isOnFoot = playerState.isOnFoot();
   const speed = Math.abs(Math.round(playerState.getSpeed()));
