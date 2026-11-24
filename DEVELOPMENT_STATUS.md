@@ -1,101 +1,90 @@
-# STATUS PEMBANGUNAN (DEVELOPMENT STATUS)
+# STATUS PEMBANGUNAN
 
-## Fasa 0 — Audit & Fondasi
+Fasa ikut roadmap master prompt (seksyen Q). Skala status (seksyen S):
+**Not started / In progress / Implemented / Tested / Accepted**
 
-| Ciri | Status | Catatan |
-|------|--------|---------|
-| Projek Vite + React + TS | ✅ Implemented | Setup lengkap |
-| R3F + Rapier 3D | ✅ Implemented | Canvas, physics, player controller placeholder |
-| Zustand state management | ✅ Implemented | Scene store, game state store |
-| IndexedDB save system | ✅ Implemented | openDB, saveGame, loadGame, clearSave |
-| Biome linter | ✅ Implemented | Configure di biome.json |
-| Vitest testing | ⏳ In Progress | Setup config perlu |
-| PWA manifest | ✅ Implemented | public/manifest.json |
-| Responsive UI (mobile-first) | ✅ Implemented | Menu, HUD, Settings, Warehouse |
-| Dokumen (README, TPD) | ✅ Implemented | README.md, TECHNICAL_DECISIONS.md |
+- **Implemented**: kod wujud dan berjalan, belum ada ujian atau bukti visual
+- **Tested**: ada ujian unit dan/atau disahkan di pelayar (bukti dalam `BUG_TRACKER.md` / commit)
+- **Accepted**: diuji di telefon sebenar dan diterima pemilik (belum ada setakat ini)
 
-## Fasa 1 — Playable Foundation
+Latar: Malaysia, RM, teks BM (TPD-016). Paparan wang masih Rp sehingga Pelan 005 Langkah 0.
+
+## Phase 0 — Audit & fondasi
 
 | Ciri | Status | Catatan |
 |------|--------|---------|
-| Scene 3D dengan tanah & jalan | ⏳ In Progress | Terrain, Roads, Buildings ada tapi basic |
-| Karakter boleh bergerak | ⏳ In Progress | PlayerController ada, perlu physics integration |
-| Kamera 3rd person | ⏳ Not started | Perlu orbit/follow camera |
-| Touch controls (virtual joystick) | ⏳ Not started | Perlu virtual joystick untuk mobile |
-| Motor boleh dinaiki & dikemudi | ⏳ Not started | Vehicle system belum dimulakan |
-| Mount/Dismount | ⏳ Not started | - |
-| HUD asas | ✅ Implemented | Level, XP bar, money, mission info |
-| Save/Load | ⏳ In Progress | IndexedDB setup, belum ada game data sebenar |
+| Vite + React 19 + TypeScript strict | Tested | typecheck + build lulus |
+| Vitest | Tested | 88 ujian |
+| Biome | Tested | 0 ralat |
+| Playwright | Not started | Pelan 005 Langkah 8 |
+| PWA manifest | Implemented | Service worker belum ada |
+| Dokumen wajib (seksyen S) | In progress | Ada: README, DEVELOPMENT_STATUS, BUG_TRACKER, TECHNICAL_DECISIONS. Belum: THIRD_PARTY_NOTICES, QA_REPORT, CHANGELOG |
 
-## Fasa 2 — World
+## Phase 1 — Playable foundation
 
 | Ciri | Status | Catatan |
 |------|--------|---------|
-| Kota kecil terhubung | ⏳ Not started | - |
-| Minimap | ⏳ Not started | - |
-| Chunk streaming | ⏳ Not started | - |
+| Navigasi menu → permainan | Tested | Dibaiki `dc5d761`; disahkan di Chrome |
+| Scene 3D: tanah, jalan, bangunan | Implemented | Geometri placeholder |
+| Karakter berjalan/berlari | Implemented | Kedudukan dikira manual, bukan Rapier |
+| Kamera orang ketiga | Implemented | B12: menghadap dinding semasa mula |
+| Kawalan papan kekunci (WASD, E) | Implemented | Belum diuji di pelayar; logik E dikongsi dengan butang sentuh |
+| Kawalan sentuh (joystick, tindakan, BREK) | Tested | `1b88949`; Chrome `?touch=1`. Belum diuji di telefon sebenar |
+| Motor: naik, pandu, brek, turun | In progress | Berfungsi, tetapi motor kembali ke titik tetap bila turun (Pelan 005 Langkah 3) |
+| Fizik Rapier / collision | Not started | `<Physics>` tanpa `RigidBody`; motor menembusi bangunan |
+| HUD asas | Tested | Wang, level, status pandu, kad misi reaktif |
+| Simpan/muat | In progress | IndexedDB wujud; tidak simpan paket/kedudukan (Pelan 005 Langkah 7) |
 
-## Fasa 3 — Warehouse
-
-| Ciri | Status | Catatan |
-|------|--------|---------|
-| UI Gudang | ✅ Implemented | WarehouseUI.tsx dengan filter & search |
-| Sistem paket | ⏳ In Progress | Types & state ada, belum ada UI lengkap |
-| Scan barcode | ⏳ Not started | - |
-| Loading & capacity | ⏳ Not started | - |
-
-## Fasa 4 — Delivery
+## Phase 2 — World
 
 | Ciri | Status | Catatan |
 |------|--------|---------|
-| NPC & AI | ⏳ Not started | - |
-| COD system | ⏳ Not started | Types ada |
-| Delivery proof | ⏳ Not started | - |
-| Failed delivery | ⏳ Not started | - |
+| Grid jalan bandar kecil | Implemented | Satu kawasan |
+| Kawasan bersambung (perumahan, kampung, dll.) | Not started | |
+| Navigasi / minimap | Not started | Anak panah: Pelan 005 Langkah 4 |
+| Chunk streaming, LOD | Not started | |
 
-## Fasa 5 — Realism
-
-| Ciri | Status | Catatan |
-|------|--------|---------|
-| Siang/malam cycle | ⏳ Not started | - |
-| Cuaca (hujan, kabut) | ⏳ Not started | - |
-| Traffic AI | ⏳ Not started | - |
-| BBM & kerusakan | ⏳ Not started | - |
-
-## Fasa 6 — Economy
+## Phase 3 — Warehouse
 
 | Ciri | Status | Catatan |
 |------|--------|---------|
-| Rupiah format | ✅ Implemented | formatRupiah() di utils.ts |
-| XP & level up | ⏳ In Progress | Logic ada di gamestate.ts |
-| Upgrade kenderaan | ⏳ In Progress | Logic ada, belum ada UI |
+| Skrin gudang 2D (`WarehouseUI`) | Implemented | Paket rawak, tidak bersambung ke gelung |
+| Gudang 3D, sortir, imbas, muat, kapasiti | Not started | Pelan 005 Langkah 1–2 |
+| Manifest | Not started | Jenis data wujud sahaja |
 
-## Fasa 7 — Business
-
-| Ciri | Status | Catatan |
-|------|--------|---------|
-| Rekrut pegawai | ⏳ Not started | - |
-| Gaji & payroll | ⏳ Not started | - |
-| Cabang | ⏳ Not started | - |
-
-## Fasa 8 — Polish
+## Phase 4 — Delivery
 
 | Ciri | Status | Catatan |
 |------|--------|---------|
-| Model 3D asset | ⏳ Not started | Placeholder geometri sahaja |
-| Animasi | ⏳ Not started | - |
-| Audio | ⏳ Not started | - |
-| VFX | ⏳ Not started | - |
+| Gelung ambil → hantar → ganjaran → ulang | Tested | Ujian unit stor (3 kitaran, ganjaran tepat sekali); ambil paket disahkan di Chrome |
+| Zon pickup/penghantaran | Tested | 2 pickup, 3 penghantaran |
+| Pelanggan NPC, serah terima, bukti | Not started | Pelan 005 Langkah 5 |
+| Penghantaran gagal / retur | Not started | Pelan 005 Langkah 5–6 |
+| COD | Not started | Pelan 006 |
 
-## Fasa 9 — Release
+## Phase 5 — Realism
 
 | Ciri | Status | Catatan |
 |------|--------|---------|
-| Mobile testing | ⏳ Not started | - |
-| PWA install | ⏳ In Progress | Manifest ada, service worker belum |
-| Deploy Cloudflare | ⏳ Not started | - |
+| Trafik NPC | Tested | 8 kenderaan di grid, ikut paksi; tiada elak perlanggaran |
+| Siang/malam, cuaca, BBM, kerosakan, audio | Not started | |
+
+## Phase 6 — Economy / career
+
+| Ciri | Status | Catatan |
+|------|--------|---------|
+| Wang & XP daripada penghantaran | Tested | Ujian unit `player.money` / `xp` |
+| Level up | Implemented | Logik `addXP` |
+| Mata wang RM | Not started | Pelan 005 Langkah 0 |
+| Upgrade kenderaan, reputasi | Not started | Logik separa dalam `gamestate.ts`, tiada UI |
+
+## Phase 7–9 — Business, Polish, Release
+
+| Ciri | Status | Catatan |
+|------|--------|---------|
+| Semua ciri | Not started | Model 3D, animasi, audio, service worker, Cloudflare deploy |
 
 ---
 
-**Kemaskini terakhir:** 2026-11-24
-**Versi:** 0.0.0-alpha (Phase 0)
+**Kemas kini terakhir:** 2026-11-24 (selepas Pelan 004)
+**Versi:** 0.0.0-alpha

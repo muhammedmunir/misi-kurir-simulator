@@ -1,14 +1,6 @@
-const INTERACT_RADIUS = 4;
+import type { DeliveryZone } from "@/types/delivery";
 
-interface DeliveryZone {
-  id: string;
-  name: string;
-  type: "pickup" | "delivery";
-  position: { x: number; z: number };
-  areaCode: string;
-  description: string;
-  interactable?: boolean;
-}
+const INTERACT_RADIUS = 4;
 
 export function findNearbyInteractable(
   playerPos: { x: number; z: number },

@@ -1,6 +1,6 @@
 # Pelan 004 — Stabilkan Gelung Penghantaran (Fasa 2.5)
 
-**Status:** Belum dimulakan
+**Status:** Selesai (2026-11-24, `ab23c47`…`93dec38`). Lihat `BUG_TRACKER.md`.
 **Bergantung pada:** commit `353dff8` (Fasa 2)
 **Matlamat:** Gelung `ambil → hantar → ganjaran → ulang` berfungsi berulang kali, di papan kekunci DAN sentuhan, dengan ujian unit. Tiada ciri baharu sehingga pelan ini lulus.
 
