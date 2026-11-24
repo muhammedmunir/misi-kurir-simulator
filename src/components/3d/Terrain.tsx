@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
 export function Terrain() {
   const terrainData = useMemo(() => {
@@ -13,9 +13,7 @@ export function Terrain() {
         const iz = (y / segments - 0.5) * size;
 
         // Simple height noise using sine waves
-        const height = Math.sin(ix * 0.02) * 2
-          + Math.cos(iz * 0.03) * 1.5
-          + Math.sin(ix * 0.05 + iz * 0.04) * 0.8;
+        const height = Math.sin(ix * 0.02) * 2 + Math.cos(iz * 0.03) * 1.5 + Math.sin(ix * 0.05 + iz * 0.04) * 0.8;
 
         vertices.push(ix, Math.max(0, height - 1), iz);
       }
@@ -37,14 +35,8 @@ export function Terrain() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[terrainData.vertices, 3]}
-        />
-        <bufferAttribute
-          attach="attributes-index"
-          args={[new Uint32Array(terrainData.indices), 1]}
-        />
+        <bufferAttribute attach="attributes-position" args={[terrainData.vertices, 3]} />
+        <bufferAttribute attach="attributes-index" args={[new Uint32Array(terrainData.indices), 1]} />
       </bufferGeometry>
       <meshStandardMaterial color="#4a7a3a" roughness={0.85} wireframe={false} />
     </mesh>

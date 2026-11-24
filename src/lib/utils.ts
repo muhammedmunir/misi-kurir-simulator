@@ -2,13 +2,13 @@
  * Generate unique IDs using crypto.randomUUID fallback to nanoid-like pattern.
  */
 export function generateId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
   }
   // Fallback: pseudo-random ID
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 }
@@ -17,9 +17,9 @@ export function generateId(): string {
  * Generate a unique ID (UUID v4 fallback).
  */
 export function nanoid(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 }
@@ -28,7 +28,7 @@ export function nanoid(): string {
  * Format Indonesian/Rupiah currency.
  */
 export function formatRupiah(amount: number): string {
-  return `Rp ${amount.toLocaleString('id-ID')}`;
+  return `Rp ${amount.toLocaleString("id-ID")}`;
 }
 
 /**
@@ -55,12 +55,12 @@ export function formatTime(ms: number): string {
  */
 export function formatDate(timestamp: number): string {
   const date = new Date(timestamp);
-  return date.toLocaleDateString('ms-MY', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return date.toLocaleDateString("ms-MY", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -88,7 +88,7 @@ export function calcVolume(length: number, width: number, height: number): numbe
 /**
  * Generate a random tracking number.
  */
-export function generateTrackingNumber(prefix: string = 'MSK'): string {
+export function generateTrackingNumber(prefix = "MSK"): string {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 8).toUpperCase();
   return `${prefix}-${timestamp}-${random}`;

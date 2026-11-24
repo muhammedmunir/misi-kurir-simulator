@@ -1,10 +1,10 @@
-import { create } from 'zustand';
-import type { Player, GameSettings, Vehicle, Delivery, Manifest } from '@/types/game';
-import { generateId } from '@/lib/utils';
+import { generateId } from "@/lib/utils";
+import type { Delivery, GameSettings, Manifest, Player, Vehicle } from "@/types/game";
+import { create } from "zustand";
 
 // ─── Default / factory ────────────────────────────────────────────
 
-export function createPlayer(name: string = 'Pelanggan'): Player {
+export function createPlayer(name = "Pelanggan"): Player {
   const now = Date.now();
   return {
     id: generateId(),
@@ -19,7 +19,7 @@ export function createPlayer(name: string = 'Pelanggan'): Player {
     failedDeliveries: 0,
     totalEarnings: 0,
     currentVehicleId: null,
-    unlockedAreas: ['bandar', 'perumahan'],
+    unlockedAreas: ["bandar", "perumahan"],
     createdAt: now,
     updatedAt: now,
   };
@@ -31,9 +31,9 @@ export function createSettings(): GameSettings {
     musicVolume: 0.7,
     sfxVolume: 0.8,
     ambientVolume: 0.5,
-    graphicsPreset: 'medium',
-    shadowQuality: 'medium',
-    textureQuality: 'medium',
+    graphicsPreset: "medium",
+    shadowQuality: "medium",
+    textureQuality: "medium",
     drawDistance: 200,
     trafficDensity: 0.5,
     fontScale: 1,
@@ -48,9 +48,9 @@ export function createSettings(): GameSettings {
 
 export const DEFAULT_VEHICLES: Vehicle[] = [
   {
-    id: 'gen-2-matic',
-    name: 'Motor Matic Gen-2',
-    type: 'matic',
+    id: "gen-2-matic",
+    name: "Motor Matic Gen-2",
+    type: "matic",
     price: 0,
     specs: {
       maxSpeed: 60,
@@ -64,14 +64,14 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     },
     condition: 100,
     fuel: 5,
-    currentLocation: 'gudang',
+    currentLocation: "gudang",
     unlocked: true,
     owned: true,
   },
   {
-    id: 'bebek-classic',
-    name: 'Motor Bebek Klasik',
-    type: 'bebek',
+    id: "bebek-classic",
+    name: "Motor Bebek Klasik",
+    type: "bebek",
     price: 0,
     specs: {
       maxSpeed: 55,
@@ -85,14 +85,14 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     },
     condition: 100,
     fuel: 4,
-    currentLocation: 'gudang',
+    currentLocation: "gudang",
     unlocked: true,
     owned: true,
   },
   {
-    id: 'kargo-up',
-    name: 'Motor Kargo UP',
-    type: 'kargo',
+    id: "kargo-up",
+    name: "Motor Kargo UP",
+    type: "kargo",
     price: 15000000,
     specs: {
       maxSpeed: 70,
@@ -106,14 +106,14 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     },
     condition: 100,
     fuel: 8,
-    currentLocation: 'gudang',
+    currentLocation: "gudang",
     unlocked: false,
     owned: false,
   },
   {
-    id: 'pickup-doble-kabin',
-    name: 'Pickup Doble Kabin',
-    type: 'pickup',
+    id: "pickup-doble-kabin",
+    name: "Pickup Doble Kabin",
+    type: "pickup",
     price: 350000000,
     specs: {
       maxSpeed: 100,
@@ -127,14 +127,14 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     },
     condition: 100,
     fuel: 80,
-    currentLocation: 'gudang',
+    currentLocation: "gudang",
     unlocked: false,
     owned: false,
   },
   {
-    id: 'van-combi',
-    name: 'Van Combi',
-    type: 'van',
+    id: "van-combi",
+    name: "Van Combi",
+    type: "van",
     price: 280000000,
     specs: {
       maxSpeed: 90,
@@ -148,7 +148,7 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     },
     condition: 100,
     fuel: 60,
-    currentLocation: 'gudang',
+    currentLocation: "gudang",
     unlocked: false,
     owned: false,
   },
@@ -314,7 +314,7 @@ export const useGameStateStore = create<GameState>((set) => ({
     set((state) => {
       if (!state.player) return state;
       const now = new Date();
-      const date = now.toISOString().split('T')[0];
+      const date = now.toISOString().split("T")[0];
       return {
         ...state,
         activeManifest: {
@@ -325,7 +325,7 @@ export const useGameStateStore = create<GameState>((set) => ({
           totalWeight: 0,
           totalVolume: 0,
           codTotal: 0,
-          status: 'open',
+          status: "open",
           createdAt: Date.now(),
           closedAt: null,
         },

@@ -1,25 +1,25 @@
-import { useSceneStore } from '@/store/game';
-import { useGameStateStore } from '@/store/gamestate';
-import { Scene } from '@/types/scene';
+import { useSceneStore } from "@/store/game";
+import { useGameStateStore } from "@/store/gamestate";
+import { Scene } from "@/types/scene";
 
 function menuButtonStyle(label: string): React.CSSProperties {
   // Label is ignored but kept for potential future use (e.g., dynamic styling)
   void label;
   return {
-    width: '100%',
-    padding: '16px 24px',
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '12px',
-    color: '#e8e8f0',
-    fontSize: '16px',
+    width: "100%",
+    padding: "16px 24px",
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: "12px",
+    color: "#e8e8f0",
+    fontSize: "16px",
     fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    textAlign: 'left' as const,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    textAlign: "left" as const,
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
   };
 }
 
@@ -31,12 +31,8 @@ export function MainMenu() {
     <div className="menu-screen" style={containerStyle}>
       {/* Logo */}
       <div style={logoContainerStyle}>
-        <h1 style={titleStyle}>
-          MISI KURIR
-        </h1>
-        <p style={subtitleStyle}>
-          SIMULATOR
-        </p>
+        <h1 style={titleStyle}>MISI KURIR</h1>
+        <p style={subtitleStyle}>SIMULATOR</p>
       </div>
 
       {/* Divider */}
@@ -45,92 +41,84 @@ export function MainMenu() {
       {/* Menu buttons */}
       <div style={buttonContainerStyle}>
         {!isNewGame && (
-          <button
-            onClick={() => navigate(Scene.GAME)}
-            style={menuButtonStyle('Mulakan Misi')}
-          >
-            <span style={{ fontSize: '16px' }}>🚀 Mula Misi</span>
+          <button type="button" onClick={() => navigate(Scene.GAME)} style={menuButtonStyle("Mulakan Misi")}>
+            <span style={{ fontSize: "16px" }}>🚀 Mula Misi</span>
           </button>
         )}
-        <button
+        <button type="button"
           onClick={() => navigate(Scene.LOAD_SAVE)}
-          style={menuButtonStyle(isNewGame ? 'Permulaan' : 'Muat / Simpan')}
+          style={menuButtonStyle(isNewGame ? "Permulaan" : "Muat / Simpan")}
         >
-          <span style={{ fontSize: '16px' }}>
-            {isNewGame ? '📦 Permainan Baru' : '💾 Muat / Simpan'}
-          </span>
+          <span style={{ fontSize: "16px" }}>{isNewGame ? "📦 Permainan Baru" : "💾 Muat / Simpan"}</span>
         </button>
-        <button
-          onClick={() => navigate(Scene.SETTINGS)}
-          style={menuButtonStyle('Tetapan')}
-        >
-          <span style={{ fontSize: '16px' }}>⚙️ Tetapan</span>
+        <button type="button" onClick={() => navigate(Scene.SETTINGS)} style={menuButtonStyle("Tetapan")}>
+          <span style={{ fontSize: "16px" }}>⚙️ Tetapan</span>
         </button>
       </div>
 
       {/* Footer */}
       <div style={footerStyle}>
         <p>Versi 0.0.0-alpha (Phase 0)</p>
-        <p style={{ marginTop: '4px' }}>© 2026 Misi Kurir Simulator</p>
+        <p style={{ marginTop: "4px" }}>© 2026 Misi Kurir Simulator</p>
       </div>
     </div>
   );
 }
 
 const containerStyle: React.CSSProperties = {
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  background: 'linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%)',
-  gap: '24px',
-  padding: '32px 20px',
+  height: "100%",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  background: "linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%)",
+  gap: "24px",
+  padding: "32px 20px",
 };
 
 const logoContainerStyle: React.CSSProperties = {
-  textAlign: 'center',
-  marginBottom: '16px',
+  textAlign: "center",
+  marginBottom: "16px",
 };
 
 const titleStyle: React.CSSProperties = {
-  fontSize: 'clamp(28px, 6vw, 56px)',
+  fontSize: "clamp(28px, 6vw, 56px)",
   fontWeight: 800,
-  letterSpacing: '-0.02em',
+  letterSpacing: "-0.02em",
   lineHeight: 1.1,
   margin: 0,
-  background: 'linear-gradient(135deg, #f59e0b, #f97316)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
+  background: "linear-gradient(135deg, #f59e0b, #f97316)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
 };
 
 const subtitleStyle: React.CSSProperties = {
-  fontSize: 'clamp(14px, 3vw, 20px)',
-  color: '#8888a0',
-  marginTop: '8px',
+  fontSize: "clamp(14px, 3vw, 20px)",
+  color: "#8888a0",
+  marginTop: "8px",
   fontWeight: 500,
-  letterSpacing: '0.1em',
+  letterSpacing: "0.1em",
 };
 
 const dividerStyle: React.CSSProperties = {
-  width: '60px',
-  height: '2px',
-  background: 'linear-gradient(90deg, transparent, #f59e0b, transparent)',
-  margin: '8px 0',
+  width: "60px",
+  height: "2px",
+  background: "linear-gradient(90deg, transparent, #f59e0b, transparent)",
+  margin: "8px 0",
 };
 
 const buttonContainerStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '12px',
-  width: '100%',
-  maxWidth: '320px',
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+  width: "100%",
+  maxWidth: "320px",
 };
 
 const footerStyle: React.CSSProperties = {
-  position: 'absolute',
-  bottom: '24px',
-  textAlign: 'center',
-  color: '#555570',
-  fontSize: '12px',
+  position: "absolute",
+  bottom: "24px",
+  textAlign: "center",
+  color: "#555570",
+  fontSize: "12px",
 };

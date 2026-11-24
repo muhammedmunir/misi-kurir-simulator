@@ -1,10 +1,13 @@
-import { Canvas } from '@react-three/fiber';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
-import { Physics } from '@react-three/rapier';
-import { useEffect, useState, useCallback } from 'react';
-import { PlayerController } from './3d/PlayerController';
-import { WorldEnvironment } from './3d/WorldEnvironment';
-import { HUD3D } from './3d/HUD3D';
+import { touchInput } from "@/lib/touch";
+import { Canvas } from "@react-three/fiber";
+import { Bloom, EffectComposer } from "@react-three/postprocessing";
+import { Physics } from "@react-three/rapier";
+import { useCallback, useEffect, useState } from "react";
+import { CameraFollow } from "./3d/CameraFollow";
+import { HUD3D } from "./3d/HUD3D";
+import { PlayerController } from "./3d/PlayerController";
+import { WorldEnvironment } from "./3d/WorldEnvironment";
+import { TouchJoystick } from "./TouchJoystick";
 
 export function GameScene3D() {
   const [contextLost, setContextLost] = useState(false);
@@ -15,37 +18,39 @@ export function GameScene3D() {
   }, []);
 
   useEffect(() => {
-    const canvas = document.querySelector('canvas');
+    const canvas = document.querySelector("canvas");
     if (!canvas) return;
-    canvas.addEventListener('webglcontextlost', handleContextLost);
-    return () => canvas.removeEventListener('webglcontextlost', handleContextLost);
+    canvas.addEventListener("webglcontextlost", handleContextLost);
+    return () => canvas.removeEventListener("webglcontextlost", handleContextLost);
   }, [handleContextLost]);
 
   if (contextLost) {
     return (
-      <div style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#0a0a0f',
-        gap: '16px',
-        padding: '24px',
-      }}>
-        <h3 style={{ color: '#ef4444' }}>Masalah WebGL</h3>
-        <p style={{ color: '#8888a0', textAlign: 'center' }}>
+      <div
+        style={{
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#0a0a0f",
+          gap: "16px",
+          padding: "24px",
+        }}
+      >
+        <h3 style={{ color: "#ef4444" }}>Masalah WebGL</h3>
+        <p style={{ color: "#8888a0", textAlign: "center" }}>
           Pelayar anda tidak menyokong WebGL 2 atau sumber terhad.
         </p>
         <button
           onClick={() => window.location.reload()}
           style={{
-            padding: '12px 24px',
-            background: '#f59e0b',
-            borderRadius: '8px',
-            color: '#000',
+            padding: "12px 24px",
+            background: "#f59e0b",
+            borderRadius: "8px",
+            color: "#000",
             fontWeight: 700,
-            cursor: 'pointer',
+            cursor: "pointer",
           }}
         >
           Muat Semula
@@ -55,32 +60,31 @@ export function GameScene3D() {
   }
 
   return (
-    <div style={{ height: '100%', width: '100%', position: 'relative' }}>
+    <div style={{ height: "100%", width: "100%", position: "relative" }}>
       <Canvas
         shadows={false}
         dpr={[1, 1.5]}
         camera={{ position: [0, 5, 10], fov: 60 }}
-        style={{ background: '#0a0a0f' }}
+        style={{ background: "#0a0a0f" }}
       >
-        <color attach="background" args={['#0a0a0f']} />
+        <color attach="background" args={["#0a0a0f"]} />
 
         <Physics gravity={[0, -20, 0]}>
-          {/* Player */}
+          {/* Camera follow player */}
+          <CameraFollow />
+
+          {/* Player + Motor */}
           <PlayerController />
 
           {/* World */}
           <WorldEnvironment />
 
-          {/* Ambient light */}
+          {/* Lights */}
           <ambientLight intensity={0.5} />
-          <directionalLight
-            position={[10, 20, 5]}
-            intensity={1.2}
-            castShadow={false}
-          />
+          <directionalLight position={[10, 20, 5]} intensity={1.2} castShadow={false} />
         </Physics>
 
-        {/* Post-processing (lightweight for mobile) */}
+        {/* Post-processing */}
         <EffectComposer enableNormalPass={false}>
           <Bloom luminanceThreshold={0.9} intensity={0.15} />
         </EffectComposer>
@@ -88,6 +92,18 @@ export function GameScene3D() {
 
       {/* 3D overlay HUD */}
       <HUD3D />
+
+      {/* Touch controls overlay */}
+      <TouchJoystick
+        onInput={(input) => {
+          touchInput.joystick.forward = input.joystick.forward;
+          touchInput.joystick.right = input.joystick.right;
+          touchInput.joystick.active = input.joystick.active;
+          touchInput.brake = input.brake;
+          touchInput.horn = input.horn;
+          touchInput.cameraAngle = input.cameraAngle;
+        }}
+      />
     </div>
   );
 }

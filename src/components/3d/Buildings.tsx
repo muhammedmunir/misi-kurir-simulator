@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
-const BUILDING_COLORS = ['#4a5568', '#5a6578', '#6a7588', '#3d4f5f', '#7a8a9a', '#4b5c6d'];
+const BUILDING_COLORS = ["#4a5568", "#5a6578", "#6a7588", "#3d4f5f", "#7a8a9a", "#4b5c6d"];
 
 export function Buildings() {
   const buildings = useMemo(() => {
@@ -60,7 +60,7 @@ export function Buildings() {
                   <meshStandardMaterial color="#87ceeb" emissive="#334455" emissiveIntensity={0.3} />
                 </mesh>
               );
-            })
+            }),
           )}
 
           {/* Door */}

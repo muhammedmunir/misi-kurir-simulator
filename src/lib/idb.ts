@@ -1,8 +1,8 @@
-import { SaveData } from '@/types/game';
+import type { SaveData } from "@/types/game";
 
-const DB_NAME = 'misikurir-db';
+const DB_NAME = "misikurir-db";
 const DB_VERSION = 1;
-const STORE_NAME = 'saves';
+const STORE_NAME = "saves";
 
 export async function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -11,8 +11,8 @@ export async function openDB(): Promise<IDBDatabase> {
     request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-        store.createIndex('timestamp', 'timestamp', { unique: false });
+        const store = db.createObjectStore(STORE_NAME, { keyPath: "id" });
+        store.createIndex("timestamp", "timestamp", { unique: false });
       }
     };
 
@@ -25,7 +25,7 @@ export async function saveGame(saveData: SaveData): Promise<boolean> {
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const tx = db.transaction(STORE_NAME, "readwrite");
       const store = tx.objectStore(STORE_NAME);
       store.put(saveData);
       tx.oncomplete = () => {
@@ -46,9 +46,9 @@ export async function loadGame(): Promise<SaveData | null> {
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
+      const tx = db.transaction(STORE_NAME, "readonly");
       const store = tx.objectStore(STORE_NAME);
-      const request = store.get('current');
+      const request = store.get("current");
       request.onsuccess = () => {
         db.close();
         resolve(request.result ?? null);
@@ -67,9 +67,9 @@ export async function clearSave(): Promise<boolean> {
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const tx = db.transaction(STORE_NAME, "readwrite");
       const store = tx.objectStore(STORE_NAME);
-      store.delete('current');
+      store.delete("current");
       tx.oncomplete = () => {
         db.close();
         resolve(true);

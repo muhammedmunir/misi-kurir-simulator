@@ -1,7 +1,7 @@
-import * as THREE from 'three';
-import { Terrain } from './Terrain';
-import { Buildings } from './Buildings';
-import { Roads } from './Roads';
+import * as THREE from "three";
+import { Buildings } from "./Buildings";
+import { Roads } from "./Roads";
+import { Terrain } from "./Terrain";
 
 export function WorldEnvironment() {
   return (
@@ -19,10 +19,7 @@ export function WorldEnvironment() {
       {/* Sky dome */}
       <mesh position={[0, 0, 0]}>
         <sphereGeometry args={[400, 32, 32]} />
-        <meshBasicMaterial
-          color="#1a1a3a"
-          side={THREE.BackSide}
-        />
+        <meshBasicMaterial color="#1a1a3a" side={THREE.BackSide} />
       </mesh>
     </group>
   );

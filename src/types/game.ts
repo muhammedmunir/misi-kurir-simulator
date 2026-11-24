@@ -1,35 +1,35 @@
 export type PacketStatus =
-  | 'incoming'
-  | 'received'
-  | 'sorting'
-  | 'ready_to_dispatch'
-  | 'loaded'
-  | 'in_transit'
-  | 'out_for_delivery'
-  | 'delivered'
-  | 'failed'
-  | 'returned'
-  | 'cancelled';
+  | "incoming"
+  | "received"
+  | "sorting"
+  | "ready_to_dispatch"
+  | "loaded"
+  | "in_transit"
+  | "out_for_delivery"
+  | "delivered"
+  | "failed"
+  | "returned"
+  | "cancelled";
 
-export type PaymentMethod = 'cod' | 'prepaid' | 'wallet';
+export type PaymentMethod = "cod" | "prepaid" | "wallet";
 
-export type Priority = 'normal' | 'express' | 'urgent';
+export type Priority = "normal" | "express" | "urgent";
 
 export const PACKET_STATUS_FLOW: PacketStatus[][] = [
-  ['incoming'],
-  ['incoming', 'received'],
-  ['received', 'sorting'],
-  ['sorting', 'ready_to_dispatch'],
-  ['ready_to_dispatch', 'loaded'],
-  ['loaded', 'in_transit'],
-  ['in_transit', 'out_for_delivery'],
-  ['out_for_delivery', 'delivered'],
-  ['out_for_delivery', 'failed'],
-  ['failed', 'out_for_delivery'],
-  ['failed', 'returned'],
-  ['delivered', 'returned'],
-  ['incoming', 'cancelled'],
-  ['returned', 'sorting'],
+  ["incoming"],
+  ["incoming", "received"],
+  ["received", "sorting"],
+  ["sorting", "ready_to_dispatch"],
+  ["ready_to_dispatch", "loaded"],
+  ["loaded", "in_transit"],
+  ["in_transit", "out_for_delivery"],
+  ["out_for_delivery", "delivered"],
+  ["out_for_delivery", "failed"],
+  ["failed", "out_for_delivery"],
+  ["failed", "returned"],
+  ["delivered", "returned"],
+  ["incoming", "cancelled"],
+  ["returned", "sorting"],
 ];
 
 export function canTransition(from: PacketStatus, to: PacketStatus): boolean {
@@ -76,12 +76,12 @@ export interface Manifest {
   totalWeight: number;
   totalVolume: number;
   codTotal: number;
-  status: 'open' | 'closed' | 'archived';
+  status: "open" | "closed" | "archived";
   createdAt: number;
   closedAt: number | null;
 }
 
-export type VehicleType = 'matic' | 'bebek' | 'kargo' | 'touring' | 'pickup' | 'van' | 'truk';
+export type VehicleType = "matic" | "bebek" | "kargo" | "touring" | "pickup" | "van" | "truk";
 
 export interface Vehicle {
   id: string;
@@ -105,7 +105,18 @@ export interface Vehicle {
   owned: boolean;
 }
 
-export type AreaCode = 'bandar' | 'perumahan' | 'pasar' | 'industri' | 'kampung' | 'sawah' | 'perbukitan' | 'johor' | 'pinang' | 'melaka' | 'kelantan';
+export type AreaCode =
+  | "bandar"
+  | "perumahan"
+  | "pasar"
+  | "industri"
+  | "kampung"
+  | "sawah"
+  | "perbukitan"
+  | "johor"
+  | "pinang"
+  | "melaka"
+  | "kelantan";
 
 export interface Delivery {
   id: string;
@@ -120,7 +131,7 @@ export interface Delivery {
   reward: number;
   xpReward: number;
   estimatedTime: number;
-  status: 'pending' | 'active' | 'completed' | 'failed' | 'returning';
+  status: "pending" | "active" | "completed" | "failed" | "returning";
   startedAt: number | null;
   completedAt: number | null;
   failureReason: string | null;
@@ -150,9 +161,9 @@ export interface GameSettings {
   musicVolume: number;
   sfxVolume: number;
   ambientVolume: number;
-  graphicsPreset: 'low' | 'medium' | 'high';
-  shadowQuality: 'none' | 'low' | 'medium' | 'high';
-  textureQuality: 'low' | 'medium' | 'high';
+  graphicsPreset: "low" | "medium" | "high";
+  shadowQuality: "none" | "low" | "medium" | "high";
+  textureQuality: "low" | "medium" | "high";
   drawDistance: number;
   trafficDensity: number;
   fontScale: 1 | 1.25 | 1.5;
