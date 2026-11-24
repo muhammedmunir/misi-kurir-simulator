@@ -4,7 +4,7 @@
 
 ## Ringkasan
 
-Pelan 004 selesai: B1–B11 dan B13 dibaiki. B12 dirakam untuk Pelan 005.
+Pelan 004 selesai: B1–B11 dan B13 dibaiki. B12 dibaiki dalam Pelan 005 Langkah 2.
 Belum diuji: telefon sebenar, skrin 360px, hantar paket dalam permainan sebenar (logik dilindungi ujian unit).
 
 ## Pepijat
@@ -89,7 +89,7 @@ Belum diuji: telefon sebenar, skrin 360px, hantar paket dalam permainan sebenar 
 - **Fail:** `src/components/3d/CameraFollow.tsx`
 - **Masalah:** Kamera mula di `(0, 5, 10)` menghadap arah player. Jika player spawn berhampiran bangunan, kamera mungkin terjepit di dalam/ddekat dinding. Motor juga kecil dari sudut ini.
 - **Kesan:** Pemain tidak nampak motor secara jelas; persepsi "gelap" atau berdesak.
-- **Status:** DIRAKAM — dijadualkan Pelan 005 Langkah 3 (motor dinamik & parkir)
+- **Status:** SELESAI — punca sebenar: `CameraFollow` menggerakkan objek `<camera>` baharu, bukan kamera render, jadi kamera tidak pernah mengikut pemain sejak Fasa 1. Kini guna `state.camera`. Bangunan rawak juga dialih dari persimpangan jalan ke tengah blok. Disahkan di Chrome.
 - **Pengesahan:** mula permainan — semak jika kamera terjepit di dinding.
 
 ### B13 — `.playwright-mcp/` tidak dalam `.gitignore`
