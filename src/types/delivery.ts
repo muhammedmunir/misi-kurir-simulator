@@ -65,7 +65,14 @@ export interface DeliverySession {
   handover: DeliveryHandover | null;
 }
 
-export type DeliveryAction = "open_warehouse" | "deliver" | "nothing" | "blocked" | "open_handover" | "return_packets" | "fail_handover";
+export type DeliveryAction =
+  | "open_warehouse"
+  | "deliver"
+  | "nothing"
+  | "blocked"
+  | "open_handover"
+  | "return_packets"
+  | "fail_handover";
 
 export interface DeliveryResult {
   action: DeliveryAction;
