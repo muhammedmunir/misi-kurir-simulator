@@ -1,3 +1,7 @@
+import type { Manifest, Packet } from "@/types/game";
+
+// ── Delivery Zone ────────────────────────────────────────────────
+
 export interface DeliveryZone {
   id: string;
   name: string;
@@ -8,14 +12,15 @@ export interface DeliveryZone {
   interactable?: boolean;
 }
 
+// ── Delivery Session ─────────────────────────────────────────────
+
 export interface DeliverySession {
-  state: "idle" | "hasPacket" | "enRoute" | "arrived" | "complete";
-  packetId: string | null;
-  trackingNumber: string | null;
+  state: "idle" | "atPickup" | "carrying" | "atDelivery" | "complete";
+  packet: Packet | null;
+  manifest: Manifest | null;
   targetZone: DeliveryZone | null;
   reward: number;
   xpReward: number;
-  hasPacket: boolean;
   nearbyZone: DeliveryZone | null;
   cooldownUntil: number;
   deliveredAt: number | null;
@@ -29,4 +34,6 @@ export interface DeliverySession {
 export interface DeliveryResult {
   action: "pickup" | "deliver" | "nothing" | "blocked";
   message: string;
+  reward?: number; // MYR ganjaran (hanya pada pickup/deliver)
+  xpReward?: number;
 }

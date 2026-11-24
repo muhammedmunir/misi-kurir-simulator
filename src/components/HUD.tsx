@@ -12,8 +12,8 @@ export function HUD() {
   const player = useGameStateStore((s) => s.player);
   const session = useDeliveryStore((s) => s.session);
 
-  const hasPacket = session.hasPacket;
-  const trackingNumber = session.trackingNumber;
+  const hasPacket = !!session.packet;
+  const trackingNumber = session.packet?.trackingNumber ?? null;
   const targetZone = session.targetZone;
   const interactionMessage = session.interactionMessage;
   const completeMessage = session.completeMessage;

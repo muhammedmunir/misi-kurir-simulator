@@ -16,10 +16,10 @@ export function getInteractButtonInfo(session: DeliverySession, now: number): Bu
   if (now < session.cooldownUntil) return { label: "Tunggu...", enabled: false };
 
   if (zone.type === "pickup") {
-    return session.hasPacket ? { label: "Hantar dulu", enabled: false } : { label: "AMBIL PAKET", enabled: true };
+    return session.packet ? { label: "Hantar dulu", enabled: false } : { label: "AMBIL PAKET", enabled: true };
   }
 
-  if (!session.hasPacket) return { label: "Tiada paket", enabled: false };
+  if (!session.packet) return { label: "Tiada paket", enabled: false };
   if (zone.id !== session.targetZone?.id) return { label: "Bukan sini", enabled: false };
   return { label: "HANTAR PAKET", enabled: true };
 }

@@ -1,8 +1,9 @@
 import { rollDeliveryReward } from "@/data/economy";
 import { formatRinggit } from "@/lib/utils";
 import type { DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
+import type { Manifest, Packet, PacketStatus } from "@/types/game";
 
-// ── Zone Data ────────────────────────────────────────────────────
+// ── Zone Data ─────────────────────────────────────────────────────
 
 export const DELIVERY_ZONES: DeliveryZone[] = [
   {
@@ -52,18 +53,17 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   },
 ];
 
-// ── Pure State Functions (boleh diuji) ─────────────────────────
+// ── Pure State Functions (boleh diuji) ────────────────────────────
 
 /** Cipta session baharu dari keadaan kosong. */
 export function createSession(): DeliverySession {
   return {
     state: "idle",
-    packetId: null,
-    trackingNumber: null,
+    packet: null,
+    manifest: null,
     targetZone: null,
     reward: 0,
     xpReward: 0,
-    hasPacket: false,
     nearbyZone: null,
     cooldownUntil: 0,
     deliveredAt: null,
@@ -90,6 +90,8 @@ export function tickSession(
   // Auto-reset: complete → idle selepas autoResetMs
   if (next.state === "complete" && next.deliveredAt != null && now - next.deliveredAt >= autoResetMs) {
     next.state = "idle";
+    next.packet = null;
+    next.manifest = null;
     next.targetZone = null;
     next.reward = 0;
     next.xpReward = 0;
@@ -153,25 +155,56 @@ export function interact(
 
   const zone = nearbyZone;
 
-  // Ambil paket
-  if (zone.type === "pickup" && !session.hasPacket) {
+  // Ambil paket di zon pickup
+  if (zone.type === "pickup" && session.state === "idle") {
     const deliveryZones = DELIVERY_ZONES.filter((z) => z.type === "delivery");
     const targetZone = deliveryZones[Math.floor(rng() * deliveryZones.length)];
-    const reward = rollDeliveryReward(rng);
     const xpReward = 25 + Math.floor(rng() * 25);
     const trackingNumber = createTrackingNumber("MSK");
     const packetId = createId();
     const message = `Pilih paket dari ${zone.name}`;
 
-    const newSession: DeliverySession = {
-      ...session,
-      state: "hasPacket",
-      packetId,
+    // Cipta Packet baharu
+    const packet: Packet = {
+      id: packetId,
       trackingNumber,
+      senderName: "Penghantar",
+      receiverName: "", // diisi semasa pickup
+      senderAddress: zone.name,
+      receiverAddress: targetZone.name,
+      areaCode: targetZone.areaCode,
+      weight: 0.5 + rng() * 2, // 0.5–2.5 kg
+      dimensions: { length: 20, width: 15, height: 10 },
+      volume: 3,
+      paymentMethod: "prepaid",
+      codAmount: 0,
+      priority: "normal",
+      specialInstructions: "",
+      status: "incoming",
+      history: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const sessionWithPacket: DeliverySession = {
+      ...session,
+      state: "carrying",
+      packet,
+      manifest: {
+        id: createId(),
+        date: new Date().toISOString().split("T")[0],
+        packets: [packetId],
+        totalPackets: 1,
+        totalWeight: packet.weight,
+        totalVolume: packet.volume,
+        codTotal: 0,
+        status: "open",
+        createdAt: now,
+        closedAt: null,
+      },
       targetZone,
-      reward,
+      reward: 0,
       xpReward,
-      hasPacket: true,
       cooldownUntil: now + 500,
       interactionMessage: message,
       interactionMessageTime: now,
@@ -179,20 +212,39 @@ export function interact(
 
     return {
       result: { action: "pickup", message },
-      session: newSession,
+      session: sessionWithPacket,
     };
   }
 
-  // Hantar paket
-  if (zone.type === "delivery" && session.hasPacket && zone.id === session.targetZone?.id) {
-    const reward = session.reward;
+  // Hantar paket di zon delivery
+  if (zone.type === "delivery" && session.state === "carrying" && zone.id === session.targetZone?.id) {
+    const reward = rollDeliveryReward(() => rng());
     const xpReward = session.xpReward;
     const message = `Penghantaran selesai! ${formatRinggit(reward)} | +${xpReward} XP`;
 
-    const newSession: DeliverySession = {
+    // Update status paket → delivered
+    const deliveredPacket = {
+      ...session.packet!,
+      status: "delivered" as PacketStatus,
+      updatedAt: now,
+      history: [
+        ...session.packet!.history,
+        { status: "delivered" as PacketStatus, timestamp: now, reason: "Paket diserahkan kepada penerima" },
+      ],
+    };
+
+    const closedManifest: Manifest = {
+      ...session.manifest!,
+      status: "closed" as Manifest["status"],
+      closedAt: now,
+    };
+
+    const sessionComplete: DeliverySession = {
       ...session,
       state: "complete",
-      hasPacket: false,
+      packet: deliveredPacket,
+      manifest: closedManifest,
+      reward,
       deliveredAt: now,
       cooldownUntil: now + 1000,
       completeMessage: message,
@@ -202,13 +254,13 @@ export function interact(
     };
 
     return {
-      result: { action: "deliver", message },
-      session: newSession,
+      result: { action: "deliver", message, reward, xpReward },
+      session: sessionComplete,
     };
   }
 
-  // Zon pickup tetapi sudah ada paket
-  if (zone.type === "pickup" && session.hasPacket) {
+  // Zon pickup tetapi sudah membawa paket
+  if (zone.type === "pickup" && session.state === "carrying") {
     return {
       result: { action: "nothing", message: "Anda sudah ada paket. Hantar dulu yang sedia ada." },
       session,

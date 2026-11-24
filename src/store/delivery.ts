@@ -66,7 +66,6 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => ({
     const keys = [
       "state",
       "targetZone",
-      "reward",
       "xpReward",
       "deliveredAt",
       "cooldownUntil",
@@ -74,6 +73,8 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => ({
       "completeMessageTime",
       "interactionMessage",
       "interactionMessageTime",
+      "packet",
+      "manifest",
     ] as const;
     let changed = false;
     for (const k of keys) {
@@ -105,12 +106,13 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => ({
     // "blocked" means cooldown active — still return result so UI shows message
     // but caller should NOT allow motor swap (handled in PlayerController)
     if (result.result.action === "pickup") {
+      const pkt = result.session.packet;
       return {
         result: { action: "pickup", message: result.result.message },
         payload: {
-          reward: result.session.reward,
+          reward: 0, // pickup tidak beri reward
           xpReward: result.session.xpReward,
-          trackingNumber: result.session.trackingNumber,
+          trackingNumber: pkt?.trackingNumber ?? null,
           session: result.session,
         },
       };
@@ -118,14 +120,17 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => ({
 
     if (result.result.action === "deliver") {
       // Berikan ganjaran kepada game store
-      useGameStateStore.getState().addMoney(result.session.reward);
-      useGameStateStore.getState().addXP(result.session.xpReward);
+      const reward = result.result.reward ?? 0;
+      const xpReward = result.result.xpReward ?? 0;
+      useGameStateStore.getState().addMoney(reward);
+      useGameStateStore.getState().addXP(xpReward);
+      const pkt = result.session.packet;
       return {
         result: { action: "deliver", message: result.result.message },
         payload: {
-          reward: result.session.reward,
-          xpReward: result.session.xpReward,
-          trackingNumber: result.session.trackingNumber,
+          reward,
+          xpReward,
+          trackingNumber: pkt?.trackingNumber ?? null,
           session: result.session,
         },
       };

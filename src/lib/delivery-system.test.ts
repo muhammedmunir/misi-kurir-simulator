@@ -2,6 +2,8 @@ import { DELIVERY_ZONES, createSession, interact, interactBlocksMotorSwap, tickS
 import { generateNPCTraffic, updateNPCTraffic } from "@/lib/npc-traffic";
 import { useDeliveryStore } from "@/store/delivery";
 import { useGameStateStore } from "@/store/gamestate";
+import type { DeliverySession } from "@/types/delivery";
+import type { Manifest, Packet } from "@/types/game";
 import { beforeEach, describe, expect, it } from "vitest";
 
 // ── Helpers ───────────────────────────────────────────────────────
@@ -23,15 +25,58 @@ function fixedRng(...vals: number[]) {
   };
 }
 
+/** Buat session dengan packet & manifest untuk testing */
+function sessionWithPacket(overrides?: Partial<DeliverySession>): DeliverySession {
+  const packet: Packet = {
+    id: "pkt-test-1",
+    trackingNumber: "MSK-TEST",
+    senderName: "Penghantar",
+    receiverName: "Penerima",
+    senderAddress: "Pejabat Pos",
+    receiverAddress: "Kedai Runcit",
+    areaCode: "perumahan",
+    weight: 1.5,
+    dimensions: { length: 20, width: 15, height: 10 },
+    volume: 3,
+    paymentMethod: "prepaid",
+    codAmount: 0,
+    priority: "normal",
+    specialInstructions: "",
+    status: "in_transit",
+    history: [{ status: "in_transit", timestamp: 0, reason: "Dalam penghantaran" }],
+    createdAt: 0,
+    updatedAt: 0,
+  };
+  const manifest: Manifest = {
+    id: "man-test-1",
+    date: "2026-01-01",
+    packets: ["pkt-test-1"],
+    totalPackets: 1,
+    totalWeight: 1.5,
+    totalVolume: 3,
+    codTotal: 0,
+    status: "open",
+    createdAt: 0,
+    closedAt: null,
+  };
+  return {
+    ...createSession(),
+    state: "carrying",
+    packet,
+    manifest,
+    ...overrides,
+  };
+}
+
 // ── createSession ────────────────────────────────────────────────
 
 describe("createSession", () => {
   it("mula dengan state idle", () => {
     const s = createSession();
     expect(s.state).toBe("idle");
-    expect(s.hasPacket).toBe(false);
-    expect(s.packetId).toBeNull();
-    expect(s.trackingNumber).toBeNull();
+    expect(!!s.packet).toBe(false);
+    expect(s.packet).toBeNull();
+    expect(s.manifest).toBeNull();
     expect(s.targetZone).toBeNull();
     expect(s.reward).toBe(0);
     expect(s.xpReward).toBe(0);
@@ -56,13 +101,15 @@ describe("tickSession", () => {
   });
 
   it("auto-reset complete -> idle selepas 5000ms", () => {
-    const s: ReturnType<typeof createSession> = {
+    const s: DeliverySession = {
       ...createSession(),
       state: "complete",
       deliveredAt: 1000,
-      reward: 5000,
+      reward: 50,
       xpReward: 50,
       targetZone: DELIVERY_ZONES[1],
+      packet: null,
+      manifest: null,
     };
     let next = tickSession(s, 5999);
     expect(next.state).toBe("complete");
@@ -76,7 +123,7 @@ describe("tickSession", () => {
   });
 
   it("biar cooldown apabila now < cooldownUntil", () => {
-    const s: ReturnType<typeof createSession> = {
+    const s: DeliverySession = {
       ...createSession(),
       cooldownUntil: 500,
     };
@@ -85,7 +132,7 @@ describe("tickSession", () => {
   });
 
   it("tick semasa cooldown tidak mengubah cooldownUntil", () => {
-    const s: ReturnType<typeof createSession> = {
+    const s: DeliverySession = {
       ...createSession(),
       cooldownUntil: 500,
     };
@@ -94,7 +141,7 @@ describe("tickSession", () => {
   });
 
   it("padam completeMessage selepas 4000ms", () => {
-    const s: ReturnType<typeof createSession> = {
+    const s: DeliverySession = {
       ...createSession(),
       state: "complete",
       completeMessage: "Selesai!",
@@ -109,7 +156,7 @@ describe("tickSession", () => {
   });
 
   it("padam interactionMessage selepas 3000ms", () => {
-    const s: ReturnType<typeof createSession> = {
+    const s: DeliverySession = {
       ...createSession(),
       interactionMessage: "Berhampiran: Pos",
       interactionMessageTime: 0, // bukan null supaya condition != null lulus
@@ -135,42 +182,45 @@ describe("interact — ambil paket", () => {
 
     expect(result).not.toBeNull();
     expect(result.result.action).toBe("pickup");
-    expect(result.session.hasPacket).toBe(true);
-    expect(result.session.state).toBe("hasPacket");
-    expect(result.session.packetId).not.toBeNull();
-    expect(result.session.trackingNumber).not.toBeNull();
+    expect(!!result.session.packet).toBe(true);
+    expect(result.session.state).toBe("carrying");
+    expect(result.session.packet?.id).not.toBeNull();
+    expect(result.session.packet?.trackingNumber).not.toBeNull();
     expect(result.session.targetZone).not.toBeNull();
+    expect(!!result.session.manifest).toBe(true);
+    expect(result.session.manifest?.status).toBe("open");
+    expect(result.session.manifest?.totalPackets).toBe(1);
     expect(result.session.cooldownUntil).toBe(now + 500);
     expect(result.session.interactionMessage).toBe("Pilih paket dari Pejabat Pos Pusat");
     expect(result.session.interactionMessageTime).toBe(now);
+    expect(result.session.xpReward).toBeGreaterThan(0);
   });
 
-  it("set hasPacket=true selepas ambil", () => {
+  it("set packet & manifest selepas ambil", () => {
     const s = createSession();
     const zone = DELIVERY_ZONES[0];
     const now = 1000;
     const rng = fixedRng(500, 500);
     const result = interact(s, zone, now, fakeId, fakeTracking, rng);
 
-    expect(result.session.hasPacket).toBe(true);
-    expect(result.session.state).toBe("hasPacket");
+    expect(!!result.session.packet).toBe(true);
+    expect(result.session.state).toBe("carrying");
+    expect(result.session.packet?.status).toBe("incoming");
+    expect(result.session.manifest?.status).toBe("open");
+    expect(result.session.manifest?.packets).toContain(result.session.packet!.id);
   });
 
   it("tiada mutation di zon pickup apabila sudah ada paket", () => {
-    const s: ReturnType<typeof createSession> = {
-      ...createSession(),
-      hasPacket: true,
-      state: "hasPacket",
-      reward: 3000,
+    const s = sessionWithPacket({
+      targetZone: DELIVERY_ZONES[1],
       xpReward: 30,
-    };
+    });
     const zone = DELIVERY_ZONES[0];
     const now = 2000;
 
     const result = interact(s, zone, now, fakeId, fakeTracking, fixedRng(500));
     expect(result.result.action).toBe("nothing");
-    expect(result.session.hasPacket).toBe(true);
-    expect(result.session.state).toBe("hasPacket");
+    expect(result.session.state).toBe("carrying");
   });
 });
 
@@ -178,45 +228,38 @@ describe("interact — ambil paket", () => {
 
 describe("interact — hantar paket", () => {
   it("berjaya di zon penghantaran betul", () => {
-    const s: ReturnType<typeof createSession> = {
-      ...createSession(),
-      hasPacket: true,
-      state: "hasPacket",
+    const s = sessionWithPacket({
       targetZone: DELIVERY_ZONES[1],
-      reward: 3000,
       xpReward: 30,
-    };
+    });
     const zone = DELIVERY_ZONES[1];
     const now = 3000;
 
     const result = interact(s, zone, now, fakeId, fakeTracking, fixedRng(500));
     expect(result.result.action).toBe("deliver");
     expect(result.session.state).toBe("complete");
-    expect(result.session.hasPacket).toBe(false);
+    expect(result.session.packet?.status).toBe("delivered");
+    expect(result.session.manifest?.status).toBe("closed");
     expect(result.session.deliveredAt).toBe(now);
     expect(result.session.cooldownUntil).toBe(now + 1000);
-    expect(result.result.message).toContain("3,000");
-    expect(result.result.message).toContain("30 XP");
+    expect(result.result.reward).toBeGreaterThan(0);
+    expect(result.result.xpReward).toBe(30);
+    expect(result.result.message).toContain("XP");
     expect(result.session.completeMessage).toBe(result.result.message);
     expect(result.session.completeMessageTime).toBe(now);
     expect(result.session.interactionMessage).toBeNull();
   });
 
   it("tolak hantar di zon salah", () => {
-    const s: ReturnType<typeof createSession> = {
-      ...createSession(),
-      hasPacket: true,
-      state: "hasPacket",
+    const s = sessionWithPacket({
       targetZone: DELIVERY_ZONES[1],
-      reward: 3000,
-      xpReward: 30,
-    };
+    });
     const zone = DELIVERY_ZONES[2];
     const now = 3000;
 
     const result = interact(s, zone, now, fakeId, fakeTracking, fixedRng(500));
     expect(result.result.action).toBe("nothing");
-    expect(result.session.state).toBe("hasPacket");
+    expect(result.session.state).toBe("carrying");
   });
 
   it("tolak hantar tanpa paket", () => {
@@ -233,10 +276,12 @@ describe("interact — hantar paket", () => {
 
 describe("interact — disekat (blocked)", () => {
   it("cooldown di zon delivery → blocked", () => {
-    const s: ReturnType<typeof createSession> = {
+    const s: DeliverySession = {
       ...createSession(),
       state: "complete",
       cooldownUntil: 2000,
+      packet: null,
+      manifest: null,
     };
     const zone = DELIVERY_ZONES[1];
     const now = 1500;
@@ -249,11 +294,42 @@ describe("interact — disekat (blocked)", () => {
   });
 
   it("cooldown di zon pickup → blocked", () => {
-    const s: ReturnType<typeof createSession> = {
+    const s: DeliverySession = {
       ...createSession(),
-      hasPacket: true,
-      state: "hasPacket",
+      state: "carrying",
       cooldownUntil: 2000,
+      packet: {
+        id: "pkt-1",
+        trackingNumber: "MSK-X",
+        senderName: "A",
+        receiverName: "B",
+        senderAddress: "Addr1",
+        receiverAddress: "Addr2",
+        areaCode: "perumahan",
+        weight: 1,
+        dimensions: { length: 10, width: 10, height: 10 },
+        volume: 1,
+        paymentMethod: "prepaid",
+        codAmount: 0,
+        priority: "normal",
+        specialInstructions: "",
+        status: "in_transit",
+        history: [],
+        createdAt: 0,
+        updatedAt: 0,
+      } as Packet,
+      manifest: {
+        id: "man-1",
+        date: "2026-01-01",
+        packets: ["pkt-1"],
+        totalPackets: 1,
+        totalWeight: 1,
+        totalVolume: 1,
+        codTotal: 0,
+        status: "open",
+        createdAt: 0,
+        closedAt: null,
+      } as Manifest,
     };
     const zone = DELIVERY_ZONES[0];
     const now = 1500;
@@ -272,7 +348,7 @@ describe("interact — disekat (blocked)", () => {
   });
 
   it("cooldown tepat pada had — tidak disekat", () => {
-    const s: ReturnType<typeof createSession> = {
+    const s: DeliverySession = {
       ...createSession(),
       cooldownUntil: 1500,
     };
@@ -298,16 +374,17 @@ describe("gelung penghantaran 3 kitaran", () => {
     for (let i = 0; i < 3; i++) {
       s = tickSession(s, t);
       expect(s.state, `kitaran ${i + 1}: state sebelum ambil`).toBe("idle");
-      expect(s.hasPacket, `kitaran ${i + 1}: tiada paket`).toBe(false);
+      expect(!!s.packet, `kitaran ${i + 1}: tiada paket`).toBe(false);
 
       const pickResult = interact(s, pickupZone, t, fakeId, fakeTracking, fixedRng(300, 500));
       expect(pickResult, `kitaran ${i + 1}: pickup tidak null`).not.toBeNull();
       expect(pickResult.result.action).toBe("pickup");
       s = pickResult.session;
 
-      expect(s.state).toBe("hasPacket");
-      expect(s.hasPacket).toBe(true);
+      expect(s.state).toBe("carrying");
+      expect(!!s.packet).toBe(true);
       expect(s.targetZone).not.toBeNull();
+      expect(!!s.manifest).toBe(true);
 
       t += 600;
 
@@ -317,13 +394,14 @@ describe("gelung penghantaran 3 kitaran", () => {
       s = deliverResult.session;
 
       expect(s.state, `kitaran ${i + 1}: state selepas hantar`).toBe("complete");
-      expect(s.hasPacket).toBe(false);
+      expect(!!s.packet).toBe(true);
+      expect(s.packet?.status).toBe("delivered");
       expect(s.deliveredAt).toBe(t);
 
       t += 5100;
       s = tickSession(s, t);
       expect(s.state, `kitaran ${i + 1}: selepas auto-reset`).toBe("idle");
-      expect(s.hasPacket).toBe(false);
+      expect(!!s.packet).toBe(false);
       expect(s.reward).toBe(0);
     }
   });
@@ -348,16 +426,16 @@ describe("useDeliveryStore — gelung penuh", () => {
     // Ambil paket
     payload = useDeliveryStore.getState().interact(100000);
     expect(payload.result?.action).toBe("pickup");
-    expect(payload.payload?.reward).toBeGreaterThan(0);
+    expect(payload.payload?.reward).toBe(0); // pickup tidak beri reward
     expect(payload.payload?.xpReward).toBeGreaterThan(0);
 
     const session = useDeliveryStore.getState().session;
-    expect(session.hasPacket).toBe(true);
-    expect(session.state).toBe("hasPacket");
+    expect(!!session.packet).toBe(true);
+    expect(session.state).toBe("carrying");
 
     // Tick tidak ubah hasPacket
     useDeliveryStore.getState().tick(100600);
-    expect(useDeliveryStore.getState().session.hasPacket).toBe(true);
+    expect(useDeliveryStore.getState().session.state).toBe("carrying");
 
     // Hantar paket — targetZone ditetapkan semasa pickup
     const targetZoneId = session.targetZone?.id;
@@ -369,12 +447,13 @@ describe("useDeliveryStore — gelung penuh", () => {
 
     const sessionAfter = useDeliveryStore.getState().session;
     expect(sessionAfter.state).toBe("complete");
-    expect(sessionAfter.hasPacket).toBe(false);
+    expect(!!sessionAfter.packet).toBe(true);
+    expect(sessionAfter.packet?.status).toBe("delivered");
 
     // Tick 5000ms → auto-reset
     useDeliveryStore.getState().tick(105700);
     expect(useDeliveryStore.getState().session.state).toBe("idle");
-    expect(useDeliveryStore.getState().session.hasPacket).toBe(false);
+    expect(!!useDeliveryStore.getState().session.packet).toBe(false);
 
     // Ulang kitaran 2
     useDeliveryStore.getState().tick(105700); // auto-reset
@@ -397,7 +476,7 @@ describe("useDeliveryStore — gelung penuh", () => {
     useDeliveryStore.getState().setNearbyZone(DELIVERY_ZONES[0]);
     payload = useDeliveryStore.getState().interact(113000);
     expect(payload.result?.action).toBe("pickup");
-    expect(useDeliveryStore.getState().session.hasPacket).toBe(true);
+    expect(!!useDeliveryStore.getState().session.packet).toBe(true);
   });
 
   it("cooldown di zon → blocked, E tak boleh swap motor", () => {
@@ -411,7 +490,7 @@ describe("useDeliveryStore — gelung penuh", () => {
     // Sedang dalam cooldown → blocked
     expect(payload.result?.action).toBe("blocked");
 
-    // Setelah cooldown habis (pickup zone), dapat ambil lagi? Tidak — hasPacket=true
+    // Setelah cooldown habis (pickup zone), dapat ambil lagi? Tidak — carrying
     // "nothing" = sudah ada paket, jangan swap motor
     payload = useDeliveryStore.getState().interact(100600);
     expect(payload.result?.action).toBe("nothing");
@@ -535,8 +614,10 @@ describe("ganjaran — wang & XP pemain", () => {
   function player() {
     const p = useGameStateStore.getState().player;
     if (!p) throw new Error("player mesti wujud selepas createNewGame");
-    return p;
+    return { money: p.money, xp: p.xp, totalEarnings: p.totalEarnings, level: p.level };
   }
+
+  // _playerRef — reference stability check placeholder
 
   function pickUp(now: number) {
     useDeliveryStore.getState().setNearbyZone(DELIVERY_ZONES[0]);
@@ -552,29 +633,36 @@ describe("ganjaran — wang & XP pemain", () => {
   }
 
   it("ambil paket → wang & XP tidak berubah", () => {
-    const before = player();
+    const beforeMoney = useGameStateStore.getState().player?.money ?? 0;
+    const beforeXp = useGameStateStore.getState().player?.xp ?? 0;
+    const beforeEarnings = useGameStateStore.getState().player?.totalEarnings ?? 0;
     expect(pickUp(100_000).result?.action).toBe("pickup");
 
-    const after = player();
-    expect(after.money).toBe(before.money);
-    expect(after.xp).toBe(before.xp);
-    expect(after.totalEarnings).toBe(before.totalEarnings);
+    const after = useGameStateStore.getState().player!;
+    expect(after.money).toBe(beforeMoney);
+    expect(after.xp).toBe(beforeXp);
+    expect(after.totalEarnings).toBe(beforeEarnings);
   });
 
   it("hantar → wang & XP bertambah tepat sebanyak ganjaran", () => {
     const before = player();
     pickUp(100_000);
-    const { reward, xpReward } = useDeliveryStore.getState().session;
-    expect(reward).toBeGreaterThan(0);
+    const { reward } = useDeliveryStore.getState().session;
+    // session.reward selepas pickup = 0; reward sebenar ada di result setelah deliver
+    expect(reward).toBe(0);
 
-    expect(deliverToTarget(100_600).result?.action).toBe("deliver");
+    const deliverResult = deliverToTarget(100_600);
+    expect(deliverResult.result?.action).toBe("deliver");
+
+    const rewardAmount = deliverResult.payload?.reward ?? 0;
+    const xpAmount = deliverResult.payload?.xpReward ?? 0;
 
     const after = player();
-    expect(after.money).toBe(before.money + reward);
-    expect(after.totalEarnings).toBe(before.totalEarnings + reward);
+    expect(after.money).toBe(before.money + rewardAmount);
+    expect(after.totalEarnings).toBe(before.totalEarnings + rewardAmount);
     // xpReward < xpToNext awal (100), jadi tiada naik level
     expect(after.level).toBe(before.level);
-    expect(after.xp).toBe(before.xp + xpReward);
+    expect(after.xp).toBe(before.xp + xpAmount);
   });
 
   it("tekan lagi di zon sama selepas hantar (tiada paket) → tiada ganjaran kedua", () => {
@@ -594,11 +682,11 @@ describe("ganjaran — wang & XP pemain", () => {
   it("tekan berulang semasa cooldown hantar → ganjaran sekali sahaja", () => {
     const before = player();
     pickUp(100_000);
-    const { reward } = useDeliveryStore.getState().session;
-    deliverToTarget(100_600);
+    const deliverResult = deliverToTarget(100_600);
+    const rewardAmount = deliverResult.payload?.reward ?? 0;
     useDeliveryStore.getState().interact(100_700);
     useDeliveryStore.getState().interact(100_800);
 
-    expect(player().money).toBe(before.money + reward);
+    expect(player().money).toBe(before.money + rewardAmount);
   });
 });
