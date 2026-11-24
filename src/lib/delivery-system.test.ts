@@ -1,6 +1,7 @@
 import { DELIVERY_ZONES, createSession, interact, interactBlocksMotorSwap, tickSession } from "@/lib/delivery-system";
 import { generateNPCTraffic, updateNPCTraffic } from "@/lib/npc-traffic";
 import { useDeliveryStore } from "@/store/delivery";
+import { useGameStateStore } from "@/store/gamestate";
 import { beforeEach, describe, expect, it } from "vitest";
 
 // ── Helpers ───────────────────────────────────────────────────────
@@ -525,36 +526,79 @@ describe("interactBlocksMotorSwap", () => {
 
 // ── Ganjaran: pickup tidak tambah wang/XP ───────────────────────
 
-describe("ganjaran — pickup tiada tambah", () => {
+describe("ganjaran — wang & XP pemain", () => {
   beforeEach(() => {
     useDeliveryStore.getState().reset();
+    useGameStateStore.getState().createNewGame("Ujian");
   });
 
-  it("ambil paket → wang/XP tidak berubah", () => {
-    useDeliveryStore.getState().setNearbyZone(DELIVERY_ZONES[0]);
-    useDeliveryStore.getState().interact(100000);
+  function player() {
+    const p = useGameStateStore.getState().player;
+    if (!p) throw new Error("player mesti wujud selepas createNewGame");
+    return p;
+  }
 
-    const session = useDeliveryStore.getState().session;
-    // Ganjaran hanya diberikan semasa "deliver", bukan "pickup".
-    // PlayerController.handleInteract() cabang "pickup" tidak memanggil addMoney/addXP.
-    expect(session.hasPacket).toBe(true);
-    expect(session.state).toBe("hasPacket");
+  function pickUp(now: number) {
+    useDeliveryStore.getState().setNearbyZone(DELIVERY_ZONES[0]);
+    return useDeliveryStore.getState().interact(now);
+  }
+
+  function deliverToTarget(now: number) {
+    const targetId = useDeliveryStore.getState().session.targetZone?.id;
+    const zone = DELIVERY_ZONES.find((z) => z.id === targetId);
+    if (!zone) throw new Error("zon sasaran mesti wujud selepas ambil paket");
+    useDeliveryStore.getState().setNearbyZone(zone);
+    return useDeliveryStore.getState().interact(now);
+  }
+
+  it("ambil paket → wang & XP tidak berubah", () => {
+    const before = player();
+    expect(pickUp(100_000).result?.action).toBe("pickup");
+
+    const after = player();
+    expect(after.money).toBe(before.money);
+    expect(after.xp).toBe(before.xp);
+    expect(after.totalEarnings).toBe(before.totalEarnings);
   });
 
-  it("hantar → reward bertambah tepat sekali", () => {
-    // Ambil paket
-    useDeliveryStore.getState().setNearbyZone(DELIVERY_ZONES[0]);
-    const pick = useDeliveryStore.getState().interact(100000);
-    expect(pick.result?.action).toBe("pickup");
-    expect(pick.payload?.trackingNumber).not.toBeNull();
+  it("hantar → wang & XP bertambah tepat sebanyak ganjaran", () => {
+    const before = player();
+    pickUp(100_000);
+    const { reward, xpReward } = useDeliveryStore.getState().session;
+    expect(reward).toBeGreaterThan(0);
 
-    // Hantar paket — targetZone ditetapkan semasa pickup
-    const targetZoneId = useDeliveryStore.getState().session.targetZone?.id;
-    const deliveryZone = DELIVERY_ZONES.find((z) => z.id === targetZoneId);
-    if (!deliveryZone) throw new Error("delivery zone must exist");
-    useDeliveryStore.getState().setNearbyZone(deliveryZone);
-    const deliver = useDeliveryStore.getState().interact(100600);
-    expect(deliver.result?.action).toBe("deliver");
-    expect(deliver.payload?.reward).toBeGreaterThan(0);
+    expect(deliverToTarget(100_600).result?.action).toBe("deliver");
+
+    const after = player();
+    expect(after.money).toBe(before.money + reward);
+    expect(after.totalEarnings).toBe(before.totalEarnings + reward);
+    // xpReward < xpToNext awal (100), jadi tiada naik level
+    expect(after.level).toBe(before.level);
+    expect(after.xp).toBe(before.xp + xpReward);
+  });
+
+  it("tekan lagi di zon sama selepas hantar (tiada paket) → tiada ganjaran kedua", () => {
+    pickUp(100_000);
+    deliverToTarget(100_600);
+    const afterFirst = player();
+
+    // Cooldown hantar = 1000ms; tekan selepas tamat, masih di zon penghantaran
+    const again = useDeliveryStore.getState().interact(102_000);
+    expect(again.result?.action).not.toBe("deliver");
+
+    const afterSecond = player();
+    expect(afterSecond.money).toBe(afterFirst.money);
+    expect(afterSecond.xp).toBe(afterFirst.xp);
+  });
+
+  it("tekan berulang semasa cooldown hantar → ganjaran sekali sahaja", () => {
+    const before = player();
+    pickUp(100_000);
+    const { reward } = useDeliveryStore.getState().session;
+    deliverToTarget(100_600);
+    useDeliveryStore.getState().interact(100_700);
+    useDeliveryStore.getState().interact(100_800);
+
+    expect(player().money).toBe(before.money + reward);
   });
 });
