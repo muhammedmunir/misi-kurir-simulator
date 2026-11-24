@@ -2,6 +2,7 @@ import type { DeliveryResult, DeliverySession, DeliveryZone } from "@/types/deli
 import { create } from "zustand";
 
 import { DELIVERY_ZONES, createSession, interact as interactPure, tickSession } from "@/lib/delivery-system";
+import { useGameStateStore } from "@/store/gamestate";
 
 // ── Type helpers ─────────────────────────────────────────────────
 
@@ -116,6 +117,9 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => ({
     }
 
     if (result.result.action === "deliver") {
+      // Berikan ganjaran kepada game store
+      useGameStateStore.getState().addMoney(result.session.reward);
+      useGameStateStore.getState().addXP(result.session.xpReward);
       return {
         result: { action: "deliver", message: result.result.message },
         payload: {

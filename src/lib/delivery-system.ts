@@ -219,5 +219,16 @@ export function interact(
   };
 }
 
+/**
+ * `interactBlocksMotorSwap` — tulen: action → true jika motor swap disekat.
+ * "pickup" / "deliver" / "blocked" → true  (swing disekat).
+ * "nothing" / null    → false (biarkan motor swap).
+ */
+export function interactBlocksMotorSwap(action: string | null): boolean {
+  if (action === null) return false;
+  if (action === "nothing") return false;
+  return true;
+}
+
 // Semua komponen sudah guna useDeliveryStore.
 // Shim ini sudah boleh dibuang (2025-11-24).

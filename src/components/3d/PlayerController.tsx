@@ -1,3 +1,4 @@
+import { interactBlocksMotorSwap } from "@/lib/delivery-system";
 import { touchInput } from "@/lib/touch";
 import { useDeliveryStore } from "@/store/delivery";
 import { useFrame } from "@react-three/fiber";
@@ -39,43 +40,16 @@ export const playerState = {
 };
 
 /**
- * `interactBlocksMotorSwap` — tulen: action → true jika motor swap disekat.
- * "pickup" / "deliver" / "blocked" → true  (swing disekat).
- * "nothing" / null    → false (biarkan motor swap).
- */
-export function interactBlocksMotorSwap(action: string | null): boolean {
-  if (action === null) return false;
-  if (action === "nothing") return false;
-  return true;
-}
-
-/**
  * `handleInteract` — panggil store.interact(now).
- * Pulang true jika delivery zone ada (apa-apa pun action),
- * supaya motor swap DILARANG.
- * Pulang false jika tiada delivery zone → benarkan motor swap.
+ * Gunakan `interactBlocksMotorSwap()` untuk tentukan apakah
+ * motor swap disekat atau tidak.
  */
 function handleInteract(): boolean {
   const now = Date.now();
   const { result } = useDeliveryStore.getState().interact(now);
-
-  if (result) {
-    if (result.action === "pickup") {
-      return true;
-    }
-
-    if (result.action === "deliver") {
-      return true;
-    }
-
-    // "nothing" → benarkan motor swap
-    if (result.action === "nothing") return false;
-    // "blocked" → jangan swap motor
-    return true;
-  }
-
-  // Tiada delivery zone → benarkan motor swap
-  return false;
+  const action = result?.action ?? null;
+  const blocks = interactBlocksMotorSwap(action);
+  return blocks;
 }
 
 // ── Component ─────────────────────────────────────────────────────

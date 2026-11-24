@@ -1,5 +1,4 @@
-import { interactBlocksMotorSwap } from "@/components/3d/PlayerController";
-import { DELIVERY_ZONES, createSession, interact, tickSession } from "@/lib/delivery-system";
+import { DELIVERY_ZONES, createSession, interact, interactBlocksMotorSwap, tickSession } from "@/lib/delivery-system";
 import { generateNPCTraffic, updateNPCTraffic } from "@/lib/npc-traffic";
 import { useDeliveryStore } from "@/store/delivery";
 import { beforeEach, describe, expect, it } from "vitest";
