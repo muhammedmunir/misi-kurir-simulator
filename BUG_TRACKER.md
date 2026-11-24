@@ -97,3 +97,10 @@ Belum diuji: telefon sebenar, skrin 360px, hantar paket dalam permainan sebenar 
 - **Masalah:** Folder `.playwright-mcp/` tidak disenaraikan.
 - **Status:** SELESAI (`93dec38`)
 - **Pengesahan:** `git status` tidak tunjuk `.playwright-mcp/`.
+
+### B14 — Kamera masuk ke dalam rumah di pintu alamat
+- **Fail:** `src/components/3d/CameraFollow.tsx`
+- **Masalah:** Kamera diletak 8 unit di belakang pemain tanpa semakan halangan. Bila pemain berdiri di pintu rumah alamat dan menghadap jalan, kamera berada di dalam kotak rumah.
+- **Kesan:** Bumbung/dinding rumah menutup separuh skrin (dilihat di Chrome semasa semakan Langkah 4).
+- **Status:** DIRAKAM — pelan berasingan selepas Pelan 005 Langkah 5
+- **Pengesahan:** berdiri di pintu Kafe Kampung Digital menghadap jalan; skrin tidak patut dilindungi dinding.
