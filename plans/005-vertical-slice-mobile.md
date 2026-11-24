@@ -1,6 +1,6 @@
 # Pelan 005 — Vertical Slice Mobile Boleh Main
 
-**Status:** Belum dimulakan
+**Status:** Langkah 0 siap (commit `d05d945`), Langkah 1–9 masih dalam perkembangan
 **Bergantung pada:** Pelan 004 (selesai, `ecd1a79`)
 **Matlamat:** Capai milestone pertama wajib master prompt (seksyen Q), dan uji di browser telefon sebenar.
 
