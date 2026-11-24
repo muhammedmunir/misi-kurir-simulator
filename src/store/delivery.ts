@@ -1,3 +1,4 @@
+import { completeHandover, failHandover, takeProof as takeProofPure } from "@/delivery/handover";
 import {
   DELIVERY_ZONES,
   STARTER_CARGO,
@@ -8,7 +9,6 @@ import {
 import { useGameStateStore } from "@/store/gamestate";
 import type { DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
 import type { ParkingCheck } from "@/vehicles/motor-state";
-import { completeHandover, failHandover, takeProof as takeProofPure } from "@/delivery/handover";
 import { type Deps, dispatch, loadOntoVehicle, scanPacket } from "@/warehouse/warehouse-logic";
 import { create } from "zustand";
 

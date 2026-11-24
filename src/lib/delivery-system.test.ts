@@ -11,6 +11,7 @@ import {
 import { useDeliveryStore } from "@/store/delivery";
 import { useGameStateStore } from "@/store/gamestate";
 import { CAFE, DESK, SHOP, deliveringTo, testDeps } from "@/test/delivery-fixtures";
+import type { DeliveryHandover } from "@/types/delivery";
 import type { Deps } from "@/warehouse/warehouse-logic";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -54,7 +55,7 @@ describe("interact — hantar", () => {
     expect(next.result.action).toBe("open_handover");
     // Langkah 2+3: takeProof + completeHandover
     return completeHandover(
-      { ...next.session, handover: { ...next.session.handover, proofTaken: true } },
+      { ...next.session, handover: { ...next.session.handover, proofTaken: true } as DeliveryHandover },
       now + 1,
       deps,
     );
@@ -136,7 +137,7 @@ describe("interact — cooldown", () => {
     expect(out.result.action).toBe("open_handover");
     // completeHandover should deliver
     const result = completeHandover(
-      { ...out.session, handover: { ...out.session.handover, proofTaken: true } },
+      { ...out.session, handover: { ...out.session.handover, proofTaken: true } as DeliveryHandover },
       6001,
       testDeps(),
     );
@@ -196,7 +197,11 @@ function fullDeliverForTick(
   const deps = testDeps();
   const next = interact({ ...s, nearbyZone: SHOP }, SHOP, now, deps);
   expect(next.result.action).toBe("open_handover");
-  return completeHandover({ ...next.session, handover: { ...next.session.handover, proofTaken: true } }, now + 1, deps);
+  return completeHandover(
+    { ...next.session, handover: { ...next.session.handover, proofTaken: true } as DeliveryHandover },
+    now + 1,
+    deps,
+  );
 }
 
 describe("interactBlocksMotorSwap", () => {

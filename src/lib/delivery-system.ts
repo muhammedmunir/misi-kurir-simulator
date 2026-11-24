@@ -231,7 +231,13 @@ export function interact(
   const handover: DeliveryHandover = { packetId: packet.id, zoneId: zone.id, proofTaken: false };
   return {
     result: { action: "open_handover", message: "Serah terima dibuka" },
-    session: { ...session, handover, cooldownUntil: now + 300, interactionMessage: "Serah terima dibuka", interactionMessageTime: now },
+    session: {
+      ...session,
+      handover,
+      cooldownUntil: now + 300,
+      interactionMessage: "Serah terima dibuka",
+      interactionMessageTime: now,
+    },
   };
 }
 

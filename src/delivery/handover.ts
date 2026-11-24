@@ -1,15 +1,11 @@
 import { rollDeliveryReward } from "@/data/economy";
-import { type CargoLimits, closeManifest, isCarrying } from "@/delivery/manifest";
+import { closeManifest, isCarrying } from "@/delivery/manifest";
 import { transition } from "@/delivery/packet";
-import { STARTER_CARGO } from "@/lib/delivery-system";
 import { DELIVERY_ZONES } from "@/lib/delivery-system";
 import { formatRinggit } from "@/lib/utils";
 import type { DeliveryAction, DeliveryResult, DeliverySession } from "@/types/delivery";
 import type { Packet } from "@/types/game";
 import type { Deps } from "@/warehouse/warehouse-logic";
-
-/** Starter motor cargo — single source of truth via STARTER_CARGO. */
-export const HANDOVER_CARGO: CargoLimits = STARTER_CARGO;
 
 // ── Helpers (pure) ────────────────────────────────────────────────
 
