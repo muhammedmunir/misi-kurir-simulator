@@ -1,10 +1,9 @@
-import { DELIVERY_SYSTEM } from "@/lib/delivery-system";
 import { saveGame } from "@/lib/idb";
+import { useDeliveryStore } from "@/store/delivery";
 import { useDeliveryUIStore } from "@/store/delivery-ui";
 import { useSceneStore } from "@/store/game";
 import { useGameStateStore } from "@/store/gamestate";
 import { Scene } from "@/types/scene";
-import { useEffect, useState } from "react";
 import { playerState } from "./3d/PlayerController";
 
 export function HUD() {
@@ -13,17 +12,9 @@ export function HUD() {
   const player = useGameStateStore((s) => s.player);
   const interactionMessage = useDeliveryUIStore((s) => s.interactionMessage);
   const completeMessage = useDeliveryUIStore((s) => s.completeMessage);
-
-  const [deliveryState, setDeliveryState] = useState({
-    hasPacket: false,
-    trackingNumber: null as string | null,
-  });
-
-  // Poll delivery system for state changes
-  useEffect(() => {
-    const session = DELIVERY_SYSTEM.getSession();
-    setDeliveryState({ hasPacket: session.hasPacket, trackingNumber: session.trackingNumber });
-  }, []);
+  const hasPacket = useDeliveryStore((s) => s.session.hasPacket);
+  const trackingNumber = useDeliveryStore((s) => s.session.trackingNumber);
+  const targetZone = useDeliveryStore((s) => s.session.targetZone);
 
   const isOnFoot = playerState.isOnFoot();
   const speed = Math.abs(Math.round(playerState.getSpeed()));
@@ -193,20 +184,21 @@ export function HUD() {
           {/* Delivery / Mission info */}
           <div
             style={{
-              background: deliveryState.hasPacket ? "rgba(245, 158, 11, 0.25)" : "rgba(34, 197, 94, 0.2)",
-              border: deliveryState.hasPacket
-                ? "1px solid rgba(245, 158, 11, 0.5)"
-                : "1px solid rgba(34, 197, 94, 0.4)",
+              background: hasPacket ? "rgba(245, 158, 11, 0.25)" : "rgba(34, 197, 94, 0.2)",
+              border: hasPacket ? "1px solid rgba(245, 158, 11, 0.5)" : "1px solid rgba(34, 197, 94, 0.4)",
               borderRadius: "12px",
               padding: "10px 16px",
               maxWidth: "250px",
             }}
           >
-            <p style={{ fontSize: "12px", color: deliveryState.hasPacket ? "#f59e0b" : "#22c55e", margin: "0 0 2px" }}>
-              {deliveryState.hasPacket ? "📦 Bawa Paket" : "🔍 Cari Paket"}
+            <p style={{ fontSize: "12px", color: hasPacket ? "#f59e0b" : "#22c55e", margin: "0 0 2px" }}>
+              {hasPacket ? "📦 Bawa Paket" : "🔍 Cari Paket"}
             </p>
-            {deliveryState.hasPacket && deliveryState.trackingNumber && (
-              <p style={{ fontSize: "11px", color: "#e8e8f0", margin: "0 0 2px" }}>{deliveryState.trackingNumber}</p>
+            {hasPacket && trackingNumber && (
+              <p style={{ fontSize: "11px", color: "#e8e8f0", margin: "0 0 2px" }}>{trackingNumber}</p>
+            )}
+            {hasPacket && targetZone && (
+              <p style={{ fontSize: "11px", color: "#e8e8f0", margin: "0 0 2px" }}>Sasaran: {targetZone.name}</p>
             )}
             {completeMessage && (
               <p style={{ fontSize: "13px", fontWeight: 700, color: "#22c55e", margin: "4px 0 0" }}>
@@ -216,8 +208,8 @@ export function HUD() {
             {interactionMessage && !completeMessage && (
               <p style={{ fontSize: "11px", color: "#f59e0b", margin: "4px 0 0" }}>{interactionMessage}</p>
             )}
-            {!deliveryState.hasPacket && !interactionMessage && (
-              <p style={{ fontSize: "12px", fontWeight: 600 }}>Ke Balik Pos Pusat (E)</p>
+            {!hasPacket && !interactionMessage && (
+              <p style={{ fontSize: "12px", fontWeight: 600 }}>Ke Pejabat Pos Pusat (E)</p>
             )}
           </div>
         </div>

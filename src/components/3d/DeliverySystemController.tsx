@@ -1,12 +1,14 @@
 import { DELIVERY_SYSTEM } from "@/lib/delivery-system";
 import { findNearbyInteractable } from "@/lib/delivery-utils";
+import { useDeliveryStore } from "@/store/delivery";
 import { useDeliveryUIStore } from "@/store/delivery-ui";
 import { useFrame } from "@react-three/fiber";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export function DeliverySystemController() {
+  const prevNearbyIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    // Reset delivery state on unmount
     return () => {
       DELIVERY_SYSTEM.resetSession();
       useDeliveryUIStore.getState().clearMessages();
@@ -17,31 +19,32 @@ export function DeliverySystemController() {
     const playerPos = DELIVERY_SYSTEM.getPlayerPosition();
     if (!playerPos) return;
 
-    const { setNearbyZone, getSession } = DELIVERY_SYSTEM;
-    const session = getSession();
-    const ui = useDeliveryUIStore.getState();
-
-    // Check nearby interactable zones
     const zones = DELIVERY_SYSTEM.getZones();
     const nearby = findNearbyInteractable(playerPos, zones);
-    setNearbyZone(nearby);
+    const session = useDeliveryStore.getState().session;
+    const ui = useDeliveryUIStore.getState();
 
-    // Update UI with zone info
-    if (nearby && nearby.id !== ui.activeZone) {
-      ui.setActiveZone(nearby.id, nearby.name);
-      if (session.hasPacket && nearby.type === "delivery" && nearby.id === session.targetZone?.id) {
-        ui.setInteractionMessage(`Berhampiran: ${nearby.name} — Hantar paket (E)`);
-      } else if (nearby.type === "pickup" && !session.hasPacket) {
-        ui.setInteractionMessage(`Berhampiran: ${nearby.name} — Ambil paket (E)`);
+    // Set nearby zone
+    useDeliveryStore.getState().setNearbyZone(nearby);
+
+    // Update UI with zone info when zone changes
+    const nearbyId = nearby?.id ?? null;
+    if (nearbyId !== prevNearbyIdRef.current) {
+      if (nearby) {
+        ui.setActiveZone(nearby.id, nearby.name);
+        if (session.hasPacket && nearby.type === "delivery" && nearby.id === session.targetZone?.id) {
+          ui.setInteractionMessage(`Berhampiran: ${nearby.name} — Hantar paket (E)`);
+        } else if (nearby.type === "pickup" && !session.hasPacket) {
+          ui.setInteractionMessage(`Berhampiran: ${nearby.name} — Ambil paket (E)`);
+        } else {
+          ui.setInteractionMessage(`Berhampiran: ${nearby.name}`);
+        }
       } else {
-        ui.setInteractionMessage(`Berhampiran: ${nearby.name}`);
+        // Left all zones - clear UI
+        ui.setActiveZone(null, null);
+        ui.setInteractionMessage("");
       }
-    }
-
-    // If player is far from all zones, clear nearby
-    if (!nearby && session.nearbyZone) {
-      ui.setActiveZone(null, null);
-      ui.setInteractionMessage("");
+      prevNearbyIdRef.current = nearbyId;
     }
   });
 
