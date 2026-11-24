@@ -38,7 +38,26 @@ describe("getInteractButtonInfo", () => {
   it("hasPacket + zon pickup → { label: 'Hantar dulu', enabled: false }", () => {
     const s = withSession({
       nearbyZone: DELIVERY_ZONES[0],
-      packet: { id: "pkt-1", trackingNumber: "MSK-ABC", senderName: "Pengirim", receiverName: "Penerima", senderAddress: "Kedai", receiverAddress: "Rumah", areaCode: "bandar", weight: 1, dimensions: { length: 20, width: 15, height: 10 }, volume: 3, paymentMethod: "prepaid" as const, codAmount: 0, priority: "normal" as const, specialInstructions: "", status: "incoming" as const, history: [], createdAt: 0, updatedAt: 0 },
+      packet: {
+        id: "pkt-1",
+        trackingNumber: "MSK-ABC",
+        senderName: "Pengirim",
+        receiverName: "Penerima",
+        senderAddress: "Kedai",
+        receiverAddress: "Rumah",
+        areaCode: "bandar",
+        weight: 1,
+        dimensions: { length: 20, width: 15, height: 10 },
+        volume: 3,
+        paymentMethod: "prepaid" as const,
+        codAmount: 0,
+        priority: "normal" as const,
+        specialInstructions: "",
+        status: "incoming" as const,
+        history: [],
+        createdAt: 0,
+        updatedAt: 0,
+      },
       state: "carrying",
     });
     const info = getInteractButtonInfo(s, now);
@@ -50,7 +69,26 @@ describe("getInteractButtonInfo", () => {
     const s = withSession({
       nearbyZone: DELIVERY_ZONES[1],
       targetZone: DELIVERY_ZONES[1],
-      packet: { id: "pkt-1", trackingNumber: "MSK-ABC", senderName: "Pengirim", receiverName: "Penerima", senderAddress: "Kedai", receiverAddress: "Rumah", areaCode: "bandar", weight: 1, dimensions: { length: 20, width: 15, height: 10 }, volume: 3, paymentMethod: "prepaid" as const, codAmount: 0, priority: "normal" as const, specialInstructions: "", status: "incoming" as const, history: [], createdAt: 0, updatedAt: 0 },
+      packet: {
+        id: "pkt-1",
+        trackingNumber: "MSK-ABC",
+        senderName: "Pengirim",
+        receiverName: "Penerima",
+        senderAddress: "Kedai",
+        receiverAddress: "Rumah",
+        areaCode: "bandar",
+        weight: 1,
+        dimensions: { length: 20, width: 15, height: 10 },
+        volume: 3,
+        paymentMethod: "prepaid" as const,
+        codAmount: 0,
+        priority: "normal" as const,
+        specialInstructions: "",
+        status: "incoming" as const,
+        history: [],
+        createdAt: 0,
+        updatedAt: 0,
+      },
       state: "carrying",
     });
     const info = getInteractButtonInfo(s, now);
@@ -100,7 +138,26 @@ describe("getInteractButtonInfo — padanan dengan interact()", () => {
     const s = withSession({
       nearbyZone: DELIVERY_ZONES[1],
       targetZone: DELIVERY_ZONES[2],
-      packet: { id: "pkt-1", trackingNumber: "MSK-ABC", senderName: "Pengirim", receiverName: "Penerima", senderAddress: "Kedai", receiverAddress: "Rumah", areaCode: "bandar", weight: 1, dimensions: { length: 20, width: 15, height: 10 }, volume: 3, paymentMethod: "prepaid" as const, codAmount: 0, priority: "normal" as const, specialInstructions: "", status: "incoming" as const, history: [], createdAt: 0, updatedAt: 0 },
+      packet: {
+        id: "pkt-1",
+        trackingNumber: "MSK-ABC",
+        senderName: "Pengirim",
+        receiverName: "Penerima",
+        senderAddress: "Kedai",
+        receiverAddress: "Rumah",
+        areaCode: "bandar",
+        weight: 1,
+        dimensions: { length: 20, width: 15, height: 10 },
+        volume: 3,
+        paymentMethod: "prepaid" as const,
+        codAmount: 0,
+        priority: "normal" as const,
+        specialInstructions: "",
+        status: "incoming" as const,
+        history: [],
+        createdAt: 0,
+        updatedAt: 0,
+      },
       state: "carrying",
     });
     expect(getInteractButtonInfo(s, now)).toEqual({ label: "Bukan sini", enabled: false });

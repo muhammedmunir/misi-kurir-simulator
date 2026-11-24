@@ -42,8 +42,8 @@ function sessionWithPacket(overrides?: Partial<DeliverySession>): DeliverySessio
     codAmount: 0,
     priority: "normal",
     specialInstructions: "",
-    status: "in_transit",
-    history: [{ status: "in_transit", timestamp: 0, reason: "Dalam penghantaran" }],
+    status: "out_for_delivery",
+    history: [{ status: "out_for_delivery", timestamp: 0, reason: "Dalam penghantaran" }],
     createdAt: 0,
     updatedAt: 0,
   };
@@ -205,7 +205,15 @@ describe("interact — ambil paket", () => {
 
     expect(!!result.session.packet).toBe(true);
     expect(result.session.state).toBe("carrying");
-    expect(result.session.packet?.status).toBe("incoming");
+    expect(result.session.packet?.status).toBe("out_for_delivery");
+    expect(result.session.packet?.history.map((h) => h.status)).toEqual([
+      "received",
+      "sorting",
+      "ready_to_dispatch",
+      "loaded",
+      "in_transit",
+      "out_for_delivery",
+    ]);
     expect(result.session.manifest?.status).toBe("open");
     expect(result.session.manifest?.packets).toContain(result.session.packet!.id);
   });
@@ -313,7 +321,7 @@ describe("interact — disekat (blocked)", () => {
         codAmount: 0,
         priority: "normal",
         specialInstructions: "",
-        status: "in_transit",
+        status: "out_for_delivery",
         history: [],
         createdAt: 0,
         updatedAt: 0,

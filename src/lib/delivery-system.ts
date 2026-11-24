@@ -1,7 +1,13 @@
 import { rollDeliveryReward } from "@/data/economy";
+import { type CargoLimits, closeManifest, createManifest, isCarrying, loadPacket } from "@/delivery/manifest";
+import { advance, createPacket, transition } from "@/delivery/packet";
 import { formatRinggit } from "@/lib/utils";
 import type { DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
-import type { Manifest, Packet, PacketStatus } from "@/types/game";
+
+/** Starter motor (Motor Matic) cargo, matching DEFAULT_VEHICLES specs. */
+export const STARTER_CARGO: CargoLimits = { maxVolume: 20, maxWeight: 15 };
+
+const RECEIVER_NAMES = ["Aminah", "Rajesh", "Mei Ling", "Hafiz", "Siti", "Kumar", "Farah", "Wei Jie"];
 
 // ── Zone Data ─────────────────────────────────────────────────────
 
@@ -137,6 +143,7 @@ export function interact(
   createId: () => string,
   createTrackingNumber: (prefix: string) => string,
   rng: () => number,
+  cargo: CargoLimits = STARTER_CARGO,
 ): { result: DeliveryResult; session: DeliverySession } {
   // Sektakan jika masih dalam cooldown → "blocked"
   if (now < session.cooldownUntil) {
@@ -164,44 +171,31 @@ export function interact(
     const packetId = createId();
     const message = `Pilih paket dari ${zone.name}`;
 
-    // Cipta Packet baharu
-    const packet: Packet = {
+    // Section I flow: received → sorting → ready_to_dispatch (warehouse, Langkah 2)
+    // → loaded (manifest + capacity check) → in_transit → out_for_delivery.
+    const received = createPacket({
       id: packetId,
       trackingNumber,
-      senderName: "Penghantar",
-      receiverName: "", // diisi semasa pickup
       senderAddress: zone.name,
+      receiverName: RECEIVER_NAMES[Math.floor(rng() * RECEIVER_NAMES.length)],
       receiverAddress: targetZone.name,
       areaCode: targetZone.areaCode,
-      weight: 0.5 + rng() * 2, // 0.5–2.5 kg
-      dimensions: { length: 20, width: 15, height: 10 },
+      weight: Math.round((0.5 + rng() * 2) * 10) / 10,
       volume: 3,
-      paymentMethod: "prepaid",
-      codAmount: 0,
-      priority: "normal",
-      specialInstructions: "",
-      status: "incoming",
-      history: [],
-      createdAt: now,
-      updatedAt: now,
-    };
+      now,
+    });
+    const ready = advance(received, ["sorting", "ready_to_dispatch"], "Disortir di gudang", now);
+    const load = loadPacket(createManifest(createId(), now), ready, cargo, now);
+    if (!load.ok) {
+      return { result: { action: "nothing", message: "Paket tidak muat dalam kenderaan" }, session };
+    }
+    const packet = advance(load.packet, ["in_transit", "out_for_delivery"], "Dalam penghantaran", now);
 
     const sessionWithPacket: DeliverySession = {
       ...session,
       state: "carrying",
       packet,
-      manifest: {
-        id: createId(),
-        date: new Date().toISOString().split("T")[0],
-        packets: [packetId],
-        totalPackets: 1,
-        totalWeight: packet.weight,
-        totalVolume: packet.volume,
-        codTotal: 0,
-        status: "open",
-        createdAt: now,
-        closedAt: null,
-      },
+      manifest: load.manifest,
       targetZone,
       reward: 0,
       xpReward,
@@ -222,22 +216,15 @@ export function interact(
     const xpReward = session.xpReward;
     const message = `Penghantaran selesai! ${formatRinggit(reward)} | +${xpReward} XP`;
 
-    // Update status paket → delivered
-    const deliveredPacket = {
-      ...session.packet!,
-      status: "delivered" as PacketStatus,
-      updatedAt: now,
-      history: [
-        ...session.packet!.history,
-        { status: "delivered" as PacketStatus, timestamp: now, reason: "Paket diserahkan kepada penerima" },
-      ],
-    };
-
-    const closedManifest: Manifest = {
-      ...session.manifest!,
-      status: "closed" as Manifest["status"],
-      closedAt: now,
-    };
+    const current = session.packet;
+    if (!current) return { result: { action: "nothing", message: "Tiada paket" }, session };
+    // Handover = the interaction itself until receiver NPCs exist (Langkah 5).
+    const deliveredPacket = transition(current, "delivered", "Paket diserahkan kepada penerima", now, {
+      inOpenManifest: isCarrying(session.manifest, current.id),
+      hasHandover: true,
+    });
+    const closed = session.manifest ? closeManifest(session.manifest, [deliveredPacket], now) : null;
+    const closedManifest = closed?.ok ? closed.manifest : session.manifest;
 
     const sessionComplete: DeliverySession = {
       ...session,

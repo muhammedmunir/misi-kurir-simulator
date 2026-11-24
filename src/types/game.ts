@@ -15,32 +15,6 @@ export type PaymentMethod = "cod" | "prepaid" | "wallet";
 
 export type Priority = "normal" | "express" | "urgent";
 
-export const PACKET_STATUS_FLOW: PacketStatus[][] = [
-  ["incoming"],
-  ["incoming", "received"],
-  ["received", "sorting"],
-  ["sorting", "ready_to_dispatch"],
-  ["ready_to_dispatch", "loaded"],
-  ["loaded", "in_transit"],
-  ["in_transit", "out_for_delivery"],
-  ["out_for_delivery", "delivered"],
-  ["out_for_delivery", "failed"],
-  ["failed", "out_for_delivery"],
-  ["failed", "returned"],
-  ["delivered", "returned"],
-  ["incoming", "cancelled"],
-  ["returned", "sorting"],
-];
-
-export function canTransition(from: PacketStatus, to: PacketStatus): boolean {
-  return PACKET_STATUS_FLOW.some((chain) => {
-    const idx = chain.indexOf(from);
-    if (idx === -1) return false;
-    if (idx + 1 >= chain.length) return false;
-    return chain[idx + 1] === to;
-  });
-}
-
 export interface Packet {
   id: string;
   trackingNumber: string;

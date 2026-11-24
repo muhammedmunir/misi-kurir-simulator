@@ -1,3 +1,4 @@
+import { canTransition } from "@/delivery/packet";
 import {
   calcVolume,
   clamp,
@@ -8,7 +9,6 @@ import {
   lerp,
   shuffleArray,
 } from "@/lib/utils";
-import { canTransition } from "@/types/game";
 import { describe, expect, it } from "vitest";
 
 describe("formatRinggit", () => {

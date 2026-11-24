@@ -1,91 +1,71 @@
 import type { Manifest, Packet } from "@/types/game";
+import { TERMINAL_STATUSES, transition } from "./packet";
 
-export type ManifestStatus = Manifest["status"];
+export interface CargoLimits {
+  /** Volume units (Vehicle.specs.cargoCapacity). */
+  maxVolume: number;
+  /** Kilograms (Vehicle.specs.cargoWeight). */
+  maxWeight: number;
+}
 
-/** Simulasi muat paket ke dalam kenderaan.
- *
- * Peraturan: setiap paket perlu ruang fizikal dalam unit isipadu
- * (unit) DAN berat (kg). Jika salah satu melebihi baki kenderaan,
- * paket itu tidak boleh dimuat.
- */
-export function createManifest(
-  packetIds: string[],
-  packets: Record<string, Packet>,
-  vehicleCargoCapacity: number, // unit isipadu
-  vehicleCargoWeight: number, // kg
-): Manifest | { error: string } {
-  let weight = 0;
-  let volume = 0;
-  const loadable: string[] = [];
-
-  for (const id of packetIds) {
-    const p = packets[id];
-    if (!p) return { error: `Paket ${id} tidak ditemui` };
-
-    const w = p.weight;
-    const v = p.volume;
-    if (weight + w > vehicleCargoWeight) {
-      break; // baki berat tidak mencukupi
-    }
-    if (volume + v > vehicleCargoCapacity) {
-      break; // baki isipadu tidak mencukupi
-    }
-    weight += w;
-    volume += v;
-    loadable.push(id);
-  }
-
+export function createManifest(id: string, now: number): Manifest {
   return {
-    id: "", // diisi oleh caller
-    date: new Date().toISOString().split("T")[0],
-    packets: loadable,
-    totalPackets: loadable.length,
-    totalWeight: weight,
-    totalVolume: volume,
+    id,
+    date: new Date(now).toISOString().slice(0, 10),
+    packets: [],
+    totalPackets: 0,
+    totalWeight: 0,
+    totalVolume: 0,
     codTotal: 0,
     status: "open",
-    createdAt: Date.now(),
+    createdAt: now,
     closedAt: null,
   };
 }
 
-/**
- * Tutup manifest. Semua paket mesti dalam status terminal (delivered/failed/returned/cancelled).
- */
-export function closeManifest(manifest: Manifest): Manifest | { error: string } {
-  if (manifest.status === "closed" || manifest.status === "archived") {
-    return { error: "Manifest sudah ditutup" };
-  }
+export type LoadError = "manifest_closed" | "not_ready" | "already_loaded" | "over_weight" | "over_volume";
 
-  return { ...manifest, status: "closed", closedAt: Date.now() };
-}
+export type LoadResult = { ok: true; manifest: Manifest; packet: Packet } | { ok: false; error: LoadError };
 
 /**
- * Semak jika paket masih dibawa dalam manifest yang masih terbuka.
- * Tiada paket di luar manifest boleh status "delivered".
+ * Load one `ready_to_dispatch` packet onto the vehicle (section H.3).
+ * A packet that does not fit is rejected and stays unloaded.
  */
-export function isCarrying(manifest: Manifest, packetId: string): boolean {
-  return manifest.status === "open" && manifest.packets.includes(packetId);
-}
+export function loadPacket(manifest: Manifest, packet: Packet, limits: CargoLimits, now: number): LoadResult {
+  if (manifest.status !== "open") return { ok: false, error: "manifest_closed" };
+  if (manifest.packets.includes(packet.id)) return { ok: false, error: "already_loaded" };
+  if (packet.status !== "ready_to_dispatch") return { ok: false, error: "not_ready" };
+  if (manifest.totalWeight + packet.weight > limits.maxWeight) return { ok: false, error: "over_weight" };
+  if (manifest.totalVolume + packet.volume > limits.maxVolume) return { ok: false, error: "over_volume" };
 
-/**
- * Buang paket dari manifest apabila ia sampai ke status terminal.
- */
-export function removeFromManifest(manifest: Manifest, packetId: string): Manifest {
   return {
-    ...manifest,
-    packets: manifest.packets.filter((id) => id !== packetId),
-    closedAt: null,
-    status: manifest.packets.filter((id) => id !== packetId).length === 0 ? "closed" : "open",
+    ok: true,
+    packet: transition(packet, "loaded", "Dimuat ke kenderaan", now),
+    manifest: {
+      ...manifest,
+      packets: [...manifest.packets, packet.id],
+      totalPackets: manifest.totalPackets + 1,
+      totalWeight: manifest.totalWeight + packet.weight,
+      totalVolume: manifest.totalVolume + packet.volume,
+      codTotal: manifest.codTotal + packet.codAmount,
+    },
   };
 }
 
-/**
- * Is paket ini boleh dihantar? Perlu manifest open + status sesuai.
- */
-export function canDeliver(manifest: Manifest | null, packet: Packet, hasHandover: boolean): boolean {
-  if (!manifest || manifest.status !== "open") return false;
-  if (manifest.packets.includes(packet.id) === false) return false;
-  if (hasHandover === false) return false;
-  return true;
+export function isCarrying(manifest: Manifest | null, packetId: string): boolean {
+  return manifest !== null && manifest.status === "open" && manifest.packets.includes(packetId);
+}
+
+export type CloseResult = { ok: true; manifest: Manifest } | { ok: false; error: "already_closed" | "unresolved" };
+
+/** Close only when every listed packet is delivered, returned or cancelled. */
+export function closeManifest(manifest: Manifest, packets: readonly Packet[], now: number): CloseResult {
+  if (manifest.status !== "open") return { ok: false, error: "already_closed" };
+  const byId = new Map(packets.map((p) => [p.id, p]));
+  const resolved = manifest.packets.every((id) => {
+    const p = byId.get(id);
+    return p !== undefined && TERMINAL_STATUSES.includes(p.status);
+  });
+  if (!resolved) return { ok: false, error: "unresolved" };
+  return { ok: true, manifest: { ...manifest, status: "closed", closedAt: now } };
 }
