@@ -117,3 +117,28 @@ Berhenti dan lapor sebaik sahaja commit dibuat. Juga berhenti tanpa commit jika:
 - Output knip (atau "sama dengan baseline")
 - Laluan tangkapan skrin
 - Senarai perkara yang tidak dibuat
+
+---
+
+## Semakan 1 (selepas `c36ace8`) — pembetulan wajib
+
+Gate lulus (tsc, biome, vitest 261, knip sama dengan baseline), tetapi:
+
+1. **Pepijat: NavArrow mati selepas manifest pertama.** `useEffect` tidak memasang interval bila `disp.name === ""`. Selepas fasa `complete`, nama menjadi `""` dan poll berhenti selama-lamanya, jadi navigasi tidak muncul semula walaupun sesi kembali `idle`.
+2. **Pepijat: `panelOpen` tidak diikuti.** `useDeliveryStore.getState()` dibaca semasa render tanpa langganan. Bila panel dibuka atau ditutup semasa pemain tidak bergerak, NavArrow tidak dirender semula. Ia kekal di atas panel (z-index 1002 > 1001), atau kekal tersembunyi.
+3. **Pelanggaran pelan:** `currentNavTarget` menyalin logik `nextTargetZone`. Pelan seksyen 2 meminta guna semula `nextTargetZone(session)` dari `src/lib/delivery-system.ts`.
+4. **Laporan:** badan commit kosong. Pelan seksyen 5 meminta baris vitest dan status pelayar.
+
+**Kontrak baharu:** `src/__contract__/005-langkah-4-navigasi-semakan.test.tsx`. Ia mengandungi 4 ujian; 3 daripadanya gagal pada `c36ace8`.
+
+**Fail dibenarkan:** `src/navigation/NavArrow.tsx`, `src/navigation/nav.ts` sahaja.
+
+**Petunjuk (bukan penyelesaian wajib):**
+- Satu fungsi `read()` yang memulangkan `null` jika tiada sasaran ATAU `panelOpen`.
+- Interval sentiasa dipasang, sekali sahaja dengan deps `[]`.
+- Tambah `useDeliveryStore.subscribe(...)` supaya perubahan sesi dikesan serta-merta.
+- `setState` dengan fungsi yang memulangkan nilai lama jika paparan tidak berubah.
+
+**Verify:** sama seperti seksyen 4. Ujian pelayar tambahan: selesaikan satu manifest (hantar semua paket), tunggu 5 s, dan pastikan navigasi kembali menunjukkan `Gudang Pejabat Pos Pusat`.
+
+**Commit:** `005 Langkah 4: semakan 1 — NavArrow kekal hidup, ikut panelOpen`. Badan commit mesti mengandungi baris `Tests …` verbatim dan status pelayar.
