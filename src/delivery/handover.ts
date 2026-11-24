@@ -1,14 +1,15 @@
 import { rollDeliveryReward } from "@/data/economy";
-import { DELIVERY_ZONES } from "@/lib/delivery-system";
 import { type CargoLimits, closeManifest, isCarrying } from "@/delivery/manifest";
 import { transition } from "@/delivery/packet";
+import { STARTER_CARGO } from "@/lib/delivery-system";
+import { DELIVERY_ZONES } from "@/lib/delivery-system";
 import { formatRinggit } from "@/lib/utils";
 import type { DeliveryAction, DeliveryResult, DeliverySession } from "@/types/delivery";
 import type { Packet } from "@/types/game";
 import type { Deps } from "@/warehouse/warehouse-logic";
 
-/** Starter motor (Motor Matic) cargo, matching DEFAULT_VEHICLES specs. */
-export const HANDOVER_CARGO: CargoLimits = { maxVolume: 20, maxWeight: 15 };
+/** Starter motor cargo — single source of truth via STARTER_CARGO. */
+export const HANDOVER_CARGO: CargoLimits = STARTER_CARGO;
 
 // ── Helpers (pure) ────────────────────────────────────────────────
 
@@ -111,18 +112,15 @@ export function completeHandover(
   const zone = lookupZone(h.zoneId);
 
   if (zone?.receiverHome === false) {
-    console.log(`[completeHandover] receiverHome=false at zone ${h.zoneId}, rejecting even with proof`);
     return { result: { action: "nothing", message: "Tiada orang di rumah" }, session };
   }
 
   if (!h.proofTaken) {
-    console.log(`[completeHandover] proofTaken=false, returning nothing`);
     return { result: { action: "nothing", message: "Ambil bukti penghantaran dahulu" }, session };
   }
 
   const packet = session.cargo.find((p) => p.id === h.packetId);
   if (!packet) {
-    console.log(`[completeHandover] packet ${h.packetId} not found`);
     return { result: { action: "nothing", message: "Paket tidak ditemui" }, session };
   }
 

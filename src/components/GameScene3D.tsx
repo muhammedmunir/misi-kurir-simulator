@@ -1,3 +1,4 @@
+import { Receiver } from "@/delivery/Receiver";
 import { NavArrow } from "@/navigation/NavArrow";
 import { WarehouseBuilding } from "@/warehouse/WarehouseBuilding";
 import { WarehousePanel } from "@/warehouse/WarehousePanel";
@@ -94,6 +95,9 @@ export function GameScene3D() {
 
           {/* NPC Traffic */}
           <NPCTraffic />
+
+          {/* Receiver figures at delivery zones */}
+          <Receiver />
 
           {/* Interaction prompt */}
           <InteractionPrompt />

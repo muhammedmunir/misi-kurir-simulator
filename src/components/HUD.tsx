@@ -1,3 +1,4 @@
+import { HandoverPanel } from "@/delivery/HandoverPanel";
 import { nextTargetZone, pendingCargo } from "@/lib/delivery-system";
 import { saveGame } from "@/lib/idb";
 import { formatRinggit } from "@/lib/utils";
@@ -224,6 +225,9 @@ export function HUD() {
           </div>
         </div>
       )}
+
+      {/* Handover panel overlay */}
+      <HandoverPanel />
     </div>
   );
 }

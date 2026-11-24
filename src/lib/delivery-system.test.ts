@@ -1,3 +1,4 @@
+import { completeHandover } from "@/delivery/handover";
 import {
   INBOUND_BATCH,
   createSession,
@@ -9,10 +10,9 @@ import {
 } from "@/lib/delivery-system";
 import { useDeliveryStore } from "@/store/delivery";
 import { useGameStateStore } from "@/store/gamestate";
-import { completeHandover } from "@/delivery/handover";
 import { CAFE, DESK, SHOP, deliveringTo, testDeps } from "@/test/delivery-fixtures";
-import { beforeEach, describe, expect, it } from "vitest";
 import type { Deps } from "@/warehouse/warehouse-logic";
+import { beforeEach, describe, expect, it } from "vitest";
 
 describe("interact — meja gudang", () => {
   it("buka panel dan terima paket baharu bila gudang kosong", () => {
@@ -43,14 +43,18 @@ describe("interact — meja gudang", () => {
 
 describe("interact — hantar", () => {
   /**Chain interact + handover ke deliver lengkap untuk verifikasi flow penuh. */
-  function fullDeliver(s: ReturnType<typeof createSession>, now: number, deps: Deps): { result: ReturnType<typeof completeHandover>["result"]; session: ReturnType<typeof createSession> } {
+  function fullDeliver(
+    s: ReturnType<typeof createSession>,
+    now: number,
+    deps: Deps,
+  ): { result: ReturnType<typeof completeHandover>["result"]; session: ReturnType<typeof createSession> } {
     // Langkah 1: open_handover — gunakan nearbyZone dari session.
     const zone = s.nearbyZone ?? SHOP;
-    let next = interact(s, zone, now, deps);
+    const next = interact(s, zone, now, deps);
     expect(next.result.action).toBe("open_handover");
     // Langkah 2+3: takeProof + completeHandover
     return completeHandover(
-      { ...next.session, handover: { ...next.session.handover!, proofTaken: true } },
+      { ...next.session, handover: { ...next.session.handover, proofTaken: true } },
       now + 1,
       deps,
     );
@@ -62,8 +66,10 @@ describe("interact — hantar", () => {
     const { result, session } = fullDeliver(s, 5000, deps);
     expect(result.action).toBe("deliver");
     expect(result.reward).toBeGreaterThan(0);
-    expect(session.cargo.find((p: typeof session.cargo[number]) => p.id === "pkt-0")?.status).toBe("delivered");
-    expect(session.cargo.find((p: typeof session.cargo[number]) => p.id === "pkt-1")?.status).toBe("out_for_delivery");
+    expect(session.cargo.find((p: (typeof session.cargo)[number]) => p.id === "pkt-0")?.status).toBe("delivered");
+    expect(session.cargo.find((p: (typeof session.cargo)[number]) => p.id === "pkt-1")?.status).toBe(
+      "out_for_delivery",
+    );
     expect(session.phase).toBe("delivering");
     expect(session.manifest?.status).toBe("open");
     expect(nextTargetZone(session)?.id).toBe(CAFE.id);
@@ -75,8 +81,10 @@ describe("interact — hantar", () => {
     let session = fullDeliver(deliveringTo([SHOP, CAFE]), 5000, deps).session;
     // After fullDeliver with 2 packets, the first one is delivered and manifest stays open.
     expect(session.phase).toBe("delivering");
-    expect(session.cargo.find((p: typeof session.cargo[number]) => p.id === "pkt-0")?.status).toBe("delivered");
-    expect(session.cargo.find((p: typeof session.cargo[number]) => p.id === "pkt-1")?.status).toBe("out_for_delivery");
+    expect(session.cargo.find((p: (typeof session.cargo)[number]) => p.id === "pkt-0")?.status).toBe("delivered");
+    expect(session.cargo.find((p: (typeof session.cargo)[number]) => p.id === "pkt-1")?.status).toBe(
+      "out_for_delivery",
+    );
     // Second delivery at CAFE: complete manifest.
     session = { ...session, nearbyZone: CAFE, handover: null };
     const { session: s2 } = fullDeliver(session, 7000, deps);
@@ -100,10 +108,12 @@ describe("interact — hantar", () => {
 
   it("dua paket ke alamat sama: dihantar satu demi satu", () => {
     const deps = testDeps();
-    let s = deliveringTo([SHOP, SHOP]);
+    const s = deliveringTo([SHOP, SHOP]);
     // First packet
     const out0 = fullDeliver(s, 5000, deps);
-    expect(out0.session.cargo.filter((p: typeof out0.session.cargo[number]) => p.status === "delivered")).toHaveLength(1);
+    expect(
+      out0.session.cargo.filter((p: (typeof out0.session.cargo)[number]) => p.status === "delivered"),
+    ).toHaveLength(1);
     // Second packet
     const { session } = fullDeliver(out0.session, 7000, deps);
     expect(session.phase).toBe("complete");
@@ -126,7 +136,7 @@ describe("interact — cooldown", () => {
     expect(out.result.action).toBe("open_handover");
     // completeHandover should deliver
     const result = completeHandover(
-      { ...out.session, handover: { ...out.session.handover!, proofTaken: true } },
+      { ...out.session, handover: { ...out.session.handover, proofTaken: true } },
       6001,
       testDeps(),
     );
@@ -179,15 +189,14 @@ describe("tickSession", () => {
 });
 
 /**Helper untuk tickSession test: full deliver to reach complete. */
-function fullDeliverForTick(s: ReturnType<typeof createSession>, now: number): { result: ReturnType<typeof completeHandover>["result"]; session: ReturnType<typeof createSession> } {
+function fullDeliverForTick(
+  s: ReturnType<typeof createSession>,
+  now: number,
+): { result: ReturnType<typeof completeHandover>["result"]; session: ReturnType<typeof createSession> } {
   const deps = testDeps();
-  let next = interact({ ...s, nearbyZone: SHOP }, SHOP, now, deps);
+  const next = interact({ ...s, nearbyZone: SHOP }, SHOP, now, deps);
   expect(next.result.action).toBe("open_handover");
-  return completeHandover(
-    { ...next.session, handover: { ...next.session.handover!, proofTaken: true } },
-    now + 1,
-    deps,
-  );
+  return completeHandover({ ...next.session, handover: { ...next.session.handover, proofTaken: true } }, now + 1, deps);
 }
 
 describe("interactBlocksMotorSwap", () => {
@@ -226,7 +235,6 @@ describe("useDeliveryStore — gelung penuh dengan wang pemain", () => {
     }
     expect(store().session.cargo.map((p) => p.id)).toEqual(ids);
     store().dispatch(start);
-    console.log(`[runManifest] after dispatch: phase=${store().session.phase}, cargo=${store().session.cargo.map((p: any) => `${p.id}=${p.status}`).join(", ")}, inbound=${store().session.inbound.map((p: any) => p.id).join(", ")}, manifest=${store().session.manifest?.status}`);
     expect(store().session.phase).toBe("delivering");
     expect(store().session.panelOpen).toBe(false);
 
@@ -251,14 +259,13 @@ describe("useDeliveryStore — gelung penuh dengan wang pemain", () => {
       } else {
         // Clear handover left open by INDUSTRI completeHandover rejection
         // so the loop can continue to the next packet.
-        if (store().session.handover && store().session.handover.packetId !== id) {
+        const h = store().session.handover;
+        if (h && h.packetId !== id) {
           store().cancelHandover();
         }
       }
       t += 2000;
     }
-
-    console.log(`[runManifest] after loop: phase=${store().session.phase}, cargo=${store().session.cargo.map((p: any) => `${p.id}=${p.status}`).join(", ")}, manifest=${store().session.manifest?.status}`);
 
     // INDUSTRI zones cause "returning" phase — interact warehouse desk to return failed packets.
     if (store().session.phase === "returning") {
