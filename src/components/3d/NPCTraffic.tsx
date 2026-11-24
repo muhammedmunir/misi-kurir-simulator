@@ -3,63 +3,69 @@ import { useFrame } from "@react-three/fiber";
 import { useRef, useState } from "react";
 import type { Group } from "three";
 
-export function NPCTraffic() {
-  const groupRef = useRef<Group>(null);
-  const lastUpdateRef = useRef(0);
-  const [npcIds] = useState<string[]>(() => generateNPCTraffic(8).map((n: NPCTrafficVehicle) => n.id));
+const NPC_COUNT = 8;
 
-  const npcDataRef = useRef<NPCTrafficVehicle[]>(generateNPCTraffic(8));
-  const vehicleRefs = useRef<Group[]>([]);
+/**
+ * Komponen utama NPC Traffic.
+ *
+ * Pembaikan B8:
+ * - Jana data SEKALI sahaja dalam useState initializer (bukan dua panggilan berasingan).
+ * - Update setiap frame (`delta` sebenar) — tiada throttle 50ms.
+ * - `heading` sudah betul dalam `generateNPCTraffic`: paksi-z → 0|π, paksi-x → ±π/2.
+ */
+export function NPCTraffic() {
+  const [npcData, setNpcData] = useState<NPCTrafficVehicle[]>(() => generateNPCTraffic(NPC_COUNT));
+  const meshRefs = useRef<Group[]>([]);
 
   useFrame((_state, delta) => {
-    if (!groupRef.current) return;
     const dt = Math.min(delta, 0.05);
 
-    const now = performance.now();
-    if (now - lastUpdateRef.current > 50) {
-      lastUpdateRef.current = now;
-      npcDataRef.current = updateNPCTraffic(npcDataRef.current, dt);
-    }
+    setNpcData((prev) => {
+      const updated = updateNPCTraffic(prev, dt);
 
-    for (let i = 0; i < vehicleRefs.current.length; i++) {
-      const mesh = vehicleRefs.current[i];
-      if (mesh && npcDataRef.current[i]) {
-        const npc = npcDataRef.current[i];
-        mesh.position.x = npc.position.x;
-        mesh.position.z = npc.position.z;
-        mesh.rotation.y = npc.heading;
+      // Sync Three.js mesh (group) positions ke data baharu.
+      for (let i = 0; i < updated.length; i++) {
+        const mesh = meshRefs.current[i];
+        if (mesh) {
+          const npc = updated[i];
+          mesh.position.set(npc.position.x, 0, npc.position.z);
+          mesh.rotation.y = npc.heading;
+        }
       }
-    }
+
+      return updated;
+    });
   });
 
   return (
-    <group ref={groupRef}>
-      {npcIds.map((id, idx) => (
-        <NPCVehicle key={id} npcRef={vehicleRefs} npcIdx={idx} npcDataRef={npcDataRef} />
+    <>
+      {npcData.map((npc, idx) => (
+        <NPCMesh key={npc.id} npc={npc} meshRef={meshRefs} meshIdx={idx} />
       ))}
-    </group>
+    </>
   );
 }
 
-function NPCVehicle({
-  npcRef,
-  npcIdx,
-  npcDataRef,
+/**
+ * Satu kenderaan NPC — statik selepas render, posisi dikemas kini oleh NPCTraffic.
+ */
+function NPCMesh({
+  npc,
+  meshRef,
+  meshIdx,
 }: {
-  npcRef: React.MutableRefObject<Group[]>;
-  npcIdx: number;
-  npcDataRef: React.MutableRefObject<NPCTrafficVehicle[]>;
+  npc: NPCTrafficVehicle;
+  meshRef: React.MutableRefObject<Group[]>;
+  meshIdx: number;
 }) {
   const ref = useRef<Group>(null);
 
+  // Daftarkan mesh ke array induk untuk sync posisi.
   useFrame(() => {
-    if (ref.current && npcRef.current) {
-      npcRef.current[npcIdx] = ref.current;
+    if (ref.current) {
+      meshRef.current[meshIdx] = ref.current;
     }
   }, 0);
-
-  const npc = npcDataRef.current?.[npcIdx];
-  if (!npc) return null;
 
   const wheelPositions = [
     [-0.8, 0.25, 0.9],
@@ -69,7 +75,7 @@ function NPCVehicle({
   ] as const;
 
   return (
-    <group ref={ref} position={[npc.position.x, 0, npc.position.z]}>
+    <group ref={ref}>
       {/* Vehicle body */}
       <mesh position={[0, 0.6, 0]}>
         <boxGeometry args={[1.6, 0.8, 3]} />
