@@ -4,6 +4,19 @@
 **Bergantung pada:** commit `353dff8` (Fasa 2)
 **Matlamat:** Gelung `ambil → hantar → ganjaran → ulang` berfungsi berulang kali, di papan kekunci DAN sentuhan, dengan ujian unit. Tiada ciri baharu sehingga pelan ini lulus.
 
+## Rujukan spesifikasi induk
+
+Spesifikasi: MASTER PROMPT "Courier Life Simulator 3D" (`COURIER LIFE SIMULATOR 3D.md`, disimpan di luar repo oleh pemilik).
+
+| Seksyen master prompt | Kaitan dengan pelan ini |
+|---|---|
+| Q — Roadmap | Label "Phase 1/2" dalam commit tidak sepadan dengan roadmap. Commit `353dff8` ialah sebahagian **Phase 4 (Delivery)**, bukan Phase 2 (World). Pelan ini dinamakan "Fasa 2.5" hanya sebagai label dalaman; ia ialah prasyarat vertical slice (Pelan 005). |
+| J — "Transisi naik/turun kendaraan harus benar-benar bekerja. Semua tombol yang tampil harus fungsional" | B2, B3 |
+| N — Touch: interaksi; target sentuh ≥ 44 CSS px | B7 |
+| R — "Uji alur penuh dari awal sampai akhir"; "Periksa console errors" | Gerbang QA, B1 |
+| S — `BUG_TRACKER.md` wajib | Langkah 6 |
+| T — "Jangan membuat tombol palsu"; "Jangan klaim fitur selesai tanpa bukti" | Gerbang QA, kemas kini `DEVELOPMENT_STATUS.md` |
+
 ## Kenapa pelan ini sebelum Fasa 3
 
 Semakan kod Fasa 2 menunjukkan gelung penghantaran dilaporkan siap tetapi tidak boleh berfungsi seperti yang didakwa. `tsc` dan `vitest` lulus kerana tiada ujian menyentuh `delivery-system.ts`, dan `tsc` tidak mengesan pelanggaran Rules of Hooks.
@@ -69,7 +82,8 @@ Semakan kod Fasa 2 menunjukkan gelung penghantaran dilaporkan siap tetapi tidak 
 - `git rm --cached tsconfig.tsbuildinfo` dan tambah `*.tsbuildinfo` ke `.gitignore`.
 - `npx biome check --write src` kemudian betulkan baki secara manual (`useButtonType`, `noArrayIndexKey`, `noParameterAssign`). Jangan tambah `biome-ignore`.
 - Betulkan "Balik Pos" → "Pejabat Pos".
-- Kemas kini `DEVELOPMENT_STATUS.md` supaya sepadan dengan realiti (Fasa 1 & 2, dan status pelan ini).
+- Kemas kini `DEVELOPMENT_STATUS.md` supaya sepadan dengan realiti dan guna skala status seksyen S: `Not started / In progress / Implemented / Tested / Accepted`. Petakan baris kepada fasa master prompt (Q), bukan label commit. "Tested" hanya jika ada ujian atau bukti visual.
+- Cipta `BUG_TRACKER.md` (seksyen S) dengan B1–B10: severity, langkah reproduksi, status, cara pengesahan.
 
 ## Gerbang QA (ECHO) — semua wajib sebelum laporan "siap"
 ```
@@ -81,7 +95,4 @@ npm run build
 Plus **pengesahan visual di pelayar** (`npm run dev`): tangkapan skrin atau GIF bagi (a) konsol bersih, (b) gelung penuh dengan papan kekunci, (c) gelung penuh dalam mod peranti sentuh. Laporan siap tanpa bukti visual tidak diterima — Fasa 1 & 2 dilaporkan siap tanpanya.
 
 ## Di luar skop
-Gudang, minimap, chunk streaming, COD, ekonomi baharu. Ini untuk Pelan 005.
-
-## Draf Pelan 005 (selepas 004 lulus)
-Fasa 3 — Gudang bersambung ke gelung: zon pickup buka `WarehouseUI` → pilih paket sebenar dari `gamestate` (bukan rawak) → kapasiti motor (contoh 3 paket) → berbilang sasaran aktif → minimap 2D ringkas dengan penanda sasaran.
+Gudang, parkir, pelanggan NPC, minimap, COD, Playwright, ekonomi baharu. Semua ini dalam `plans/005-vertical-slice-mobile.md`.

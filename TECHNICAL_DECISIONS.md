@@ -17,6 +17,7 @@
 | TPD-013 | 2026-11-24 | Placeholder geometri sebelum asset 3D | Beli asset / Buat Blender sendiri | Lebih pantas untuk vertical slice. Asset final boleh tukar kemudian. |
 | TPD-014 | 2026-11-24 | Cloudflare Pages untuk deploy | Vercel / Netlify / GitHub Pages | Cloudflare Pages gratis, KV support untuk PWA caching, worldwide CDN. |
 | TPD-015 | 2026-11-24 | Nama projek: Misi Kurir Simulator | Courier Life Simulator / Kurir Megah / Laju Express | "Misi Kurir" lebih Melayu/Malaysia, ringkas, jelas maksudnya. |
+| TPD-016 | 2026-11-24 | Latar Malaysia: mata wang RM (`ms-MY`), kawasan & nama tempatan Malaysia, teks UI BM | Indonesia + Rp (ikut master prompt seksyen B/K/M); latar Indonesia + teks BM | Keputusan pemilik. **Penyimpangan sengaja daripada master prompt** (Indonesia/Rupiah). Semua rujukan "Indonesia"/"Rp" dalam master prompt dibaca sebagai "Malaysia"/"RM". Ganjaran & harga perlu ditentukur semula ke skala RM. |
 
 ---
 
