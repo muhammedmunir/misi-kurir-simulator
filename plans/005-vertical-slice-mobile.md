@@ -1,7 +1,7 @@
 # Pelan 005 — Vertical Slice Mobile Boleh Main
 
 **Status:** Belum dimulakan
-**Bergantung pada:** Pelan 004 lulus sepenuhnya (gerbang QA + bukti visual)
+**Bergantung pada:** Pelan 004 (selesai, `ecd1a79`)
 **Matlamat:** Capai milestone pertama wajib master prompt (seksyen Q), dan uji di browser telefon sebenar.
 
 > "Milestone pertama wajib berupa playable mobile vertical slice: pemain memasuki gudang, bergerak, menaiki motor, berkendara di jalan terhubung, mencapai tujuan, mengambil paket, berinteraksi dengan pelanggan, menyelesaikan satu pengiriman, dan menyimpan progres melalui browser ponsel."
@@ -71,7 +71,9 @@ src/save/         save-schema.ts, migrate.ts (+ test)
 - `src/vehicles/motor-state.ts`: kedudukan & arah motor dinamik. Turun motor = pemain muncul di sisi motor; motor kekal di situ.
 - Turun hanya dibenarkan jika `|motorSpeed| < 1`. Jika tidak, tunjuk "Berhenti dulu".
 - Kotak parkir bertanda di hadapan setiap rumah tujuan. Parkir di luar kotak dibenarkan, tetapi rekod sebagai `parkedProperly: false` untuk reputasi kelak (tanpa penalti dalam slice ini).
-- Butang sentuh NAIK/TURUN berasingan daripada AMBIL/HANTAR jika kedua-duanya mungkin di satu tempat. Satu butang, satu tindakan.
+- B12: kamera mula menghadap dinding bangunan dan motor tidak kelihatan. Betulkan sudut/jarak kamera awal supaya pemain dan motor kelihatan semasa permainan bermula.
+- Kawalan sentuh sedia ada (`1b88949`) sudah ada butang NAIK/TURUN MOTOR melalui `getActionButton()`. Kekalkan satu butang tindakan, kecuali jika ujian menunjukkan konflik antara tindakan penghantaran dan motor di tempat yang sama.
+- (Asal) Butang sentuh NAIK/TURUN berasingan daripada AMBIL/HANTAR jika kedua-duanya mungkin di satu tempat. Satu butang, satu tindakan.
 
 **Lulus:** ujian unit `motor-state`; manual — tunggang ke rumah, berhenti, turun, berjalan ke pintu, kembali, naik semula di tempat yang sama.
 
