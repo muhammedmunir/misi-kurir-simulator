@@ -1,3 +1,4 @@
+import { interactBlocksMotorSwap } from "@/components/3d/PlayerController";
 import { DELIVERY_ZONES, createSession, interact, tickSession } from "@/lib/delivery-system";
 import { generateNPCTraffic, updateNPCTraffic } from "@/lib/npc-traffic";
 import { useDeliveryStore } from "@/store/delivery";
@@ -496,5 +497,65 @@ describe("updateNPCTraffic", () => {
       expect(result[i].position.x).toBe(positions[i].x);
       expect(result[i].position.z).toBe(positions[i].z);
     }
+  });
+});
+
+// ── interactBlocksMotorSwap ──────────────────────────────────────
+
+describe("interactBlocksMotorSwap", () => {
+  it("pickup → true (swing disekat)", () => {
+    expect(interactBlocksMotorSwap("pickup")).toBe(true);
+  });
+
+  it("deliver → true (swing disekat)", () => {
+    expect(interactBlocksMotorSwap("deliver")).toBe(true);
+  });
+
+  it("blocked → true (swing disekat)", () => {
+    expect(interactBlocksMotorSwap("blocked")).toBe(true);
+  });
+
+  it("nothing → false (benarkan motor swap)", () => {
+    expect(interactBlocksMotorSwap("nothing")).toBe(false);
+  });
+
+  it("null → false (tiada delivery zone)", () => {
+    expect(interactBlocksMotorSwap(null)).toBe(false);
+  });
+});
+
+// ── Ganjaran: pickup tidak tambah wang/XP ───────────────────────
+
+describe("ganjaran — pickup tiada tambah", () => {
+  beforeEach(() => {
+    useDeliveryStore.getState().reset();
+  });
+
+  it("ambil paket → wang/XP tidak berubah", () => {
+    useDeliveryStore.getState().setNearbyZone(DELIVERY_ZONES[0]);
+    useDeliveryStore.getState().interact(100000);
+
+    const session = useDeliveryStore.getState().session;
+    // Ganjaran hanya diberikan semasa "deliver", bukan "pickup".
+    // PlayerController.handleInteract() cabang "pickup" tidak memanggil addMoney/addXP.
+    expect(session.hasPacket).toBe(true);
+    expect(session.state).toBe("hasPacket");
+  });
+
+  it("hantar → reward bertambah tepat sekali", () => {
+    // Ambil paket
+    useDeliveryStore.getState().setNearbyZone(DELIVERY_ZONES[0]);
+    const pick = useDeliveryStore.getState().interact(100000);
+    expect(pick.result?.action).toBe("pickup");
+    expect(pick.payload?.trackingNumber).not.toBeNull();
+
+    // Hantar paket — targetZone ditetapkan semasa pickup
+    const targetZoneId = useDeliveryStore.getState().session.targetZone?.id;
+    const deliveryZone = DELIVERY_ZONES.find((z) => z.id === targetZoneId);
+    if (!deliveryZone) throw new Error("delivery zone must exist");
+    useDeliveryStore.getState().setNearbyZone(deliveryZone);
+    const deliver = useDeliveryStore.getState().interact(100600);
+    expect(deliver.result?.action).toBe("deliver");
+    expect(deliver.payload?.reward).toBeGreaterThan(0);
   });
 });

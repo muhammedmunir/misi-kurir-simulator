@@ -1,6 +1,5 @@
 import { touchInput } from "@/lib/touch";
 import { useDeliveryStore } from "@/store/delivery";
-import { useGameStateStore } from "@/store/gamestate";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { type Group, Vector3 } from "three";
@@ -40,6 +39,17 @@ export const playerState = {
 };
 
 /**
+ * `interactBlocksMotorSwap` — tulen: action → true jika motor swap disekat.
+ * "pickup" / "deliver" / "blocked" → true  (swing disekat).
+ * "nothing" / null    → false (biarkan motor swap).
+ */
+export function interactBlocksMotorSwap(action: string | null): boolean {
+  if (action === null) return false;
+  if (action === "nothing") return false;
+  return true;
+}
+
+/**
  * `handleInteract` — panggil store.interact(now).
  * Pulang true jika delivery zone ada (apa-apa pun action),
  * supaya motor swap DILARANG.
@@ -47,32 +57,20 @@ export const playerState = {
  */
 function handleInteract(): boolean {
   const now = Date.now();
-  const { result, payload } = useDeliveryStore.getState().interact(now);
+  const { result } = useDeliveryStore.getState().interact(now);
 
   if (result) {
-    const session = useDeliveryStore.getState().session;
-
     if (result.action === "pickup") {
-      // Apply reward/xp to game store
-      const gs = useGameStateStore.getState();
-      if (gs.player && payload) {
-        gs.addMoney(payload.reward);
-        gs.addXP(payload.xpReward);
-      }
       return true;
     }
 
     if (result.action === "deliver") {
-      // Apply reward/xp to game store
-      const gs = useGameStateStore.getState();
-      if (gs.player) {
-        gs.addMoney(session.reward);
-        gs.addXP(session.xpReward);
-      }
       return true;
     }
 
-    // "nothing" atau "blocked" → jangan swap motor
+    // "nothing" → benarkan motor swap
+    if (result.action === "nothing") return false;
+    // "blocked" → jangan swap motor
     return true;
   }
 

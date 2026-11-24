@@ -119,9 +119,9 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => ({
       return {
         result: { action: "deliver", message: result.result.message },
         payload: {
-          reward: s.reward,
-          xpReward: s.xpReward,
-          trackingNumber: s.trackingNumber,
+          reward: result.session.reward,
+          xpReward: result.session.xpReward,
+          trackingNumber: result.session.trackingNumber,
           session: result.session,
         },
       };
