@@ -6,6 +6,7 @@ export const touchInput: TouchInputType = {
   joystick: { forward: 0, right: 0, active: false },
   brake: false,
   horn: false,
+  action: false,
   cameraAngle: 0,
 };
 
@@ -18,6 +19,7 @@ export function bindTouchInput(onInput: (input: TouchInputType) => void) {
     touchInput.joystick.active = input.joystick.active;
     touchInput.brake = input.brake;
     touchInput.horn = input.horn;
+    touchInput.action = input.action;
     touchInput.cameraAngle = input.cameraAngle;
     onInput(input);
   };

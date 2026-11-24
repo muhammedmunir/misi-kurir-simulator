@@ -81,8 +81,8 @@ export function PlayerController() {
       e.preventDefault();
 
       // Priority: delivery interaction first
-      const delivered = handleInteract();
-      if (delivered) return;
+      const blocks = handleInteract();
+      if (blocks) return;
 
       // Fallback: motor swap
       if (onFoot) {
@@ -113,6 +113,13 @@ export function PlayerController() {
 
     // ── Sync player position to delivery system ───────────────
     useDeliveryStore.getState().setPlayerPosition({ x: pos.x, z: pos.z });
+
+    // ── Handle touch action button ────────────────────────────
+    if (touchInput.action) {
+      touchInput.action = false;
+      const blocks = handleInteract();
+      if (blocks) return; // disekat, jangan teruskan
+    }
 
     // ── Gather input from keyboard + touch ────────────────────
     let inputForward = 0;

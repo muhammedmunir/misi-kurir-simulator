@@ -10,6 +10,7 @@ export interface TouchInput {
   joystick: JoystickInput;
   brake: boolean;
   horn: boolean;
+  action: boolean;
   cameraAngle: number;
 }
 
@@ -17,13 +18,16 @@ export type TouchInputCallback = (input: TouchInput) => void;
 
 const JOYSTICK_RADIUS = 60;
 const KNOB_RADIUS = 25;
+const BTN_W = 60;
+const BTN_H = 48;
 
 export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const touchStateRef = useRef<Record<number, { type: "joystick" | "brake" | "horn" }>>({});
+  const touchStateRef = useRef<Record<number, { type: "joystick" | "brake" | "horn" | "action" }>>({});
   const baseRef = useRef<{ x: number; y: number } | null>(null);
   const knobRef = useRef<{ x: number; y: number } | null>(null);
   const isBrakingRef = useRef(false);
+  const isActionRef = useRef(false);
 
   const getCanvasPos = useCallback((canvas: HTMLCanvasElement, clientX: number, clientY: number) => {
     const rect = canvas.getBoundingClientRect();
@@ -46,9 +50,15 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
           baseRef.current = { x: pos.x, y: pos.y };
           knobRef.current = { x: pos.x, y: pos.y };
         } else {
-          const isBottom = pos.y > canvas.height / 2;
-          touchStateRef.current[touch.identifier] = { type: isBottom ? "brake" : "horn" };
-          if (isBottom) isBrakingRef.current = true;
+          // Zon kanan: HORN / ACTION / BRAKE
+          if (pos.y >= 280 && pos.y < 280 + BTN_H) {
+            touchStateRef.current[touch.identifier] = { type: "action" };
+          } else if (pos.y > canvas.height / 2) {
+            touchStateRef.current[touch.identifier] = { type: "brake" };
+            isBrakingRef.current = true;
+          } else {
+            touchStateRef.current[touch.identifier] = { type: "horn" };
+          }
         }
       }
     },
@@ -84,6 +94,7 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
       const state = touchStateRef.current[touch.identifier];
       if (state) {
         if (state.type === "brake") isBrakingRef.current = false;
+        if (state.type === "action") isActionRef.current = false;
         if (state.type === "joystick") {
           baseRef.current = null;
           knobRef.current = null;
@@ -121,6 +132,8 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
+      const rx = w - BTN_W - 16; // right edge x
+
       // Joystick
       if (baseRef.current) {
         const { x: bx, y: by } = baseRef.current;
@@ -144,31 +157,42 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
         }
       }
 
-      // Buttons (right side)
-      const btnW = 60;
-      const btnH = 50;
-      const rx = w - btnW - 16;
+      // ACTION button (tengah kanan)
+      const actionY = 280;
+      ctx.fillStyle = "rgba(59, 130, 246, 0.4)";
+      ctx.strokeStyle = "rgba(59, 130, 246, 0.8)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(rx, actionY, BTN_W, BTN_H, 10);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#93c5fd";
+      ctx.font = "bold 13px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("INTERAKSI", rx + BTN_W / 2, actionY + BTN_H / 2 + 5);
 
+      // HORN button (atas kanan)
       ctx.fillStyle = "rgba(245, 158, 11, 0.3)";
       ctx.strokeStyle = "rgba(245, 158, 11, 0.6)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.roundRect(rx, 16, btnW, btnH, 10);
+      ctx.roundRect(rx, 16, BTN_W, BTN_H, 10);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#f59e0b";
       ctx.font = "bold 16px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("HORN", rx + btnW / 2, 46);
+      ctx.fillText("HORN", rx + BTN_W / 2, 16 + BTN_H / 2 + 5);
 
+      // BRAKE button (bawah kanan)
       ctx.fillStyle = isBrakingRef.current ? "rgba(239, 68, 68, 0.6)" : "rgba(239, 68, 68, 0.3)";
       ctx.strokeStyle = "rgba(239, 68, 68, 0.6)";
       ctx.beginPath();
-      ctx.roundRect(rx, h - btnH - 16, btnW, btnH, 10);
+      ctx.roundRect(rx, h - BTN_H - 16, BTN_W, BTN_H, 10);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#ef4444";
-      ctx.fillText("BRAKE", rx + btnW / 2, h - btnH / 2 + 5);
+      ctx.fillText("BRAKE", rx + BTN_W / 2, h - BTN_H - 16 + BTN_H / 2 + 5);
 
       // Report input
       let jx = 0;
@@ -187,6 +211,7 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
         joystick: { forward: -jy, right: jx, active: Math.abs(jx) > 0.1 || Math.abs(jy) > 0.1 },
         brake: isBrakingRef.current,
         horn: false,
+        action: isActionRef.current,
         cameraAngle: 0,
       });
 
