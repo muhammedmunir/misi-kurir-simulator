@@ -8,6 +8,7 @@ import {
 import { useGameStateStore } from "@/store/gamestate";
 import type { DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
 import type { ParkingCheck } from "@/vehicles/motor-state";
+import { completeHandover, failHandover, takeProof as takeProofPure } from "@/delivery/handover";
 import { type Deps, dispatch, loadOntoVehicle, scanPacket } from "@/warehouse/warehouse-logic";
 import { create } from "zustand";
 
@@ -32,8 +33,8 @@ interface DeliveryStore {
   deps: Deps;
 
   tick: (now: number) => void;
-  /** E key / action button. Applies the reward to the player on "deliver". */
-  interact: (now: number) => { result: DeliveryResult | null };
+  /** E key / action button. Applies the reward to the player on "deliver". Accepts optional onFoot flag. */
+  interact: (now: number, onFoot?: boolean | { onFoot: boolean }) => { result: DeliveryResult | null };
 
   // Warehouse panel
   scan: (packetId: string, now: number) => void;
@@ -50,6 +51,12 @@ interface DeliveryStore {
   setPlayerPosition: (pos: { x: number; z: number }) => void;
   setNearbyZone: (zone: DeliveryZone | null) => void;
   reset: () => void;
+
+  // Handover workflow
+  takeProof: () => void;
+  confirmHandover: (now: number) => void;
+  reportAbsent: (now: number) => void;
+  cancelHandover: () => void;
 }
 
 const TICK_KEYS = [
@@ -85,10 +92,13 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => {
       if (TICK_KEYS.some((k) => next[k] !== session[k])) set({ session: next });
     },
 
-    interact: (now) => {
+    interact: (now, onFoot) => {
       const s = get().session;
       if (!s.nearbyZone) return { result: null };
-      const { result, session } = interactPure(s, s.nearbyZone, now, get().deps);
+      // Infer onFoot from zone type: delivery zones require onFoot=true,
+      // pickup zones (warehouse) are accessible from motor so onFoot doesn't matter.
+      const flag = onFoot ?? s.nearbyZone.type === "delivery";
+      const { result, session } = interactPure(s, s.nearbyZone, now, get().deps, flag);
       set({ session });
       if (result.action === "deliver") {
         useGameStateStore.getState().addMoney(result.reward ?? 0);
@@ -123,9 +133,45 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => {
       if (s.nearbyZone?.id === zone?.id) return;
       // Walking away from the desk closes the warehouse panel.
       const panelOpen = s.panelOpen && zone?.type === "pickup";
-      set({ session: { ...s, nearbyZone: zone, panelOpen } });
+      // Walking away from a delivery zone closes the handover workflow.
+      let handover = s.handover;
+      if (s.nearbyZone?.type === "delivery" && zone?.type !== "delivery") {
+        handover = null;
+      }
+      set({ session: { ...s, nearbyZone: zone, panelOpen, handover } });
     },
 
     reset: () => set({ session: createSession() }),
+
+    // Handover workflow
+    takeProof: () => {
+      set({ session: takeProofPure(get().session, Date.now()) });
+    },
+    confirmHandover: (now) => {
+      const { result, session } = completeHandover(get().session, now, get().deps);
+      set({ session });
+      if (result.action === "deliver") {
+        useGameStateStore.getState().addMoney(result.reward ?? 0);
+        useGameStateStore.getState().addXP(result.xpReward ?? 0);
+      }
+    },
+    reportAbsent: (now) => {
+      const s = get().session;
+      const h = s.handover;
+      if (!h) return;
+      // Reject confirm (no proof, no receiverHome=false); fall through to failHandover
+      const failed = failHandover(s, now);
+      set({
+        session: {
+          ...failed,
+          handover: null,
+          interactionMessage: "Penerima tiada di rumah",
+          interactionMessageTime: now,
+        },
+      });
+    },
+    cancelHandover: () => {
+      set((s) => ({ session: { ...s.session, handover: null } }));
+    },
   };
 });

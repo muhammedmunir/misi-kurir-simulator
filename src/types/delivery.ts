@@ -16,6 +16,8 @@ export interface DeliveryZone {
   lot?: { x: number; z: number };
   /** Parking box on the road in front of the address. */
   parking?: Rect;
+  /** false = industrial zone with no one at home. */
+  receiverHome?: boolean;
 }
 
 // ── Delivery Session ─────────────────────────────────────────────
@@ -24,9 +26,19 @@ export interface DeliveryZone {
  * idle       — no manifest; packets wait at the warehouse
  * loading    — manifest open, loading packets onto the vehicle
  * delivering — dispatched; cargo is out for delivery
+ * returning  — some packets failed, must return to warehouse
  * complete   — every cargo packet resolved, manifest closed (auto-resets to idle)
  */
-export type DeliveryPhase = "idle" | "loading" | "delivering" | "complete";
+export type DeliveryPhase = "idle" | "loading" | "delivering" | "returning" | "complete";
+
+export interface DeliveryHandover {
+  /** packetId in cargo that needs handover. */
+  packetId: string;
+  /** Zone id where the rider is standing. */
+  zoneId: string;
+  /** Proof photo taken by the rider. */
+  proofTaken: boolean;
+}
 
 export interface DeliverySession {
   phase: DeliveryPhase;
@@ -49,9 +61,11 @@ export interface DeliverySession {
   completeMessageTime: number | null;
   interactionMessage: string | null;
   interactionMessageTime: number | null;
+  /** Active handover workflow at current zone. */
+  handover: DeliveryHandover | null;
 }
 
-export type DeliveryAction = "open_warehouse" | "deliver" | "nothing" | "blocked";
+export type DeliveryAction = "open_warehouse" | "deliver" | "nothing" | "blocked" | "open_handover" | "return_packets" | "fail_handover";
 
 export interface DeliveryResult {
   action: DeliveryAction;

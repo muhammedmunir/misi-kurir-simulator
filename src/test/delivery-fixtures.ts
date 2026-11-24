@@ -6,7 +6,7 @@ export const DESK = DELIVERY_ZONES[0];
 export const SHOP = DELIVERY_ZONES[1];
 export const CAFE = DELIVERY_ZONES[2];
 /** Pusat Industri Timur — tiada penerima di rumah (Langkah 5). */
-export const INDUSTRI = DELIVERY_ZONES[4];
+export const INDUSTRI = DELIVERY_ZONES.find((z) => z.areaCode === "industri") ?? DELIVERY_ZONES[2];
 
 /** Deterministic ids/tracking; rng cycles through `values`. */
 export function testDeps(values: number[] = [0.5]): Deps {

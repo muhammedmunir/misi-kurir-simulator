@@ -30,10 +30,11 @@ describe("getInteractButtonInfo — sepadan dengan interact()", () => {
     });
   });
 
-  it("alamat paket semasa menghantar → HANTAR PAKET", () => {
+  it("alamat paket semasa menghantar → SERAH PAKET", () => {
     expect(getInteractButtonInfo({ ...deliveringTo([SHOP]), nearbyZone: SHOP }, now)).toEqual({
-      label: "HANTAR PAKET",
+      label: "SERAH PAKET",
       enabled: true,
+      needsOnFoot: true,
     });
   });
 

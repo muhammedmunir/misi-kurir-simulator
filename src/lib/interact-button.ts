@@ -5,6 +5,8 @@ import { canDismount } from "@/vehicles/motor-state";
 export interface ButtonInfo {
   label: string;
   enabled: boolean;
+  /** Rider must be on foot to use this button. */
+  needsOnFoot?: boolean;
 }
 
 /**
@@ -18,12 +20,13 @@ export function getInteractButtonInfo(session: DeliverySession, now: number): Bu
   if (now < session.cooldownUntil) return { label: "Tunggu...", enabled: false };
 
   if (zone.type === "pickup") {
+    if (session.phase === "returning") return { label: "PULANGKAN PAKET", enabled: true };
     if (session.phase === "delivering") return { label: "Hantar dulu", enabled: false };
     if (session.phase === "complete") return { label: "Tunggu...", enabled: false };
     return { label: "BUKA GUDANG", enabled: true };
   }
 
-  if (deliverableAt(session, zone)) return { label: "HANTAR PAKET", enabled: true };
+  if (deliverableAt(session, zone)) return { label: "SERAH PAKET", enabled: true, needsOnFoot: true };
   if (session.phase === "delivering") return { label: "Bukan sini", enabled: false };
   return { label: "Tiada paket", enabled: false };
 }
@@ -41,6 +44,12 @@ export interface MotorContext {
  * a cooldown blocks everything, otherwise fall back to mounting/dismounting.
  */
 export function getActionButton(delivery: ButtonInfo, motor: MotorContext): ButtonInfo {
+  // Needs on foot but rider is on motor → suggest dismount instead of delivery action
+  if (delivery.needsOnFoot && !motor.onFoot) {
+    return canDismount(motor.speed)
+      ? { label: "TURUN MOTOR", enabled: true }
+      : { label: "BERHENTI DULU", enabled: false };
+  }
   if (delivery.enabled) return delivery;
   if (delivery.label === "Tunggu...") return delivery;
   if (!motor.onFoot) {

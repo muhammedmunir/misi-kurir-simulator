@@ -1,8 +1,6 @@
-import { rollDeliveryReward } from "@/data/economy";
 import { type CargoLimits, closeManifest, isCarrying } from "@/delivery/manifest";
 import { transition } from "@/delivery/packet";
-import { formatRinggit } from "@/lib/utils";
-import type { DeliveryAction, DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
+import type { DeliveryAction, DeliveryHandover, DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
 import type { Packet } from "@/types/game";
 import { type Deps, WAREHOUSE, generateInbound } from "@/warehouse/warehouse-logic";
 
@@ -27,6 +25,7 @@ function destination(
   lotX: number,
   lotZ: number,
   description: string,
+  receiverHome = true,
 ): DeliveryZone {
   return {
     id,
@@ -38,6 +37,7 @@ function destination(
     interactable: true,
     lot: { x: lotX, z: lotZ },
     parking: { x: lotX, z: lotZ + 17, halfX: 2.5, halfZ: 1.5 },
+    receiverHome,
   };
 }
 
@@ -57,7 +57,8 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   },
   destination("zone-delivery-1", "Kedai Runcit Mak Minah", "perumahan", 60, 20, "Penghantaran ke kedai runcit"),
   destination("zone-delivery-2", "Kafe Kampung Digital", "pasar", -20, -20, "Penghantaran ke kafe tempatan"),
-  destination("zone-delivery-3", "Pusat Industri Timur", "industri", 100, -60, "Penghantaran kargo industri"),
+  destination("zone-delivery-3", "Gudang Stokin Barat", "perindustrian", 90, 50, "Penghantaran kotak stokin"),
+  destination("zone-delivery-4", "Pusat Industri Timur", "industri", 100, -60, "Penghantaran kargo industri", false),
 ];
 
 const DESTINATIONS = DELIVERY_ZONES.filter((z) => z.type === "delivery");
@@ -83,6 +84,7 @@ export function createSession(): DeliverySession {
     completeMessageTime: null,
     interactionMessage: null,
     interactionMessageTime: null,
+    handover: null,
   };
 }
 
@@ -146,21 +148,61 @@ function say(session: DeliverySession, action: DeliveryAction, message: string, 
 /**
  * One interaction (E key / action button). Pure: ids, tracking numbers and
  * randomness are injected.
- *  - warehouse desk: open the panel (restocking inbound if empty)
- *  - delivery zone: hand over the cargo packet addressed here
+ *  - warehouse desk: open the panel (restocking inbound if empty),
+ *    or return failed packets when phase is "returning"
+ *  - delivery zone: open handover workflow when onFoot
  */
 export function interact(
   session: DeliverySession,
   zone: DeliveryZone | null,
   now: number,
   deps: Deps,
+  onFoot?: boolean | { onFoot: boolean },
 ): { result: DeliveryResult; session: DeliverySession } {
+  // When onFoot is not specified, infer from zone type: delivery zones require on-foot.
+  let flag: boolean;
+  if (onFoot === undefined) {
+    flag = zone?.type === "delivery" || false;
+  } else {
+    flag = typeof onFoot === "object" ? onFoot.onFoot : onFoot;
+  }
   if (zone && now < session.cooldownUntil) {
     return { result: { action: "blocked", message: "Tunggu sebentar..." }, session };
   }
   if (!zone) return { result: { action: "nothing", message: "Tiada zon berdekatan" }, session };
 
+  // ── Warehouse desk ────────────────────────────────────────────
   if (zone.type === "pickup") {
+    if (session.phase === "returning") {
+      // Return all failed packets to the warehouse
+      const cargo = session.cargo.map((p) => {
+        if (p.status !== "failed") return p;
+        return transition(p, "returned", "Dipulangkan ke gudang", now, {
+          inOpenManifest: isCarrying(session.manifest, p.id),
+          hasHandover: true,
+        });
+      });
+
+      let next: DeliverySession = {
+        ...session,
+        cargo,
+        cooldownUntil: now + 300,
+        interactionMessage: "Paket gagal dipulangkan ke gudang",
+        interactionMessageTime: now,
+      };
+
+      if (next.manifest) {
+        const closed = closeManifest(next.manifest, cargo, now);
+        if (closed.ok) {
+          next = { ...next, manifest: closed.manifest, phase: "complete", completedAt: now };
+        }
+      } else {
+        next = { ...next, phase: "complete", completedAt: now };
+      }
+
+      return { result: { action: "return_packets", message: "Paket dipulangkan" }, session: next };
+    }
+
     if (session.phase === "delivering") return say(session, "nothing", "Hantar paket dalam motor dahulu", now);
     if (session.phase === "complete") return say(session, "nothing", "Manifest selesai. Tunggu sebentar.", now);
 
@@ -172,6 +214,12 @@ export function interact(
     return { result: { action: "open_warehouse", message: "Gudang dibuka" }, session: next };
   }
 
+  // ── Delivery zone ─────────────────────────────────────────────
+  if (!flag) {
+    // Still on motor — do nothing so the press dismounts first
+    return say(session, "nothing", "Tiada paket. Muat paket di gudang dahulu.", now);
+  }
+
   const packet = deliverableAt(session, zone);
   if (!packet) {
     const msg =
@@ -179,37 +227,12 @@ export function interact(
     return say(session, "nothing", msg, now);
   }
 
-  // Handover = this interaction until receiver NPCs exist (Langkah 5).
-  const delivered = transition(packet, "delivered", "Paket diserahkan kepada penerima", now, {
-    inOpenManifest: isCarrying(session.manifest, packet.id),
-    hasHandover: true,
-  });
-  const cargo = session.cargo.map((p) => (p.id === packet.id ? delivered : p));
-  const reward = rollDeliveryReward(deps.rng);
-  const xpReward = 25 + Math.floor(deps.rng() * 25);
-  const left = cargo.filter((p) => p.status === "out_for_delivery").length;
-
-  let next: DeliverySession = {
-    ...session,
-    cargo,
-    cooldownUntil: now + 1000,
-    interactionMessage: null,
-    interactionMessageTime: null,
+  // Open handover workflow
+  const handover: DeliveryHandover = { packetId: packet.id, zoneId: zone.id, proofTaken: false };
+  return {
+    result: { action: "open_handover", message: "Serah terima dibuka" },
+    session: { ...session, handover, cooldownUntil: now + 300, interactionMessage: "Serah terima dibuka", interactionMessageTime: now },
   };
-  let message = `Diserahkan kepada ${packet.receiverName}! ${formatRinggit(reward)} | +${xpReward} XP`;
-
-  if (left === 0 && session.manifest) {
-    const closed = closeManifest(session.manifest, cargo, now);
-    if (closed.ok) {
-      next = { ...next, manifest: closed.manifest, phase: "complete", completedAt: now };
-      message += " — semua paket selesai";
-    }
-  } else {
-    message += ` — ${left} lagi`;
-  }
-
-  next = { ...next, completeMessage: message, completeMessageTime: now };
-  return { result: { action: "deliver", message, reward, xpReward }, session: next };
 }
 
 /** Whether this interaction result consumes the press (so no motor mount/dismount). */
