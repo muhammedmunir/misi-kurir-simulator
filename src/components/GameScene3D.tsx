@@ -1,0 +1,97 @@
+import { Canvas } from '@react-three/fiber';
+import { Environment, EffectComposer, Bloom, SSAO } from '@react-three/drei';
+import { Physics } from '@react-three/rapier';
+import { useEffect, useState, useCallback } from 'react';
+import { useGameStateStore } from '@/store/gamestate';
+import { useSceneStore } from '@/store/game';
+import { Scene } from '@/types/scene';
+import { PlayerController } from './3d/PlayerController';
+import { WorldEnvironment } from './3d/WorldEnvironment';
+import { HUD3D } from './3d/HUD3D';
+
+export function GameScene3D() {
+  const navigate = useSceneStore((s) => s.navigate);
+  const [contextLost, setContextLost] = useState(false);
+
+  const handleContextLost = useCallback((e: Event) => {
+    e.preventDefault();
+    setContextLost(true);
+  }, []);
+
+  useEffect(() => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return;
+    canvas.addEventListener('webglcontextlost', handleContextLost);
+    return () => canvas.removeEventListener('webglcontextlost', handleContextLost);
+  }, [handleContextLost]);
+
+  if (contextLost) {
+    return (
+      <div style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0a0a0f',
+        gap: '16px',
+        padding: '24px',
+      }}>
+        <h3 style={{ color: '#ef4444' }}>Masalah WebGL</h3>
+        <p style={{ color: '#8888a0', textAlign: 'center' }}>
+          Pelayar anda tidak menyokong WebGL 2 atau sumber terhad.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            padding: '12px 24px',
+            background: '#f59e0b',
+            borderRadius: '8px',
+            color: '#000',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          Muat Semula
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ height: '100%', width: '100%', position: 'relative' }}>
+      <Canvas
+        shadows={false}
+        dpr={[1, 1.5]}
+        camera={{ position: [0, 5, 10], fov: 60 }}
+        style={{ background: '#0a0a0f' }}
+      >
+        <color attach="background" args={['#0a0a0f']} />
+
+        <Physics gravity={[0, -20, 0]}>
+          {/* Player */}
+          <PlayerController />
+
+          {/* World */}
+          <WorldEnvironment />
+
+          {/* Ambient light */}
+          <ambientLight intensity={0.5} />
+          <directionalLight
+            position={[10, 20, 5]}
+            intensity={1.2}
+            castShadow={false}
+          />
+        </Physics>
+
+        {/* Post-processing (lightweight for mobile) */}
+        <EffectComposer enableNormalPass={false}>
+          <Bloom luminanceThreshold={0.9} intensity={0.15} />
+        </EffectComposer>
+      </Canvas>
+
+      {/* 3D overlay HUD */}
+      <HUD3D />
+    </div>
+  );
+}

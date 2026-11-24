@@ -1,0 +1,32 @@
+import { useEffect } from 'react';
+import { useSceneStore } from '@/store/game';
+import { Scene } from '@/types/scene';
+import { MainMenu } from './components/MainMenu';
+import { GameScene3D } from './components/GameScene3D';
+import { HUD } from './components/HUD';
+import { WarehouseUI } from './components/WarehouseUI';
+import { SettingsPanel } from './components/SettingsPanel';
+import { LoadSavePanel } from './components/LoadSavePanel';
+
+export function App() {
+  const { currentScene, confirmScene } = useSceneStore();
+
+  // Auto-confirm scene transitions after a brief delay
+  useEffect(() => {
+    if (currentScene !== undefined) {
+      const timer = setTimeout(() => confirmScene(), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [currentScene, confirmScene]);
+
+  return (
+    <div className="app-root" style={{ height: '100dvh', width: '100vw', overflow: 'hidden', background: '#0a0a0f' }}>
+      {currentScene === Scene.MENU && <MainMenu />}
+      {currentScene === Scene.LOAD_SAVE && <LoadSavePanel />}
+      {currentScene === Scene.GAME && <GameScene3D />}
+      {currentScene === Scene.WAREHOUSE && <WarehouseUI />}
+      {currentScene === Scene.SETTINGS && <SettingsPanel />}
+      <HUD />
+    </div>
+  );
+}

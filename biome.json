@@ -1,0 +1,28 @@
+{
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "correctness": {
+        "noUnusedVariables": "error",
+        "noUnusedImports": "error"
+      },
+      "style": {
+        "useConst": "info",
+        "noNonNullAssertion": "info"
+      },
+      "suspicious": {
+        "noExplicitAny": "warn",
+        "noConsole": "info"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentSize": 2,
+    "lineWidth": 120
+  },
+  "organizeImports": {
+    "enabled": true
+  }
+}

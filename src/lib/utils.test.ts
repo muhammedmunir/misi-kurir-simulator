@@ -1,0 +1,137 @@
+import { describe, it, expect } from 'vitest';
+import { formatRupiah, formatTime, clamp, lerp, calcVolume, generateTrackingNumber, degToRad, shuffleArray } from '@/lib/utils';
+import { canTransition } from '@/types/game';
+
+describe('formatRupiah', () => {
+  it('format angka biasa', () => {
+    expect(formatRupiah(100000)).toBe('Rp 100.000');
+  });
+  it('format angka besar', () => {
+    expect(formatRupiah(5000000)).toBe('Rp 5.000.000');
+  });
+  it('format angka nol', () => {
+    expect(formatRupiah(0)).toBe('Rp 0');
+  });
+  it('format angka kecil', () => {
+    expect(formatRupiah(15000)).toBe('Rp 15.000');
+  });
+});
+
+describe('formatTime', () => {
+  it('format kurang dari 60 saat', () => {
+    expect(formatTime(30000)).toBe('30s');
+  });
+  it('format kurang dari 1 jam', () => {
+    expect(formatTime(90000)).toBe('1m 30s');
+  });
+  it('format lebih dari 1 jam', () => {
+    expect(formatTime(7200000)).toBe('2j 0m');
+  });
+  it('format 0', () => {
+    expect(formatTime(0)).toBe('0s');
+  });
+});
+
+describe('clamp', () => {
+  it('kecil dari min', () => {
+    expect(clamp(0, 5, 10)).toBe(5);
+  });
+  it('dalam range', () => {
+    expect(clamp(7, 5, 10)).toBe(7);
+  });
+  it('lebih besar dari max', () => {
+    expect(clamp(15, 5, 10)).toBe(10);
+  });
+});
+
+describe('lerp', () => {
+  it('t = 0', () => {
+    expect(lerp(0, 10, 0)).toBe(0);
+  });
+  it('t = 1', () => {
+    expect(lerp(0, 10, 1)).toBe(10);
+  });
+  it('t = 0.5', () => {
+    expect(lerp(0, 10, 0.5)).toBe(5);
+  });
+});
+
+describe('calcVolume', () => {
+  it('kotak 10x10x10 cm', () => {
+    expect(calcVolume(10, 10, 10)).toBe(1);
+  });
+  it('kotak 1x1x1 cm', () => {
+    expect(calcVolume(1, 1, 1)).toBe(0.001);
+  });
+  it('kotak besar', () => {
+    expect(calcVolume(50, 40, 30)).toBe(60);
+  });
+});
+
+describe('generateTrackingNumber', () => {
+  it('generate format betul', () => {
+    const num = generateTrackingNumber('MSK');
+    expect(num).toMatch(/^MSK-[A-Z0-9]+-[A-Z0-9]+$/);
+  });
+  it('berbeza setiap panggilan', () => {
+    const a = generateTrackingNumber();
+    const b = generateTrackingNumber();
+    expect(a).not.toBe(b);
+  });
+});
+
+describe('degToRad', () => {
+  it('90 degree = PI/2', () => {
+    expect(degToRad(90)).toBeCloseTo(Math.PI / 2);
+  });
+  it('180 degree = PI', () => {
+    expect(degToRad(180)).toBeCloseTo(Math.PI);
+  });
+  it('0 degree = 0', () => {
+    expect(degToRad(0)).toBe(0);
+  });
+});
+
+describe('shuffleArray', () => {
+  it('array kosong', () => {
+    expect(shuffleArray([])).toEqual([]);
+  });
+  it('satu item', () => {
+    expect(shuffleArray([1])).toEqual([1]);
+  });
+  it('berbagai item', () => {
+    const arr = [1, 2, 3, 4, 5];
+    const shuffled = shuffleArray(arr);
+    expect(shuffled).toHaveLength(5);
+    expect(shuffled).not.toEqual([1, 2, 3, 4, 5]); // kemungkinan tinggi berbeza
+  });
+  it('tidak ubah array asal', () => {
+    const arr = [1, 2, 3];
+    shuffleArray(arr);
+    expect(arr).toHaveLength(3);
+  });
+});
+
+describe('canTransition', () => {
+  it('incoming → received', () => {
+    expect(canTransition('incoming', 'received')).toBe(true);
+  });
+  it('received → sorting', () => {
+    expect(canTransition('received', 'sorting')).toBe(true);
+  });
+  it('sorting → delivered (invalid)', () => {
+    expect(canTransition('sorting', 'delivered')).toBe(false);
+  });
+  it('failed → out_for_delivery (retry)', () => {
+    expect(canTransition('failed', 'out_for_delivery')).toBe(true);
+  });
+  it('delivered → returned', () => {
+    expect(canTransition('delivered', 'returned')).toBe(true);
+  });
+  it('delivered → incoming (invalid)', () => {
+    expect(canTransition('delivered', 'incoming')).toBe(false);
+  });
+  it('cancelled → returned (invalid)', () => {
+    expect(canTransition('cancelled', 'returned')).toBe(false);
+  });
+});
