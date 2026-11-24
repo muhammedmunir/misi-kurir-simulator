@@ -16,7 +16,11 @@ export function shouldShowTouchControls(): boolean {
 
 function readActionButton(): ButtonInfo {
   const delivery = getInteractButtonInfo(useDeliveryStore.getState().session, Date.now());
-  return getActionButton(delivery, { onFoot: playerState.isOnFoot(), nearMotor: playerState.isNearMotor() });
+  return getActionButton(delivery, {
+    onFoot: playerState.isOnFoot(),
+    nearMotor: playerState.isNearMotor(),
+    speed: playerState.getSpeed(),
+  });
 }
 
 export function TouchJoystick() {

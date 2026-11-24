@@ -7,6 +7,7 @@ import {
 } from "@/lib/delivery-system";
 import { useGameStateStore } from "@/store/gamestate";
 import type { DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
+import type { ParkingCheck } from "@/vehicles/motor-state";
 import { type Deps, dispatch, loadOntoVehicle, scanPacket } from "@/warehouse/warehouse-logic";
 import { create } from "zustand";
 
@@ -39,6 +40,11 @@ interface DeliveryStore {
   load: (packetId: string, now: number) => void;
   dispatch: (now: number) => void;
   closePanel: () => void;
+
+  /** Show a short message in the HUD / panel. */
+  notify: (message: string, now: number) => void;
+  /** Called when the rider gets off the motor. */
+  recordParking: (check: ParkingCheck, now: number) => void;
 
   playerPos: { x: number; z: number } | null;
   setPlayerPosition: (pos: { x: number; z: number }) => void;
@@ -96,6 +102,18 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => {
       apply(loadOntoVehicle(get().session, packetId, STARTER_CARGO, get().deps.createId, now), now),
     dispatch: (now) => apply(dispatch(get().session, now), now),
     closePanel: () => set({ session: { ...get().session, panelOpen: false } }),
+
+    notify: (message, now) =>
+      set({ session: { ...get().session, interactionMessage: message, interactionMessageTime: now } }),
+
+    recordParking: (check, now) => {
+      const s = { ...get().session, lastParking: check };
+      if (check.zoneId) {
+        s.interactionMessage = check.proper ? "Motor diparkir dalam kotak" : "Motor di luar kotak parkir";
+        s.interactionMessageTime = now;
+      }
+      set({ session: s });
+    },
 
     playerPos: null,
     setPlayerPosition: (pos) => set({ playerPos: pos }),

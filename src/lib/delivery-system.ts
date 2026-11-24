@@ -6,11 +6,40 @@ import type { DeliveryAction, DeliveryResult, DeliverySession, DeliveryZone } fr
 import type { Packet } from "@/types/game";
 import { type Deps, WAREHOUSE, generateInbound } from "@/warehouse/warehouse-logic";
 
+/** Destination house placeholder, relative to its lot centre. */
+export const HOUSE = { width: 8, height: 5, depth: 6, zOffset: 4, doorOffset: 9 } as const;
+
 /** Starter motor (Motor Matic) cargo, matching DEFAULT_VEHICLES specs. */
 export const STARTER_CARGO: CargoLimits = { maxVolume: 20, maxWeight: 15 };
 
 /** How many new packets arrive when the warehouse runs empty. */
 export const INBOUND_BATCH = 5;
+
+/**
+ * An address on the block centred at (lotX, lotZ): the house faces +z towards
+ * the road 20 units away; the door (zone) is just outside the house, the
+ * parking box sits on the road shoulder in front.
+ */
+function destination(
+  id: string,
+  name: string,
+  areaCode: string,
+  lotX: number,
+  lotZ: number,
+  description: string,
+): DeliveryZone {
+  return {
+    id,
+    name,
+    type: "delivery",
+    position: { x: lotX, z: lotZ + HOUSE.doorOffset },
+    areaCode,
+    description,
+    interactable: true,
+    lot: { x: lotX, z: lotZ },
+    parking: { x: lotX, z: lotZ + 17, halfX: 2.5, halfZ: 1.5 },
+  };
+}
 
 // ── Zone Data ─────────────────────────────────────────────────────
 
@@ -24,37 +53,17 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
     areaCode: "bandar",
     description: "Meja sortir gudang",
     interactable: true,
+    lot: WAREHOUSE.center,
   },
-  {
-    id: "zone-delivery-1",
-    name: "Kedai Runcit Mak Minah",
-    type: "delivery",
-    position: { x: 40, z: 40 },
-    areaCode: "perumahan",
-    description: "Penghantaran ke kedai runcit",
-    interactable: true,
-  },
-  {
-    id: "zone-delivery-2",
-    name: "Kafe Kampung Digital",
-    type: "delivery",
-    position: { x: -40, z: -40 },
-    areaCode: "pasar",
-    description: "Penghantaran ke kafe tempatan",
-    interactable: true,
-  },
-  {
-    id: "zone-delivery-3",
-    name: "Pusat Industri Timur",
-    type: "delivery",
-    position: { x: 80, z: -40 },
-    areaCode: "industri",
-    description: "Penghantaran kargo industri",
-    interactable: true,
-  },
+  destination("zone-delivery-1", "Kedai Runcit Mak Minah", "perumahan", 60, 20, "Penghantaran ke kedai runcit"),
+  destination("zone-delivery-2", "Kafe Kampung Digital", "pasar", -20, -20, "Penghantaran ke kafe tempatan"),
+  destination("zone-delivery-3", "Pusat Industri Timur", "industri", 100, -60, "Penghantaran kargo industri"),
 ];
 
 const DESTINATIONS = DELIVERY_ZONES.filter((z) => z.type === "delivery");
+
+/** Parking boxes of every destination, for checkParking(). */
+export const PARKING_BOXES = DESTINATIONS.flatMap((z) => (z.parking ? [{ zoneId: z.id, box: z.parking }] : []));
 
 // ── Session ───────────────────────────────────────────────────────
 
@@ -68,6 +77,7 @@ export function createSession(): DeliverySession {
     panelOpen: false,
     nearbyZone: null,
     cooldownUntil: 0,
+    lastParking: null,
     completedAt: null,
     completeMessage: null,
     completeMessageTime: null,

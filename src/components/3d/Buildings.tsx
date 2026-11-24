@@ -1,4 +1,6 @@
-import { WAREHOUSE } from "@/warehouse/warehouse-logic";
+import { DELIVERY_ZONES } from "@/lib/delivery-system";
+
+const RESERVED_LOTS = new Set(DELIVERY_ZONES.flatMap((z) => (z.lot ? [`${z.lot.x},${z.lot.z}`] : [])));
 import { useMemo } from "react";
 
 const BUILDING_COLORS = ["#4a5568", "#5a6578", "#6a7588", "#3d4f5f", "#7a8a9a", "#4b5c6d"];
@@ -25,8 +27,8 @@ export function Buildings() {
         const width = 6 + pseudoRandom() * 8;
         const depth = 6 + pseudoRandom() * 8;
         if (emptyLot) continue;
-        // The warehouse occupies its own block.
-        if (gx * 40 + 20 === WAREHOUSE.center.x && gz * 40 + 20 === WAREHOUSE.center.z) continue;
+        // The warehouse and delivery addresses occupy their own blocks.
+        if (RESERVED_LOTS.has(`${gx * 40 + 20},${gz * 40 + 20}`)) continue;
         const height = 5 + pseudoRandom() * 20;
         const floors = Math.floor(height / 3);
 

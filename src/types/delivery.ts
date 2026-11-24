@@ -1,4 +1,5 @@
 import type { Manifest, Packet } from "@/types/game";
+import type { ParkingCheck, Rect } from "@/vehicles/motor-state";
 
 // ── Delivery Zone ────────────────────────────────────────────────
 
@@ -11,6 +12,10 @@ export interface DeliveryZone {
   areaCode: string;
   description: string;
   interactable?: boolean;
+  /** Centre of the block this address occupies (no random building is placed there). */
+  lot?: { x: number; z: number };
+  /** Parking box on the road in front of the address. */
+  parking?: Rect;
 }
 
 // ── Delivery Session ─────────────────────────────────────────────
@@ -36,6 +41,8 @@ export interface DeliverySession {
   panelOpen: boolean;
   nearbyZone: DeliveryZone | null;
   cooldownUntil: number;
+  /** Where the motor was last left. Kept for reputation later (no penalty yet). */
+  lastParking: ParkingCheck | null;
   /** When the manifest was completed (for auto-reset). */
   completedAt: number | null;
   completeMessage: string | null;

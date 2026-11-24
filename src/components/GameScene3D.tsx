@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CameraFollow } from "./3d/CameraFollow";
 import { DeliverySystemController } from "./3d/DeliverySystemController";
 import { DeliveryZones } from "./3d/DeliveryZones";
+import { Destinations } from "./3d/Destinations";
 import { HUD3D } from "./3d/HUD3D";
 import { InteractionPrompt } from "./3d/InteractionPrompt";
 import { NPCTraffic } from "./3d/NPCTraffic";
@@ -85,6 +86,7 @@ export function GameScene3D() {
           {/* World */}
           <WorldEnvironment />
           <WarehouseBuilding />
+          <Destinations />
 
           {/* Delivery zones */}
           <DeliveryZones />

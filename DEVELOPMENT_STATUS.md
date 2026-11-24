@@ -30,7 +30,8 @@ Latar: Malaysia, RM, teks BM (TPD-016). Paparan wang masih Rp sehingga Pelan 005
 | Kamera orang ketiga | Tested | B12 dibaiki: kamera kini benar-benar mengikut pemain; disahkan di Chrome |
 | Kawalan papan kekunci (WASD, E) | Implemented | Belum diuji di pelayar; logik E dikongsi dengan butang sentuh |
 | Kawalan sentuh (joystick, tindakan, BREK) | Tested | `1b88949`; Chrome `?touch=1`. Belum diuji di telefon sebenar |
-| Motor: naik, pandu, brek, turun | In progress | Berfungsi, tetapi motor kembali ke titik tetap bila turun (Pelan 005 Langkah 3) |
+| Motor: naik, pandu, brek, turun | Tested | Motor kekal di tempat ditinggalkan; turun hanya bila < 1 unit/s; disahkan di Chrome |
+| Kotak parkir di setiap alamat | Tested | Direkod betul/tidak (tiada penalti lagi); ujian unit sahaja, belum dipandu ke kotak di pelayar |
 | Fizik Rapier / collision | Not started | `<Physics>` tanpa `RigidBody`; motor menembusi bangunan |
 | HUD asas | Tested | Wang, level, status pandu, kad misi reaktif |
 | Simpan/muat | In progress | IndexedDB wujud; tidak simpan paket/kedudukan (Pelan 005 Langkah 7) |

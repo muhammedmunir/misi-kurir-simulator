@@ -1,5 +1,6 @@
 import { deliverableAt } from "@/lib/delivery-system";
 import type { DeliverySession } from "@/types/delivery";
+import { canDismount } from "@/vehicles/motor-state";
 
 export interface ButtonInfo {
   label: string;
@@ -30,6 +31,8 @@ export function getInteractButtonInfo(session: DeliverySession, now: number): Bu
 export interface MotorContext {
   onFoot: boolean;
   nearMotor: boolean;
+  /** Motor speed (units/s); dismounting needs canDismount(speed). */
+  speed: number;
 }
 
 /**
@@ -40,7 +43,11 @@ export interface MotorContext {
 export function getActionButton(delivery: ButtonInfo, motor: MotorContext): ButtonInfo {
   if (delivery.enabled) return delivery;
   if (delivery.label === "Tunggu...") return delivery;
-  if (!motor.onFoot) return { label: "TURUN MOTOR", enabled: true };
+  if (!motor.onFoot) {
+    return canDismount(motor.speed)
+      ? { label: "TURUN MOTOR", enabled: true }
+      : { label: "BERHENTI DULU", enabled: false };
+  }
   if (motor.nearMotor) return { label: "NAIK MOTOR", enabled: true };
   return delivery;
 }

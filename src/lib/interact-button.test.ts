@@ -62,16 +62,23 @@ describe("getActionButton — keutamaan sama seperti performInteract()", () => {
   const hantarDulu = { label: "Hantar dulu", enabled: false };
 
   it("tindakan penghantaran menang walaupun dekat motor", () => {
-    expect(getActionButton(ambil, { onFoot: true, nearMotor: true })).toEqual(ambil);
+    expect(getActionButton(ambil, { onFoot: true, nearMotor: true, speed: 0 })).toEqual(ambil);
   });
 
   it("cooldown menyekat naik/turun motor", () => {
-    expect(getActionButton(tunggu, { onFoot: false, nearMotor: false })).toEqual(tunggu);
-    expect(getActionButton(tunggu, { onFoot: true, nearMotor: true })).toEqual(tunggu);
+    expect(getActionButton(tunggu, { onFoot: false, nearMotor: false, speed: 0 })).toEqual(tunggu);
+    expect(getActionButton(tunggu, { onFoot: true, nearMotor: true, speed: 0 })).toEqual(tunggu);
+  });
+
+  it("atas motor masih bergerak → BERHENTI DULU, nyahaktif", () => {
+    expect(getActionButton(tiadaZon, { onFoot: false, nearMotor: false, speed: 5 })).toEqual({
+      label: "BERHENTI DULU",
+      enabled: false,
+    });
   });
 
   it("atas motor + tiada tindakan → TURUN MOTOR", () => {
-    expect(getActionButton(tiadaZon, { onFoot: false, nearMotor: false })).toEqual({
+    expect(getActionButton(tiadaZon, { onFoot: false, nearMotor: false, speed: 0 })).toEqual({
       label: "TURUN MOTOR",
       enabled: true,
     });
@@ -79,12 +86,12 @@ describe("getActionButton — keutamaan sama seperti performInteract()", () => {
 
   it("berjalan dekat motor + tiada tindakan → NAIK MOTOR (termasuk di zon pickup dengan paket)", () => {
     const naik = { label: "NAIK MOTOR", enabled: true };
-    expect(getActionButton(tiadaZon, { onFoot: true, nearMotor: true })).toEqual(naik);
-    expect(getActionButton(hantarDulu, { onFoot: true, nearMotor: true })).toEqual(naik);
+    expect(getActionButton(tiadaZon, { onFoot: true, nearMotor: true, speed: 0 })).toEqual(naik);
+    expect(getActionButton(hantarDulu, { onFoot: true, nearMotor: true, speed: 0 })).toEqual(naik);
   });
 
   it("berjalan jauh dari motor + tiada tindakan → label penghantaran, nyahaktif", () => {
-    expect(getActionButton(tiadaZon, { onFoot: true, nearMotor: false })).toEqual(tiadaZon);
+    expect(getActionButton(tiadaZon, { onFoot: true, nearMotor: false, speed: 0 })).toEqual(tiadaZon);
   });
 });
 

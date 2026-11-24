@@ -235,3 +235,28 @@ describe("useDeliveryStore — gelung penuh dengan wang pemain", () => {
     expect(store().session.panelOpen).toBe(false);
   });
 });
+
+describe("useDeliveryStore.recordParking", () => {
+  beforeEach(() => useDeliveryStore.getState().reset());
+
+  it("dalam kotak alamat: simpan dan beri mesej", () => {
+    useDeliveryStore.getState().recordParking({ zoneId: SHOP.id, proper: true }, 100);
+    const s = useDeliveryStore.getState().session;
+    expect(s.lastParking).toEqual({ zoneId: SHOP.id, proper: true });
+    expect(s.interactionMessage).toBe("Motor diparkir dalam kotak");
+  });
+
+  it("luar kotak: direkod tidak betul, tiada penalti wang", () => {
+    useGameStateStore.getState().createNewGame("Ujian");
+    const money = useGameStateStore.getState().player?.money;
+    useDeliveryStore.getState().recordParking({ zoneId: SHOP.id, proper: false }, 100);
+    expect(useDeliveryStore.getState().session.lastParking?.proper).toBe(false);
+    expect(useDeliveryStore.getState().session.interactionMessage).toBe("Motor di luar kotak parkir");
+    expect(useGameStateStore.getState().player?.money).toBe(money);
+  });
+
+  it("jauh dari alamat: direkod tanpa mesej", () => {
+    useDeliveryStore.getState().recordParking({ zoneId: null, proper: true }, 100);
+    expect(useDeliveryStore.getState().session.interactionMessage).toBeNull();
+  });
+});
