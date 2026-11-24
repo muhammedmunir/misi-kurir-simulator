@@ -5,6 +5,8 @@ import { type Deps, dispatch, loadOntoVehicle, scanPacket } from "@/warehouse/wa
 export const DESK = DELIVERY_ZONES[0];
 export const SHOP = DELIVERY_ZONES[1];
 export const CAFE = DELIVERY_ZONES[2];
+/** Pusat Industri Timur — tiada penerima di rumah (Langkah 5). */
+export const INDUSTRI = DELIVERY_ZONES[3];
 
 /** Deterministic ids/tracking; rng cycles through `values`. */
 export function testDeps(values: number[] = [0.5]): Deps {
