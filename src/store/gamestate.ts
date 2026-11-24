@@ -1,3 +1,4 @@
+import { STARTING_MONEY, VEHICLE_PRICES } from "@/data/economy";
 import { generateId } from "@/lib/utils";
 import type { Delivery, GameSettings, Manifest, Player, Vehicle } from "@/types/game";
 import { create } from "zustand";
@@ -13,7 +14,7 @@ export function createPlayer(name = "Pelanggan"): Player {
     xp: 0,
     xpToNext: 100,
     reputation: 0,
-    money: 500000, // RM 500k modal
+    money: STARTING_MONEY,
     totalDeliveries: 0,
     successfulDeliveries: 0,
     failedDeliveries: 0,
@@ -51,7 +52,7 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     id: "gen-2-matic",
     name: "Motor Matic Gen-2",
     type: "matic",
-    price: 0,
+    price: VEHICLE_PRICES.matic,
     specs: {
       maxSpeed: 60,
       acceleration: 0.6,
@@ -72,7 +73,7 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     id: "bebek-classic",
     name: "Motor Bebek Klasik",
     type: "bebek",
-    price: 0,
+    price: VEHICLE_PRICES.bebek,
     specs: {
       maxSpeed: 55,
       acceleration: 0.7,
@@ -93,7 +94,7 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     id: "kargo-up",
     name: "Motor Kargo UP",
     type: "kargo",
-    price: 15000000,
+    price: VEHICLE_PRICES.kargo,
     specs: {
       maxSpeed: 70,
       acceleration: 0.5,
@@ -114,7 +115,7 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     id: "pickup-doble-kabin",
     name: "Pickup Doble Kabin",
     type: "pickup",
-    price: 350000000,
+    price: VEHICLE_PRICES.pickup,
     specs: {
       maxSpeed: 100,
       acceleration: 0.4,
@@ -135,7 +136,7 @@ export const DEFAULT_VEHICLES: Vehicle[] = [
     id: "van-combi",
     name: "Van Combi",
     type: "van",
-    price: 280000000,
+    price: VEHICLE_PRICES.van,
     specs: {
       maxSpeed: 90,
       acceleration: 0.45,

@@ -1,3 +1,4 @@
+import { rollDeliveryReward } from "@/data/economy";
 import { formatRinggit } from "@/lib/utils";
 import type { DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
 
@@ -156,7 +157,7 @@ export function interact(
   if (zone.type === "pickup" && !session.hasPacket) {
     const deliveryZones = DELIVERY_ZONES.filter((z) => z.type === "delivery");
     const targetZone = deliveryZones[Math.floor(rng() * deliveryZones.length)];
-    const reward = Math.floor(2000 + rng() * 5000);
+    const reward = rollDeliveryReward(rng);
     const xpReward = 25 + Math.floor(rng() * 25);
     const trackingNumber = createTrackingNumber("MSK");
     const packetId = createId();
