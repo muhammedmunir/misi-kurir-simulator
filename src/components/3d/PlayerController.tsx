@@ -3,17 +3,11 @@ import { touchInput } from "@/lib/touch";
 import { useDeliveryUIStore } from "@/store/delivery-ui";
 import { useGameStateStore } from "@/store/gamestate";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { type Group, Vector3 } from "three";
 
 // ── Keyboard state ────────────────────────────────────────────────
 const keysDown = new Set<string>();
-document.addEventListener("keydown", (e) => {
-  keysDown.add(e.code);
-});
-document.addEventListener("keyup", (e) => {
-  keysDown.delete(e.code);
-});
 
 // ── Constants ─────────────────────────────────────────────────────
 const WALK_SPEED = 5;
@@ -46,80 +40,91 @@ export const playerState = {
   isOnFoot: () => onFoot,
 };
 
+// ── Shared interaction handler ────────────────────────────────────
+function handleInteract(): boolean {
+  const deliveryResult = DELIVERY_SYSTEM.checkInteract();
+  if (deliveryResult) {
+    const ui = useDeliveryUIStore.getState();
+    const session = DELIVERY_SYSTEM.getSession();
+
+    if (deliveryResult.action === "pickup") {
+      ui.setHasPacket(true);
+      ui.setTrackingNumber(session.trackingNumber);
+      ui.setInteractionMessage(deliveryResult.message);
+      return true; // delivery handled, skip motor swap
+    }
+    if (deliveryResult.action === "deliver") {
+      ui.setHasPacket(false);
+      ui.setTrackingNumber(null);
+      ui.setCompleteMessage(deliveryResult.message);
+      ui.setInteractionMessage("");
+      const gs = useGameStateStore.getState();
+      if (gs.player) {
+        gs.addMoney(session.reward);
+        gs.addXP(session.xpReward);
+      }
+      return true;
+    }
+    ui.setInteractionMessage(deliveryResult.message);
+    return true; // something happened (even "nothing" message), don't swap motor
+  }
+  return false; // no delivery interaction, allow motor swap
+}
+
 // ── Component ─────────────────────────────────────────────────────
 export function PlayerController() {
   const groupRef = useRef<Group>(null);
   const motorRef = useRef<Group>(null);
 
-  const [mounted, setMounted] = useState(false);
+  // Keyboard handlers inside useEffect (not module level)
   useEffect(() => {
-    setMounted(true);
+    const onKeyDown = (e: KeyboardEvent) => {
+      keysDown.add(e.code);
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      keysDown.delete(e.code);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
   }, []);
-  if (!mounted) return null;
 
-  // Keyboard interaction (E key — motor swap + delivery interaction)
+  // E key interaction
   useEffect(() => {
-    let interacted = false;
     const handler = (e: KeyboardEvent) => {
-      if (e.code === "KeyE" && !interacted) {
-        interacted = true;
-        e.preventDefault();
+      // Ignore auto-repeat
+      if (e.code !== "KeyE" || e.repeat) return;
+      e.preventDefault();
 
-        // Delivery system interaction
-        const deliveryResult = DELIVERY_SYSTEM.checkInteract();
-        if (deliveryResult) {
-          const ui = useDeliveryUIStore.getState();
-          const session = DELIVERY_SYSTEM.getSession();
+      // Priority: delivery interaction first
+      const handled = handleInteract();
+      if (handled) return;
 
-          if (deliveryResult.action === "pickup") {
-            ui.setHasPacket(true);
-            ui.setTrackingNumber(session.trackingNumber);
-            ui.setInteractionMessage(deliveryResult.message);
-            // Keep on foot, skip motor swap
-            return;
-          }
-          if (deliveryResult.action === "deliver") {
-            ui.setHasPacket(false);
-            ui.setTrackingNumber(null);
-            ui.setCompleteMessage(deliveryResult.message);
-            ui.setInteractionMessage("");
-            // Sync game state with reward
-            const gs = useGameStateStore.getState();
-            if (gs.player) {
-              gs.addMoney(session.reward);
-              gs.addXP(session.xpReward);
-            }
-            return;
-          }
-          ui.setInteractionMessage(deliveryResult.message);
-        }
-
-        // Motor swap interaction (fallback)
-        if (onFoot) {
-          const dx = pos.x - MOTOR_POSITION.x;
-          const dz = pos.z - MOTOR_POSITION.z;
-          const dist = Math.sqrt(dx * dx + dz * dz);
-          if (dist <= INTERACT_DISTANCE) {
-            onFoot = false;
-            motorHeading = Math.atan2(dx, dz);
-            motorSpeed = 0;
-          }
-        } else {
-          onFoot = true;
+      // Fallback: motor swap
+      if (onFoot) {
+        const dx = pos.x - MOTOR_POSITION.x;
+        const dz = pos.z - MOTOR_POSITION.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist <= INTERACT_DISTANCE) {
+          onFoot = false;
+          motorHeading = Math.atan2(dx, dz);
           motorSpeed = 0;
-          pos.x = MOTOR_POSITION.x + 1.5;
-          pos.z = MOTOR_POSITION.z;
-          pos.y = 1.6;
-          vel.set(0, 0, 0);
         }
+      } else {
+        onFoot = true;
+        motorSpeed = 0;
+        pos.x = MOTOR_POSITION.x + 1.5;
+        pos.z = MOTOR_POSITION.z;
+        pos.y = 1.6;
+        vel.set(0, 0, 0);
       }
     };
     window.addEventListener("keydown", handler);
-    return () => {
-      window.removeEventListener("keydown", handler);
-      interacted = false;
-    };
-  });
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   useFrame((_state, delta) => {
     if (!groupRef.current) return;
