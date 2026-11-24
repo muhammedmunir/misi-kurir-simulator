@@ -78,6 +78,9 @@ src/save/         save-schema.ts, migrate.ts (+ test)
 **Lulus:** ujian unit `motor-state`; manual — tunggang ke rumah, berhenti, turun, berjalan ke pintu, kembali, naik semula di tempat yang sama.
 
 ### Langkah 4 — Navigasi ke tujuan
+
+> Pelan terperinci untuk C9: `plans/005-langkah-4-navigasi.md` (kontrak: `src/__contract__/005-langkah-4-navigasi.test.tsx`). Langkah 0–3 selesai: `ea4dc88`, `7c683e5`, `09b9246`, `eed0b13`.
+
 - `nav.ts`: jarak dan arah relatif dari pemain/motor ke sasaran aktif (diuji).
 - Anak panah HUD di tepi skrin + jarak dalam meter + nama penerima & alamat. Penanda tiang di lokasi tujuan dalam dunia.
 - Minimap **di luar skop** (Phase 2 World). Anak panah sudah cukup untuk slice.
