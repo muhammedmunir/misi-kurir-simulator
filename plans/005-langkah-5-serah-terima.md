@@ -180,3 +180,26 @@ Berhenti dan lapor sebaik sahaja commit dibuat. Juga berhenti tanpa commit jika:
 - Output knip (atau "sama dengan baseline")
 - Laluan tangkapan skrin
 - Senarai perkara yang tidak dibuat
+
+---
+
+## Semakan 1 (selepas 36d6357..080ce80)
+
+Gate hijau, tetapi ada pepijat dan pelanggaran skop. Kontrak baharu: `src/__contract__/005-langkah-5-semakan.test.ts` (7 ujian, 6 gagal sebelum dibaiki).
+
+| # | Masalah | Bukti | Baiki |
+|---|---------|-------|-------|
+| S1 | Atas motor boleh buka serah terima. `performInteract()` di `src/components/3d/PlayerController.tsx` memanggil `interact(Date.now())` tanpa ctx; `interact` (tulen) dan stor menganggap "berjalan kaki" untuk zon delivery. | S1 ×4 gagal | `export function performInteract()` dan hantar `{ onFoot }` (pembolehubah modul) ke `useDeliveryStore.getState().interact(Date.now(), { onFoot })`. Dalam `interact` tulen dan stor: tiada ctx = `onFoot: false`. Buang inferens jenis zon. Mesej atas motor: `"Turun dari motor dahulu"`. |
+| S2 | Zon rekaan "Gudang Stokin Barat" ditambah (luar skop). `zone-delivery-3` bertukar nama. | S2 ×2 gagal | Buang zon itu. `zone-delivery-3` = Pusat Industri Timur, `receiverHome: false`. Pulihkan `PARKING_BOXES` toHaveLength(3) dalam `src/vehicles/motor-state.test.ts`. Pulihkan `src/test/delivery-fixtures.ts` ke `INDUSTRI = DELIVERY_ZONES[3]` (fail ini di luar skop; jangan sunting lagi). |
+| S3 | Ujian wang dilemahkan dalam `src/lib/delivery-system.test.ts`: `toBe(start + reward)` → `toBeGreaterThan(start)`, XP → `toBeGreaterThanOrEqual` (lulus walaupun XP tidak ditambah). | diff | Pulihkan semakan tepat: wang = `start + rollDeliveryReward(rng)`, XP = `xpStart + xpReward`. Ambil `reward`/`xpReward` daripada hasil `completeHandover` atau kira dengan rng ujian. |
+| S4 | Logik selesai disalin 3 kali (`deliverPacket`, `settlePhase`, `returnFailedPackets` dalam `handover.ts`, dan cabang `returning` dalam `interact`). | baca kod | Satu fungsi `settlePhase` dalam `src/delivery/handover.ts`. `interact` cabang `returning` memanggil `returnFailedPackets`. `deliverPacket` memanggil `settlePhase` sahaja. |
+| S5 | `"fail_handover"` dalam `DeliveryAction` tidak digunakan. | grep | Buang. |
+| S6 | 6 commit untuk satu langkah; `biome.json` disunting. | git log | Perubahan `indentSize`→`indentWidth` diterima (setara). Jangan sunting konfigurasi lagi. Semakan ini = **satu** commit. |
+
+Ujian sedia ada yang mesti dikemas kini (panggil `interact` dengan `{ onFoot: true }`, tanpa melemahkan semakan wang/status): yang gagal selepas S1/S2 dalam `delivery-system.test.ts` dan `motor-state.test.ts`.
+
+**Verify:** `npx tsc --noEmit`, `npx biome check src/`, `npx vitest run` (0 gagal), knip sama dengan baseline. Pelayar `http://localhost:5179/?touch=1`: atas motor di Kedai Runcit Mak Minah → butang TURUN MOTOR, tekan → turun (tiada panel); tekan lagi → panel serah terima; Ambil bukti → Serahkan paket → wang naik.
+
+**Commit (satu):** `005 Langkah 5 Semakan 1: onFoot sebenar, buang zon rekaan, pulihkan ujian wang`
+
+**STOP:** jika kontrak tidak boleh lulus tanpa menyunting `src/__contract__/`, atau jika ujian di luar senarai di atas gagal.
