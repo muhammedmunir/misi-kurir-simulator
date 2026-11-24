@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import { Scene } from '@/types/scene';
-import type { Player, GameSettings, Vehicle, Packet, Delivery, Manifest, SaveData, SaveSlot } from '@/types/game';
-import * as idb from '@/lib/idb';
-import { nanoid } from '@/lib/utils';
+import type { Player, GameSettings } from '@/types/game';
 
 interface SceneManagerState {
   currentScene: Scene;

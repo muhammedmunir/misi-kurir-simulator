@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { Player, GameSettings, Vehicle, SaveData, Delivery, Packet, Manifest, PacketStatus, Priority, PaymentMethod } from '@/types/game';
-import { generateId, generateTrackingNumber, calcVolume, formatRupiah } from '@/lib/utils';
+import type { Player, GameSettings, Vehicle, Delivery, Manifest } from '@/types/game';
+import { generateId } from '@/lib/utils';
 
 // ─── Default / factory ────────────────────────────────────────────
 
@@ -189,7 +189,7 @@ interface GameState {
   resetGame: () => void;
 }
 
-export const useGameStateStore = create<GameState>((set, get) => ({
+export const useGameStateStore = create<GameState>((set) => ({
   player: null,
   vehicles: DEFAULT_VEHICLES,
   activeManifest: null,
@@ -232,9 +232,11 @@ export const useGameStateStore = create<GameState>((set, get) => ({
   },
 
   spendMoney: (amount: number) => {
-    return set((state) => {
+    let result = false;
+    set((state) => {
       if (!state.player) return state;
       if (state.player.money < amount) return state;
+      result = true;
       return {
         player: {
           ...state.player,
@@ -243,6 +245,7 @@ export const useGameStateStore = create<GameState>((set, get) => ({
         },
       };
     });
+    return result;
   },
 
   addXP: (amount: number) => {
@@ -309,20 +312,23 @@ export const useGameStateStore = create<GameState>((set, get) => ({
 
   createManifest: (packetIds: string[]) => {
     set((state) => {
-      if (!state.player) return null;
+      if (!state.player) return state;
       const now = new Date();
       const date = now.toISOString().split('T')[0];
       return {
-        id: generateId(),
-        date,
-        packets: packetIds,
-        totalPackets: packetIds.length,
-        totalWeight: 0,
-        totalVolume: 0,
-        codTotal: 0,
-        status: 'open',
-        createdAt: Date.now(),
-        closedAt: null,
+        ...state,
+        activeManifest: {
+          id: generateId(),
+          date,
+          packets: packetIds,
+          totalPackets: packetIds.length,
+          totalWeight: 0,
+          totalVolume: 0,
+          codTotal: 0,
+          status: 'open',
+          createdAt: Date.now(),
+          closedAt: null,
+        },
       };
     });
   },

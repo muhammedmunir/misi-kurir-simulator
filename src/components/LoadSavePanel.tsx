@@ -1,6 +1,5 @@
 import { useSceneStore } from '@/store/game';
 import { useGameStateStore } from '@/store/gamestate';
-import { createPlayer, createSettings } from '@/store/gamestate';
 import { Scene } from '@/types/scene';
 import { useState } from 'react';
 

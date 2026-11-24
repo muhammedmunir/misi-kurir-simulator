@@ -1,5 +1,4 @@
 import { useSceneStore } from '@/store/game';
-import { useGameStateStore } from '@/store/gamestate';
 import { Scene } from '@/types/scene';
 import { useState, useMemo } from 'react';
 import type { Packet, PacketStatus } from '@/types/game';
@@ -37,7 +36,6 @@ function generateTestPackets(): Packet[] {
 
 export function WarehouseUI() {
   const navigate = useSceneStore((s) => s.navigate);
-  const player = useGameStateStore((s) => s.player);
   const [filter, setFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 

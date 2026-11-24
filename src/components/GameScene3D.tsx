@@ -1,16 +1,12 @@
 import { Canvas } from '@react-three/fiber';
-import { Environment, EffectComposer, Bloom, SSAO } from '@react-three/drei';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { Physics } from '@react-three/rapier';
 import { useEffect, useState, useCallback } from 'react';
-import { useGameStateStore } from '@/store/gamestate';
-import { useSceneStore } from '@/store/game';
-import { Scene } from '@/types/scene';
 import { PlayerController } from './3d/PlayerController';
 import { WorldEnvironment } from './3d/WorldEnvironment';
 import { HUD3D } from './3d/HUD3D';
 
 export function GameScene3D() {
-  const navigate = useSceneStore((s) => s.navigate);
   const [contextLost, setContextLost] = useState(false);
 
   const handleContextLost = useCallback((e: Event) => {

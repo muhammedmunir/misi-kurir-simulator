@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { Terrain } from './Terrain';
 import { Buildings } from './Buildings';
 import { Roads } from './Roads';
@@ -20,7 +21,7 @@ export function WorldEnvironment() {
         <sphereGeometry args={[400, 32, 32]} />
         <meshBasicMaterial
           color="#1a1a3a"
-          side="backSide"
+          side={THREE.BackSide}
         />
       </mesh>
     </group>
