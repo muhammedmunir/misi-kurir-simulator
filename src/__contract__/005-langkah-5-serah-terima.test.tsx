@@ -64,8 +64,9 @@ describe("handover — bukti dan serahan", () => {
     expect(result.reward).toBeGreaterThan(0);
     expect(statusOf(session, SHOP)).toBe("delivered");
     expect(session.handover).toBeNull();
-    expect(session.phase).toBe("complete");
-    expect(session.manifest?.status).toBe("closed");
+    // Langkah 6: manifest ditutup di gudang, bukan di alamat terakhir.
+    expect(session.phase).toBe("returning");
+    expect(session.manifest?.status).toBe("open");
   });
 
   it("alamat tanpa penerima (INDUSTRI): serah ditolak walaupun ada bukti", () => {
