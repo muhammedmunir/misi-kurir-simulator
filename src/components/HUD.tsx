@@ -1,13 +1,29 @@
 import { saveGame } from "@/lib/idb";
+import { DELIVERY_SYSTEM } from "@/lib/delivery-system";
 import { useSceneStore } from "@/store/game";
 import { useGameStateStore } from "@/store/gamestate";
+import { useDeliveryUIStore } from "@/store/delivery-ui";
 import { Scene } from "@/types/scene";
 import { playerState } from "./3d/PlayerController";
+import { useEffect, useState } from "react";
 
 export function HUD() {
   const navigate = useSceneStore((s) => s.navigate);
   const currentScene = useSceneStore((s) => s.currentScene);
   const player = useGameStateStore((s) => s.player);
+  const interactionMessage = useDeliveryUIStore((s) => s.interactionMessage);
+  const completeMessage = useDeliveryUIStore((s) => s.completeMessage);
+
+  const [deliveryState, setDeliveryState] = useState({
+    hasPacket: false,
+    trackingNumber: null as string | null,
+  });
+
+  // Poll delivery system for state changes
+  useEffect(() => {
+    const session = DELIVERY_SYSTEM.getSession();
+    setDeliveryState({ hasPacket: session.hasPacket, trackingNumber: session.trackingNumber });
+  }, []);
 
   const isOnFoot = playerState.isOnFoot();
   const speed = Math.abs(Math.round(playerState.getSpeed()));
@@ -160,6 +176,7 @@ export function HUD() {
               border: isOnFoot ? "1px solid rgba(59, 130, 246, 0.4)" : "1px solid rgba(220, 38, 38, 0.4)",
               borderRadius: "12px",
               padding: "10px 16px",
+              pointerEvents: "auto",
             }}
           >
             <p style={{ fontSize: "12px", color: isOnFoot ? "#3b82f6" : "#dc2626", margin: "0 0 2px" }}>
@@ -167,21 +184,47 @@ export function HUD() {
             </p>
             {!isOnFoot && <p style={{ fontSize: "20px", fontWeight: 700, color: "#fff", margin: 0 }}>{speed} km/j</p>}
             <p style={{ fontSize: "11px", color: "#8888a0", margin: "4px 0 0" }}>
-              Tekan E untuk {isOnFoot ? "naik motor" : "turun motor"}
+              Tekan E untuk {isOnFoot ? "naik motor" : "turun motor / interaksi"}
             </p>
           </div>
 
+          {/* Delivery / Mission info */}
           <div
             style={{
-              background: "rgba(245, 158, 11, 0.2)",
-              border: "1px solid rgba(245, 158, 11, 0.4)",
+              background: deliveryState.hasPacket
+                ? "rgba(245, 158, 11, 0.25)"
+                : "rgba(34, 197, 94, 0.2)",
+              border: deliveryState.hasPacket
+                ? "1px solid rgba(245, 158, 11, 0.5)"
+                : "1px solid rgba(34, 197, 94, 0.4)",
               borderRadius: "12px",
               padding: "10px 16px",
-              maxWidth: "200px",
+              maxWidth: "250px",
             }}
           >
-            <p style={{ fontSize: "12px", color: "#f59e0b", margin: "0 0 2px" }}>Misi Aktif</p>
-            <p style={{ fontSize: "14px", fontWeight: 600 }}>Penghantaran #1</p>
+            <p style={{ fontSize: "12px", color: deliveryState.hasPacket ? "#f59e0b" : "#22c55e", margin: "0 0 2px" }}>
+              {deliveryState.hasPacket ? "📦 Bawa Paket" : "🔍 Cari Paket"}
+            </p>
+            {deliveryState.hasPacket && deliveryState.trackingNumber && (
+              <p style={{ fontSize: "11px", color: "#e8e8f0", margin: "0 0 2px" }}>
+                {deliveryState.trackingNumber}
+              </p>
+            )}
+            {completeMessage && (
+              <p style={{ fontSize: "13px", fontWeight: 700, color: "#22c55e", margin: "4px 0 0" }}>
+                ✅ {completeMessage}
+              </p>
+            )}
+            {interactionMessage && !completeMessage && (
+              <p style={{ fontSize: "11px", color: "#f59e0b", margin: "4px 0 0" }}>
+                {interactionMessage}
+              </p>
+            )}
+            {!deliveryState.hasPacket && !interactionMessage && (
+              <p style={{ fontSize: "12px", fontWeight: 600 }}>
+                Ke Balik Pos Pusat (E)
+              </p>
+            )}
           </div>
         </div>
       )}

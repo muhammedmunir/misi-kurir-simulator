@@ -4,7 +4,11 @@ import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import { Physics } from "@react-three/rapier";
 import { useCallback, useEffect, useState } from "react";
 import { CameraFollow } from "./3d/CameraFollow";
+import { DeliverySystemController } from "./3d/DeliverySystemController";
+import { DeliveryZones } from "./3d/DeliveryZones";
 import { HUD3D } from "./3d/HUD3D";
+import { InteractionPrompt } from "./3d/InteractionPrompt";
+import { NPCTraffic } from "./3d/NPCTraffic";
 import { PlayerController } from "./3d/PlayerController";
 import { WorldEnvironment } from "./3d/WorldEnvironment";
 import { TouchJoystick } from "./TouchJoystick";
@@ -78,6 +82,18 @@ export function GameScene3D() {
 
           {/* World */}
           <WorldEnvironment />
+
+          {/* Delivery zones */}
+          <DeliveryZones />
+
+          {/* NPC Traffic */}
+          <NPCTraffic />
+
+          {/* Interaction prompt */}
+          <InteractionPrompt />
+
+          {/* Delivery system controller */}
+          <DeliverySystemController />
 
           {/* Lights */}
           <ambientLight intensity={0.5} />

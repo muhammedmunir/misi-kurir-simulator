@@ -1,4 +1,7 @@
+import { DELIVERY_SYSTEM } from "@/lib/delivery-system";
 import { touchInput } from "@/lib/touch";
+import { useDeliveryUIStore } from "@/store/delivery-ui";
+import { useGameStateStore } from "@/store/gamestate";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import { type Group, Vector3 } from "three";
@@ -54,11 +57,44 @@ export function PlayerController() {
   }, []);
   if (!mounted) return null;
 
-  // Keyboard interaction (E key)
+  // Keyboard interaction (E key — motor swap + delivery interaction)
   useEffect(() => {
+    let interacted = false;
     const handler = (e: KeyboardEvent) => {
-      if (e.code === "KeyE") {
+      if (e.code === "KeyE" && !interacted) {
+        interacted = true;
         e.preventDefault();
+
+        // Delivery system interaction
+        const deliveryResult = DELIVERY_SYSTEM.checkInteract();
+        if (deliveryResult) {
+          const ui = useDeliveryUIStore.getState();
+          const session = DELIVERY_SYSTEM.getSession();
+
+          if (deliveryResult.action === "pickup") {
+            ui.setHasPacket(true);
+            ui.setTrackingNumber(session.trackingNumber);
+            ui.setInteractionMessage(deliveryResult.message);
+            // Keep on foot, skip motor swap
+            return;
+          }
+          if (deliveryResult.action === "deliver") {
+            ui.setHasPacket(false);
+            ui.setTrackingNumber(null);
+            ui.setCompleteMessage(deliveryResult.message);
+            ui.setInteractionMessage("");
+            // Sync game state with reward
+            const gs = useGameStateStore.getState();
+            if (gs.player) {
+              gs.addMoney(session.reward);
+              gs.addXP(session.xpReward);
+            }
+            return;
+          }
+          ui.setInteractionMessage(deliveryResult.message);
+        }
+
+        // Motor swap interaction (fallback)
         if (onFoot) {
           const dx = pos.x - MOTOR_POSITION.x;
           const dz = pos.z - MOTOR_POSITION.z;
@@ -79,12 +115,18 @@ export function PlayerController() {
       }
     };
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      interacted = false;
+    };
   });
 
   useFrame((_state, delta) => {
     if (!groupRef.current) return;
     delta = Math.min(delta, 0.05);
+
+    // ── Sync player position to delivery system ───────────────
+    DELIVERY_SYSTEM.setPlayerPosition({ x: pos.x, z: pos.z });
 
     // ── Gather input from keyboard + touch ────────────────────
     let inputForward = 0;
