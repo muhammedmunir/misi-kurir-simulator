@@ -2,6 +2,7 @@ import { rollDeliveryReward } from "@/data/economy";
 import { completeHandover } from "@/delivery/handover";
 import {
   INBOUND_BATCH,
+  acknowledgeSummary,
   createSession,
   deliverableAt,
   interact,
@@ -87,13 +88,18 @@ describe("interact — hantar", () => {
     expect(session.cargo.find((p: (typeof session.cargo)[number]) => p.id === "pkt-1")?.status).toBe(
       "out_for_delivery",
     );
-    // Second delivery at CAFE: complete manifest.
+    // Second delivery at CAFE: packet delivered, phase → returning, manifest still open
     session = { ...session, nearbyZone: CAFE, handover: null };
     const { session: s2 } = fullDeliver(session, 7000, deps);
-    expect(s2.phase).toBe("complete");
-    expect(s2.manifest?.status).toBe("closed");
-    // completeHandover is called at now+1, so closedAt = 7001.
-    expect(s2.manifest?.closedAt).toBe(7001);
+    expect(s2.phase).toBe("returning");
+    expect(s2.manifest?.status).toBe("open");
+
+    // Go to warehouse desk to close manifest
+    const { session: s3 } = interact(s2, DESK, 9000, testDeps(), { onFoot: true });
+    expect(s3.phase).toBe("complete");
+    expect(s3.manifest?.status).toBe("closed");
+    // manifest is closed at desk interaction time.
+    expect(s3.manifest?.closedAt).toBe(9000);
   });
 
   it("zon tanpa paket untuknya: tiada perubahan pada kargo", () => {
@@ -118,7 +124,11 @@ describe("interact — hantar", () => {
     ).toHaveLength(1);
     // Second packet
     const { session } = fullDeliver(out0.session, 7000, deps);
-    expect(session.phase).toBe("complete");
+    expect(session.phase).toBe("returning");
+
+    // Close manifest at warehouse desk
+    const { session: s2 } = interact(session, DESK, 9000, testDeps(), { onFoot: true });
+    expect(s2.phase).toBe("complete");
   });
 });
 
@@ -153,7 +163,7 @@ describe("interact — cooldown", () => {
 });
 
 describe("tickSession", () => {
-  it("complete → idle selepas 5000ms; paket gudang dan sasarannya kekal", () => {
+  it("tickSession tidak reset complete → idle (perlu acknowledgeSummary)", () => {
     // Deliver through full handover flow to reach "complete"
     let s = deliveringTo([SHOP]);
     const out = fullDeliverForTick(s, 5000);
@@ -161,8 +171,18 @@ describe("tickSession", () => {
     const waiting = interact(createSession(), DESK, 100, testDeps()).session;
     s = { ...out.session, inbound: waiting.inbound, targets: { ...out.session.targets, ...waiting.targets } };
 
+    // Tick 60s later — should stay complete
     expect(tickSession(s, 9999).phase).toBe("complete");
-    const reset = tickSession(s, 10001);
+    expect(tickSession(s, 10001).phase).toBe("complete");
+  });
+
+  it("acknowledgeSummary → idle, paket gudang dan sasarannya kekal", () => {
+    let s = deliveringTo([SHOP]);
+    const out = fullDeliverForTick(s, 5000);
+    const waiting = interact(createSession(), DESK, 100, testDeps()).session;
+    s = { ...out.session, inbound: waiting.inbound, targets: { ...out.session.targets, ...waiting.targets } };
+
+    const reset = acknowledgeSummary(s);
     expect(reset.phase).toBe("idle");
     expect(reset.cargo).toEqual([]);
     expect(reset.manifest).toBeNull();
@@ -190,19 +210,24 @@ describe("tickSession", () => {
   });
 });
 
-/**Helper untuk tickSession test: full deliver to reach complete. */
+/** Helper untuk tickSession test: full deliver to reach complete (incl. desk return). */
 function fullDeliverForTick(
   s: ReturnType<typeof createSession>,
   now: number,
 ): { result: ReturnType<typeof completeHandover>["result"]; session: ReturnType<typeof createSession> } {
   const deps = testDeps();
+  // Step 1: open_handover + completeHandover at SHOP
   const next = interact({ ...s, nearbyZone: SHOP }, SHOP, now, deps, { onFoot: true });
   expect(next.result.action).toBe("open_handover");
-  return completeHandover(
+  const { result, session: delivered } = completeHandover(
     { ...next.session, handover: { ...next.session.handover, proofTaken: true } as DeliveryHandover },
     now + 1,
     deps,
   );
+  // Step 2: interact at warehouse desk to close manifest → complete
+  const desk = interact(delivered, DESK, now + 2000, deps, { onFoot: true });
+  expect(desk.session.phase).toBe("complete");
+  return { result, session: desk.session };
 }
 
 describe("interactBlocksMotorSwap", () => {
@@ -282,9 +307,12 @@ describe("useDeliveryStore — gelung penuh dengan wang pemain", () => {
     } else {
       expect(store().session.phase).toBe("complete");
     }
-    store().tick(t + 5000);
+
+    // Acknowledge summary instead of tick auto-reset
+    store().setNearbyZone(DESK);
+    store().acknowledgeSummary();
     expect(store().session.phase).toBe("idle");
-    return t + 6000;
+    return t + 2000;
   }
 
   it("imbas → muat → berangkat → hantar 2 → idle, 3 manifest berturut-turut", () => {

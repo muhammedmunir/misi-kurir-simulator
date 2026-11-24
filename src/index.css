@@ -208,6 +208,49 @@ select {
   color: var(--color-text-muted);
 }
 
+/* ── Manifest Summary Panel ───────────────────────────────────── */
+
+.wh-summary {
+  padding-bottom: 24px;
+}
+
+.wh-summary__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  font-size: 14px;
+}
+
+.wh-summary__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.wh-summary__row dt {
+  color: var(--color-text-muted);
+  flex: 0 0 auto;
+}
+
+.wh-summary__row dd {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.wh-summary__value--earned {
+  color: var(--color-primary);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.wh-summary__btn {
+  min-height: 48px;
+  width: 100%;
+}
+
 .wh-list {
   list-style: none;
   overflow-y: auto;

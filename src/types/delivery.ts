@@ -27,7 +27,7 @@ export interface DeliveryZone {
  * loading    — manifest open, loading packets onto the vehicle
  * delivering — dispatched; cargo is out for delivery
  * returning  — some packets failed, must return to warehouse
- * complete   — every cargo packet resolved, manifest closed (auto-resets to idle)
+ * complete   — manifest closed, summary shown to player (stays until acknowledged)
  */
 export type DeliveryPhase = "idle" | "loading" | "delivering" | "returning" | "complete";
 
@@ -63,9 +63,13 @@ export interface DeliverySession {
   interactionMessageTime: number | null;
   /** Active handover workflow at current zone. */
   handover: DeliveryHandover | null;
+  /** Accumulated reward/XP for the current manifest. */
+  tally: { earned: number; xp: number };
+  /** Manifest performance snapshot, shown after closing. */
+  summary: ManifestSummary | null;
 }
 
-export type DeliveryAction = "open_warehouse" | "deliver" | "nothing" | "blocked" | "open_handover" | "return_packets";
+export type DeliveryAction = "open_warehouse" | "deliver" | "nothing" | "blocked" | "open_handover" | "return_packets" | "close_manifest";
 
 export interface DeliveryResult {
   action: DeliveryAction;
@@ -73,4 +77,14 @@ export interface DeliveryResult {
   /** RM, only on "deliver". */
   reward?: number;
   xpReward?: number;
+}
+
+/** Snapshot of a manifest's performance, produced when the manifest is closed. */
+export interface ManifestSummary {
+  manifestId: string | undefined;
+  delivered: number;
+  returned: number;
+  earned: number;
+  xp: number;
+  durationMs: number;
 }

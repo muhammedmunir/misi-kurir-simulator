@@ -22,11 +22,16 @@ function deliverPacket(
   const cargo = session.cargo.map((p) => (p.id === packet.id ? delivered : p));
   const reward = rollDeliveryReward(deps.rng);
   const xpReward = 25 + Math.floor(deps.rng() * 25);
+  const tally = {
+    earned: session.tally.earned + reward,
+    xp: session.tally.xp + xpReward,
+  };
   const left = cargo.filter((p) => p.status === "out_for_delivery").length;
 
   let next: DeliverySession = {
     ...session,
     cargo,
+    tally,
     cooldownUntil: now + 1000,
     interactionMessage: null,
     interactionMessageTime: null,
@@ -34,14 +39,13 @@ function deliverPacket(
   let message = `Diserahkan kepada ${packet.receiverName}! ${formatRinggit(reward)} | +${xpReward} XP`;
 
   if (left === 0) {
-    next = settlePhase(next, now);
-  }
-  if (next.phase === "complete") {
-    message += " — semua paket selesai";
-  } else {
-    message += ` — ${left} lagi`;
+    next.phase = "returning";
+    next.completedAt = now;
+    next.completeMessage = "Semua paket dihantar — kembali ke gudang";
+    next.completeMessageTime = now;
   }
 
+  message += left === 0 ? " — kembali ke gudang" : ` — ${left} lagi`;
   next = { ...next, completeMessage: message, completeMessageTime: now };
   return {
     session: next,
@@ -49,24 +53,13 @@ function deliverPacket(
   };
 }
 
-function settlePhase(session: DeliverySession, now: number): DeliverySession {
+function settlePhase(session: DeliverySession): DeliverySession {
   const next = { ...session };
 
   const hasOut = next.cargo.some((p) => p.status === "out_for_delivery");
   if (hasOut) return next;
 
-  const hasFailed = next.cargo.some((p) => p.status === "failed");
-  if (hasFailed) {
-    return { ...next, phase: "returning" };
-  }
-
-  if (next.manifest) {
-    const closed = closeManifest(next.manifest, next.cargo, now);
-    if (closed.ok) {
-      return { ...next, manifest: closed.manifest, phase: "complete", completedAt: now };
-    }
-  }
-  return { ...next, phase: "complete", completedAt: now };
+  return { ...next, phase: "returning" };
 }
 
 function lookupZone(id: string) {
@@ -148,20 +141,53 @@ export function failHandover(session: DeliverySession, now: number): DeliverySes
     interactionMessageTime: now,
   };
 
-  return settlePhase(next, now);
+  return settlePhase(next);
 }
 
 /**
- * Return all failed packets to the warehouse.
+ * Return all failed packets, close manifest, create summary, set phase to "complete".
+ * Returns the updated `DeliverySession` directly.
  */
 export function returnFailedPackets(session: DeliverySession, now: number): DeliverySession {
-  const cargo = session.cargo.map((p) => {
-    if (p.status !== "failed") return p;
-    return transition(p, "returned", "Dipulangkan ke gudang", now, {
-      inOpenManifest: isCarrying(session.manifest, p.id),
-      hasHandover: true,
-    });
-  });
+  let cargo = session.cargo;
+  let manifest = session.manifest;
 
-  return settlePhase({ ...session, cargo }, now);
+  const hasFailed = session.cargo.some((p) => p.status === "failed");
+
+  if (hasFailed) {
+    cargo = session.cargo.map((p) => {
+      if (p.status !== "failed") return p;
+      return transition(p, "returned", "Dipulangkan ke gudang", now, {
+        inOpenManifest: isCarrying(manifest, p.id),
+        hasHandover: true,
+      });
+    });
+  }
+
+  // Close manifest
+  if (manifest) {
+    const closed = closeManifest(manifest, cargo, now);
+    if (closed.ok) {
+      manifest = closed.manifest;
+    }
+  }
+
+  // Create summary
+  const summary = {
+    manifestId: manifest?.id,
+    delivered: cargo.filter((p) => p.status === "delivered").length,
+    returned: cargo.filter((p) => p.status === "returned").length,
+    earned: session.tally.earned,
+    xp: session.tally.xp,
+    durationMs: manifest ? now - manifest.createdAt : 0,
+  };
+
+  return {
+    ...session,
+    phase: "complete",
+    manifest,
+    cargo,
+    summary,
+    completedAt: now,
+  };
 }

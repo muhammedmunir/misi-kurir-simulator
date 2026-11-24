@@ -85,6 +85,8 @@ export function createSession(): DeliverySession {
     interactionMessage: null,
     interactionMessageTime: null,
     handover: null,
+    tally: { earned: 0, xp: 0 },
+    summary: null,
   };
 }
 
@@ -106,24 +108,9 @@ export function nextTargetZone(s: DeliverySession): DeliveryZone | null {
   return DELIVERY_ZONES.find((z) => z.id === s.targets[next.id]) ?? null;
 }
 
-/** Call every frame: auto-reset after completion and expire messages. */
-export function tickSession(
-  session: DeliverySession,
-  now: number,
-  autoResetMs = 5000,
-  messageClearMs = 4000,
-): DeliverySession {
+/** Call every frame: expire messages. No longer auto-resets complete→idle. */
+export function tickSession(session: DeliverySession, now: number, messageClearMs = 4000): DeliverySession {
   const next = { ...session };
-
-  if (next.phase === "complete" && next.completedAt != null && now - next.completedAt >= autoResetMs) {
-    next.phase = "idle";
-    next.manifest = null;
-    next.cargo = [];
-    next.completedAt = null;
-    next.cooldownUntil = 0;
-    // Targets of packets still waiting at the warehouse are kept.
-    next.targets = Object.fromEntries(next.inbound.map((p) => [p.id, session.targets[p.id]]));
-  }
 
   if (next.completeMessageTime != null && now - next.completeMessageTime >= messageClearMs) {
     next.completeMessage = null;
@@ -170,13 +157,19 @@ export function interact(
   // ── Warehouse desk ────────────────────────────────────────────
   if (zone.type === "pickup") {
     if (session.phase === "returning") {
-      const next = returnFailedPackets(session, now);
+      // Delegate to returnFailedPackets which returns DeliverySession directly.
+      // Derive action from whether failed packets were present.
+      const hasFailed = session.cargo.some((p) => p.status === "failed");
+      const returned = returnFailedPackets(session, now);
+      const action: DeliveryAction = hasFailed ? "return_packets" : "close_manifest";
+
       return {
-        result: { action: "return_packets", message: "Paket dipulangkan" },
+        result: { action, message: hasFailed ? "Paket dipulangkan" : "Manifest ditutup" },
         session: {
-          ...next,
+          ...returned,
+          handover: null,
           cooldownUntil: now + 300,
-          interactionMessage: "Paket gagal dipulangkan ke gudang",
+          interactionMessage: hasFailed ? "Paket dipulangkan ke gudang" : "Manifest ditutup",
           interactionMessageTime: now,
         },
       };
@@ -223,4 +216,28 @@ export function interact(
 /** Whether this interaction result consumes the press (so no motor mount/dismount). */
 export function interactBlocksMotorSwap(action: DeliveryAction | null): boolean {
   return action !== null && action !== "nothing";
+}
+
+/**
+ * Acknowledge the manifest summary and return to idle.
+ * Clears manifest, cargo, summary, tally, completedAt, cooldown, targets
+ * (keeps targets for inbound packets).
+ */
+export function acknowledgeSummary(session: DeliverySession): DeliverySession {
+  if (session.phase !== "complete") return session;
+
+  // Keep targets only for packets still in inbound
+  const targets = Object.fromEntries(session.inbound.map((p) => [p.id, session.targets[p.id]]));
+
+  return {
+    ...session,
+    phase: "idle",
+    manifest: null,
+    cargo: [],
+    completedAt: null,
+    cooldownUntil: 0,
+    summary: null,
+    tally: { earned: 0, xp: 0 },
+    targets,
+  };
 }

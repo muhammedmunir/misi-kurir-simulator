@@ -20,7 +20,11 @@ export function getInteractButtonInfo(session: DeliverySession, now: number): Bu
   if (now < session.cooldownUntil) return { label: "Tunggu...", enabled: false };
 
   if (zone.type === "pickup") {
-    if (session.phase === "returning") return { label: "PULANGKAN PAKET", enabled: true };
+    if (session.phase === "returning") {
+      const hasFailed = session.cargo.some((p) => p.status === "failed");
+      if (hasFailed) return { label: "PULANGKAN PAKET", enabled: true };
+      return { label: "TUTUP MANIFEST", enabled: true };
+    }
     if (session.phase === "delivering") return { label: "Hantar dulu", enabled: false };
     if (session.phase === "complete") return { label: "Tunggu...", enabled: false };
     return { label: "BUKA GUDANG", enabled: true };

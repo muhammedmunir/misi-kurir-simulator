@@ -1,3 +1,4 @@
+import { acknowledgeSummary as acknowledgeSummaryPure } from "@/lib/delivery-system";
 import { completeHandover, failHandover, takeProof as takeProofPure } from "@/delivery/handover";
 import {
   DELIVERY_ZONES,
@@ -57,6 +58,8 @@ interface DeliveryStore {
   confirmHandover: (now: number) => void;
   reportAbsent: (now: number) => void;
   cancelHandover: () => void;
+  /** Acknowledge manifest summary and return to idle. */
+  acknowledgeSummary: () => void;
 }
 
 const TICK_KEYS = [
@@ -169,6 +172,10 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => {
     },
     cancelHandover: () => {
       set((s) => ({ session: { ...s.session, handover: null } }));
+    },
+
+    acknowledgeSummary: () => {
+      set({ session: acknowledgeSummaryPure(get().session) });
     },
   };
 });
