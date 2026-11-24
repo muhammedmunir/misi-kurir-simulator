@@ -9,15 +9,14 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { WarehouseUI } from "./components/WarehouseUI";
 
 export function App() {
-  const { currentScene, confirmScene } = useSceneStore();
+  const { currentScene, nextScene, confirmScene } = useSceneStore();
 
-  // Auto-confirm scene transitions after a brief delay
+  // Complete a requested transition after a brief delay
   useEffect(() => {
-    if (currentScene !== undefined) {
-      const timer = setTimeout(() => confirmScene(), 100);
-      return () => clearTimeout(timer);
-    }
-  }, [currentScene, confirmScene]);
+    if (nextScene === null) return;
+    const timer = setTimeout(() => confirmScene(), 100);
+    return () => clearTimeout(timer);
+  }, [nextScene, confirmScene]);
 
   return (
     <div className="app-root" style={{ height: "100dvh", width: "100vw", overflow: "hidden", background: "#0a0a0f" }}>

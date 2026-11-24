@@ -19,7 +19,8 @@ export function LoadSavePanel() {
       return;
     }
     createNewGame(playerName.trim());
-    navigate(Scene.TUTORIAL);
+    // No tutorial scene exists yet; go straight into the game.
+    navigate(Scene.GAME);
   }
 
   return (
