@@ -1,3 +1,4 @@
+import { rollDeliveryReward } from "@/data/economy";
 import { completeHandover } from "@/delivery/handover";
 import {
   INBOUND_BATCH,
@@ -308,14 +309,16 @@ describe("useDeliveryStore — gelung penuh dengan wang pemain", () => {
     store().interact(3000, { onFoot: true });
     // confirmHandover triggers the actual delivery with reward
     store().takeProof();
+    useDeliveryStore.setState({ deps: testDeps([0.1, 0.5, 0.9]) });
     store().confirmHandover(3000);
-    // Reward is rolled inside confirmHandover via rollDeliveryReward(deps.rng); just verify it increased.
-    expect(money()).toBeGreaterThan(start);
-    expect(xp()).toBeGreaterThanOrEqual(xpStart);
+    const reward = rollDeliveryReward(() => 0.1);
+    const xpReward = 25 + Math.floor(0.5 * 25);
+    expect(money()).toBe(start + reward);
+    expect(xp()).toBe(xpStart + xpReward);
 
     // Pressing again at the same address: nothing left to deliver
     store().interact(9000);
-    expect(money()).toBeGreaterThan(start);
+    expect(money()).toBe(start + reward);
   });
 
   it("muat paket belum diimbas: ditolak dengan mesej, tidak masuk motor", () => {

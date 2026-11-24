@@ -33,15 +33,11 @@ function deliverPacket(
   };
   let message = `Diserahkan kepada ${packet.receiverName}! ${formatRinggit(reward)} | +${xpReward} XP`;
 
-  if (left === 0 && session.manifest) {
-    const closed = closeManifest(session.manifest, cargo, now);
-    if (closed.ok) {
-      next = { ...next, manifest: closed.manifest, phase: "complete", completedAt: now };
-      message += " — semua paket selesai";
-    } else {
-      // Manifest can't close yet (e.g. failed packets) — fall through to returning.
-      next = settlePhase(next, now);
-    }
+  if (left === 0) {
+    next = settlePhase(next, now);
+  }
+  if (next.phase === "complete") {
+    message += " — semua paket selesai";
   } else {
     message += ` — ${left} lagi`;
   }
@@ -167,21 +163,5 @@ export function returnFailedPackets(session: DeliverySession, now: number): Deli
     });
   });
 
-  let next: DeliverySession = { ...session, cargo };
-
-  const hasOut = next.cargo.some((p) => p.status === "out_for_delivery");
-  if (hasOut) {
-    return next;
-  }
-
-  if (next.manifest) {
-    const closed = closeManifest(next.manifest, next.cargo, now);
-    if (closed.ok) {
-      next = { ...next, manifest: closed.manifest, phase: "complete", completedAt: now };
-    }
-  } else {
-    next = { ...next, phase: "complete", completedAt: now };
-  }
-
-  return next;
+  return settlePhase({ ...session, cargo }, now);
 }

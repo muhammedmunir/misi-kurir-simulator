@@ -1,8 +1,9 @@
-import { type CargoLimits, closeManifest, isCarrying } from "@/delivery/manifest";
-import { transition } from "@/delivery/packet";
+import { returnFailedPackets } from "@/delivery/handover";
+import type { CargoLimits } from "@/delivery/manifest";
 import type { DeliveryAction, DeliveryHandover, DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
 import type { Packet } from "@/types/game";
-import { type Deps, WAREHOUSE, generateInbound } from "@/warehouse/warehouse-logic";
+import type { Deps } from "@/warehouse/warehouse-logic";
+import { WAREHOUSE, generateInbound } from "@/warehouse/warehouse-logic";
 
 /** Destination house placeholder, relative to its lot centre. */
 export const HOUSE = { width: 8, height: 5, depth: 6, zOffset: 4, doorOffset: 9 } as const;
@@ -169,33 +170,16 @@ export function interact(
   // ── Warehouse desk ────────────────────────────────────────────
   if (zone.type === "pickup") {
     if (session.phase === "returning") {
-      // Return all failed packets to the warehouse
-      const cargo = session.cargo.map((p) => {
-        if (p.status !== "failed") return p;
-        return transition(p, "returned", "Dipulangkan ke gudang", now, {
-          inOpenManifest: isCarrying(session.manifest, p.id),
-          hasHandover: true,
-        });
-      });
-
-      let next: DeliverySession = {
-        ...session,
-        cargo,
-        cooldownUntil: now + 300,
-        interactionMessage: "Paket gagal dipulangkan ke gudang",
-        interactionMessageTime: now,
+      const next = returnFailedPackets(session, now);
+      return {
+        result: { action: "return_packets", message: "Paket dipulangkan" },
+        session: {
+          ...next,
+          cooldownUntil: now + 300,
+          interactionMessage: "Paket gagal dipulangkan ke gudang",
+          interactionMessageTime: now,
+        },
       };
-
-      if (next.manifest) {
-        const closed = closeManifest(next.manifest, cargo, now);
-        if (closed.ok) {
-          next = { ...next, manifest: closed.manifest, phase: "complete", completedAt: now };
-        }
-      } else {
-        next = { ...next, phase: "complete", completedAt: now };
-      }
-
-      return { result: { action: "return_packets", message: "Paket dipulangkan" }, session: next };
     }
 
     if (session.phase === "delivering") return say(session, "nothing", "Hantar paket dalam motor dahulu", now);
