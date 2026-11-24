@@ -42,3 +42,9 @@ coverage/
 # PWA
 service-worker.js
 pwacompat.mjs
+
+# TypeScript build
+*.tsbuildinfo
+
+# Playwright MCP
+.playwright-mcp/

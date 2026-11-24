@@ -98,6 +98,9 @@ export function GameScene3D() {
           {/* Lights */}
           <ambientLight intensity={0.5} />
           <directionalLight position={[10, 20, 5]} intensity={1.2} castShadow={false} />
+
+          {/* 3D overlay HUD */}
+          <HUD3D />
         </Physics>
 
         {/* Post-processing */}
@@ -105,9 +108,6 @@ export function GameScene3D() {
           <Bloom luminanceThreshold={0.9} intensity={0.15} />
         </EffectComposer>
       </Canvas>
-
-      {/* 3D overlay HUD */}
-      <HUD3D />
 
       {/* Touch controls overlay */}
       <TouchJoystick />
