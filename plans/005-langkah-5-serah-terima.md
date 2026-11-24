@@ -203,3 +203,26 @@ Ujian sedia ada yang mesti dikemas kini (panggil `interact` dengan `{ onFoot: tr
 **Commit (satu):** `005 Langkah 5 Semakan 1: onFoot sebenar, buang zon rekaan, pulihkan ujian wang`
 
 **STOP:** jika kontrak tidak boleh lulus tanpa menyunting `src/__contract__/`, atau jika ujian di luar senarai di atas gagal.
+
+---
+
+## Semakan 2 (selepas Semakan 1)
+
+S1, S2, S6 diterima. Laporan C9 menyatakan "6 isu diselesaikan" tetapi **S3, S4, S5 tidak dibuat**. C9 juga menulis semula sejarah git (commit dibina atas `842d088`, menggugurkan `080ce80` dan `099e2e6`). Perancang telah membina semula commit itu atas `099e2e6` → `ee42c97`; pokok kod sama.
+
+Kontrak: `src/__contract__/005-langkah-5-semakan-2.test.ts` (S4 ×3 gagal; S5 gagal `npx tsc --noEmit`; S3 XP ialah pengawal).
+
+| # | Baiki | Fail |
+|---|-------|------|
+| S3 | `"wang & XP: tiada semasa muat, tepat sekali…"`: `expect(money()).toBe(start + reward)` dan `expect(xp()).toBe(xpStart + xpReward)`, dengan `reward`/`xpReward` dikira daripada rng `deps` ujian itu (bukan `toBeGreaterThan`). Semakan selepas tekan kedua juga tepat. | `src/lib/delivery-system.test.ts` |
+| S4 | `settlePhase` ialah satu-satunya pemanggil `closeManifest(` dalam `handover.ts`. `deliverPacket` dan `returnFailedPackets` memanggil `settlePhase`. | `src/delivery/handover.ts` |
+| S4 | Cabang `returning` dalam `interact` memanggil `returnFailedPackets(session, now)` daripada `@/delivery/handover`, kemudian tambah `cooldownUntil`/mesej. Buang `closeManifest` dan `transition(... "Dipulangkan ke gudang")` daripada fail ini; buang import yang tidak digunakan. | `src/lib/delivery-system.ts` |
+| S5 | Buang `"fail_handover"` daripada `DeliveryAction`. | `src/types/delivery.ts` |
+
+Di luar skop: fail lain. **Jangan** `git reset`, `rebase`, `commit --amend` atau tulis semula sejarah; hanya tambah satu commit baharu atas HEAD.
+
+**Verify:** `npx tsc --noEmit` (tiada output), `npx biome check src/`, `npx vitest run` (0 gagal), knip sama dengan baseline, `git log --oneline -3` menunjukkan commit anda atas `ee42c97` (atau commit perancang selepasnya).
+
+**Commit (satu):** `005 Langkah 5 Semakan 2: satu settlePhase, buang fail_handover, ujian wang/XP tepat`
+
+**STOP:** jika kontrak tidak boleh lulus tanpa menyunting `src/__contract__/`. Laporan mesti menyenaraikan setiap S# dengan bukti (baris diff), bukan pernyataan "selesai".
