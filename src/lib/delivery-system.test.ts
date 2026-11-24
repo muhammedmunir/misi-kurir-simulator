@@ -195,7 +195,7 @@ describe("interact — hantar paket", () => {
     expect(result.session.hasPacket).toBe(false);
     expect(result.session.deliveredAt).toBe(now);
     expect(result.session.cooldownUntil).toBe(now + 1000);
-    expect(result.result.message).toContain("3.000");
+    expect(result.result.message).toContain("3,000");
     expect(result.result.message).toContain("30 XP");
     expect(result.session.completeMessage).toBe(result.result.message);
     expect(result.session.completeMessageTime).toBe(now);

@@ -1,3 +1,4 @@
+import { formatRinggit } from "@/lib/utils";
 import type { DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
 
 // ── Zone Data ────────────────────────────────────────────────────
@@ -185,7 +186,7 @@ export function interact(
   if (zone.type === "delivery" && session.hasPacket && zone.id === session.targetZone?.id) {
     const reward = session.reward;
     const xpReward = session.xpReward;
-    const message = `Penghantaran selesai! +Rp ${reward.toLocaleString("id-ID")} | +${xpReward} XP`;
+    const message = `Penghantaran selesai! ${formatRinggit(reward)} | +${xpReward} XP`;
 
     const newSession: DeliverySession = {
       ...session,

@@ -1,4 +1,5 @@
 import { saveGame } from "@/lib/idb";
+import { formatRinggit } from "@/lib/utils";
 import { useDeliveryStore } from "@/store/delivery";
 import { useSceneStore } from "@/store/game";
 import { useGameStateStore } from "@/store/gamestate";
@@ -110,7 +111,7 @@ export function HUD() {
               color: "#22c55e",
             }}
           >
-            Rp {player.money.toLocaleString("id-ID")}
+            {formatRinggit(player.money)}
           </div>
         </div>
 

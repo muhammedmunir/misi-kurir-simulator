@@ -13,7 +13,7 @@ export function createPlayer(name = "Pelanggan"): Player {
     xp: 0,
     xpToNext: 100,
     reputation: 0,
-    money: 500000, // Rp 500k modal
+    money: 500000, // RM 500k modal
     totalDeliveries: 0,
     successfulDeliveries: 0,
     failedDeliveries: 0,

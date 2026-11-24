@@ -25,10 +25,17 @@ export function nanoid(): string {
 }
 
 /**
- * Format Indonesian/Rupiah currency.
+ * Format Malaysian Ringgit currency.
  */
-export function formatRupiah(amount: number): string {
-  return `Rp ${amount.toLocaleString("id-ID")}`;
+export function formatRinggit(amount: number): string {
+  return new Intl.NumberFormat("ms-MY", {
+    style: "currency",
+    currency: "MYR",
+    minimumFractionDigits: 2,
+  })
+    .format(amount)
+    .replace("MYR", "RM")
+    .replace(/\s/, "");
 }
 
 /**

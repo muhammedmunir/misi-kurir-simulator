@@ -2,7 +2,7 @@ import {
   calcVolume,
   clamp,
   degToRad,
-  formatRupiah,
+  formatRinggit,
   formatTime,
   generateTrackingNumber,
   lerp,
@@ -11,18 +11,21 @@ import {
 import { canTransition } from "@/types/game";
 import { describe, expect, it } from "vitest";
 
-describe("formatRupiah", () => {
-  it("format angka biasa", () => {
-    expect(formatRupiah(100000)).toBe("Rp 100.000");
+describe("formatRinggit", () => {
+  it("format RM biasa", () => {
+    expect(formatRinggit(1250)).toBe("RM1,250.00");
   });
-  it("format angka besar", () => {
-    expect(formatRupiah(5000000)).toBe("Rp 5.000.000");
+  it("format RM besar", () => {
+    expect(formatRinggit(5000000)).toBe("RM5,000,000.00");
   });
-  it("format angka nol", () => {
-    expect(formatRupiah(0)).toBe("Rp 0");
+  it("format RM nol", () => {
+    expect(formatRinggit(0)).toBe("RM0.00");
   });
-  it("format angka kecil", () => {
-    expect(formatRupiah(15000)).toBe("Rp 15.000");
+  it("format RM kecil", () => {
+    expect(formatRinggit(15000)).toBe("RM15,000.00");
+  });
+  it("format RM dengan desimal", () => {
+    expect(formatRinggit(350.5)).toBe("RM350.50");
   });
 });
 
