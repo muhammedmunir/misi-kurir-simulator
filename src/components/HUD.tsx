@@ -1,3 +1,4 @@
+import { nextTargetZone, pendingCargo } from "@/lib/delivery-system";
 import { saveGame } from "@/lib/idb";
 import { formatRinggit } from "@/lib/utils";
 import { useDeliveryStore } from "@/store/delivery";
@@ -12,9 +13,10 @@ export function HUD() {
   const player = useGameStateStore((s) => s.player);
   const session = useDeliveryStore((s) => s.session);
 
-  const hasPacket = !!session.packet;
-  const trackingNumber = session.packet?.trackingNumber ?? null;
-  const targetZone = session.targetZone;
+  const pending = pendingCargo(session);
+  const hasPacket = pending.length > 0 || session.phase === "loading";
+  const nextPacket = pending[0] ?? null;
+  const targetZone = nextTargetZone(session);
   const interactionMessage = session.interactionMessage;
   const completeMessage = session.completeMessage;
 
@@ -194,13 +196,19 @@ export function HUD() {
             }}
           >
             <p style={{ fontSize: "12px", color: hasPacket ? "#f59e0b" : "#22c55e", margin: "0 0 2px" }}>
-              {hasPacket ? "📦 Bawa Paket" : "🔍 Cari Paket"}
+              {session.phase === "loading"
+                ? `📦 Memuat: ${session.cargo.length} paket`
+                : pending.length > 0
+                  ? `📦 ${pending.length} paket untuk dihantar`
+                  : "🔍 Ambil paket di gudang"}
             </p>
-            {hasPacket && trackingNumber && (
-              <p style={{ fontSize: "11px", color: "#e8e8f0", margin: "0 0 2px" }}>{trackingNumber}</p>
-            )}
-            {hasPacket && targetZone && (
-              <p style={{ fontSize: "11px", color: "#e8e8f0", margin: "0 0 2px" }}>Sasaran: {targetZone.name}</p>
+            {nextPacket && targetZone && (
+              <>
+                <p style={{ fontSize: "11px", color: "#e8e8f0", margin: "0 0 2px" }}>
+                  Seterusnya: {targetZone.name} ({nextPacket.receiverName})
+                </p>
+                <p style={{ fontSize: "11px", color: "#8888a0", margin: "0 0 2px" }}>{nextPacket.trackingNumber}</p>
+              </>
             )}
             {completeMessage && (
               <p style={{ fontSize: "13px", fontWeight: 700, color: "#22c55e", margin: "4px 0 0" }}>
@@ -211,7 +219,7 @@ export function HUD() {
               <p style={{ fontSize: "11px", color: "#f59e0b", margin: "4px 0 0" }}>{interactionMessage}</p>
             )}
             {!hasPacket && !interactionMessage && (
-              <p style={{ fontSize: "12px", fontWeight: 600 }}>Ke Pejabat Pos Pusat (E)</p>
+              <p style={{ fontSize: "12px", fontWeight: 600 }}>Masuk gudang, tekan E di meja sortir</p>
             )}
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { WAREHOUSE } from "@/warehouse/warehouse-logic";
 import { useMemo } from "react";
 
 const BUILDING_COLORS = ["#4a5568", "#5a6578", "#6a7588", "#3d4f5f", "#7a8a9a", "#4b5c6d"];
@@ -15,12 +16,17 @@ export function Buildings() {
     // Create buildings along roads (grid pattern)
     for (let gx = -3; gx <= 3; gx++) {
       for (let gz = -3; gz <= 3; gz++) {
-        if (pseudoRandom() > 0.5) continue; // Some empty lots
+        const emptyLot = pseudoRandom() > 0.5;
 
-        const bx = gx * 40 + (pseudoRandom() - 0.5) * 10;
-        const bz = gz * 40 + (pseudoRandom() - 0.5) * 10;
+        // Block centres (between roads), not road intersections: roads are 12 wide on
+        // multiples of 40, so a block spans ±14 around its centre.
+        const bx = gx * 40 + 20 + (pseudoRandom() - 0.5) * 4;
+        const bz = gz * 40 + 20 + (pseudoRandom() - 0.5) * 4;
         const width = 6 + pseudoRandom() * 8;
         const depth = 6 + pseudoRandom() * 8;
+        if (emptyLot) continue;
+        // The warehouse occupies its own block.
+        if (gx * 40 + 20 === WAREHOUSE.center.x && gz * 40 + 20 === WAREHOUSE.center.z) continue;
         const height = 5 + pseudoRandom() * 20;
         const floors = Math.floor(height / 3);
 

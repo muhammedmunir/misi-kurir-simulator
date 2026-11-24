@@ -27,7 +27,7 @@ Latar: Malaysia, RM, teks BM (TPD-016). Paparan wang masih Rp sehingga Pelan 005
 | Navigasi menu → permainan | Tested | Dibaiki `dc5d761`; disahkan di Chrome |
 | Scene 3D: tanah, jalan, bangunan | Implemented | Geometri placeholder |
 | Karakter berjalan/berlari | Implemented | Kedudukan dikira manual, bukan Rapier |
-| Kamera orang ketiga | Implemented | B12: menghadap dinding semasa mula |
+| Kamera orang ketiga | Tested | B12 dibaiki: kamera kini benar-benar mengikut pemain; disahkan di Chrome |
 | Kawalan papan kekunci (WASD, E) | Implemented | Belum diuji di pelayar; logik E dikongsi dengan butang sentuh |
 | Kawalan sentuh (joystick, tindakan, BREK) | Tested | `1b88949`; Chrome `?touch=1`. Belum diuji di telefon sebenar |
 | Motor: naik, pandu, brek, turun | In progress | Berfungsi, tetapi motor kembali ke titik tetap bila turun (Pelan 005 Langkah 3) |
@@ -48,16 +48,16 @@ Latar: Malaysia, RM, teks BM (TPD-016). Paparan wang masih Rp sehingga Pelan 005
 
 | Ciri | Status | Catatan |
 |------|--------|---------|
-| Skrin gudang 2D (`WarehouseUI`) | Implemented | Paket rawak, tidak bersambung ke gelung |
-| Gudang 3D, sortir, imbas, muat, kapasiti | Not started | Pelan 005 Langkah 1–2 |
-| Manifest | Not started | Jenis data wujud sahaja |
+| Gudang 3D (bangunan, rak, meja sortir) | Tested | Placeholder geometri; tiada collision. Disahkan di Chrome |
+| Imbas (simulasi), muat, kapasiti berat/isipadu, berangkat | Tested | Ujian unit + Chrome: paket ke-5 ditolak pada 20/20 unit |
+| Manifest | Tested | Dibuka pada muatan pertama, ditutup bila semua paket selesai (Langkah 6 akan pindah ke meja gudang) |
 
 ## Phase 4 — Delivery
 
 | Ciri | Status | Catatan |
 |------|--------|---------|
-| Gelung ambil → hantar → ganjaran → ulang | Tested | Ujian unit stor (3 kitaran, ganjaran tepat sekali); ambil paket disahkan di Chrome |
-| Zon pickup/penghantaran | Tested | 2 pickup, 3 penghantaran |
+| Gelung gudang → hantar berbilang paket → ganjaran → ulang | Tested | Ujian unit stor (3 manifest); Chrome: 4 paket ke 2 alamat, RM500 → RM518 |
+| Zon gudang/penghantaran | Tested | 1 meja gudang, 3 alamat |
 | Pelanggan NPC, serah terima, bukti | Not started | Pelan 005 Langkah 5 |
 | Penghantaran gagal / retur | Not started | Pelan 005 Langkah 5–6 |
 | COD | Not started | Pelan 006 |

@@ -1,29 +1,33 @@
 import { rollDeliveryReward } from "@/data/economy";
-import { type CargoLimits, closeManifest, createManifest, isCarrying, loadPacket } from "@/delivery/manifest";
-import { advance, createPacket, transition } from "@/delivery/packet";
+import { type CargoLimits, closeManifest, isCarrying } from "@/delivery/manifest";
+import { transition } from "@/delivery/packet";
 import { formatRinggit } from "@/lib/utils";
-import type { DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
+import type { DeliveryAction, DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
+import type { Packet } from "@/types/game";
+import { type Deps, WAREHOUSE, generateInbound } from "@/warehouse/warehouse-logic";
 
 /** Starter motor (Motor Matic) cargo, matching DEFAULT_VEHICLES specs. */
 export const STARTER_CARGO: CargoLimits = { maxVolume: 20, maxWeight: 15 };
 
-const RECEIVER_NAMES = ["Aminah", "Rajesh", "Mei Ling", "Hafiz", "Siti", "Kumar", "Farah", "Wei Jie"];
+/** How many new packets arrive when the warehouse runs empty. */
+export const INBOUND_BATCH = 5;
 
 // ── Zone Data ─────────────────────────────────────────────────────
 
 export const DELIVERY_ZONES: DeliveryZone[] = [
   {
     id: "zone-pickup-1",
-    name: "Pejabat Pos Pusat",
+    name: "Gudang Pejabat Pos Pusat",
     type: "pickup",
-    position: { x: 0, z: 0 },
+    // Sorting desk, inside the warehouse building
+    position: { x: WAREHOUSE.center.x, z: WAREHOUSE.center.z + 1 },
     areaCode: "bandar",
-    description: "Balik pos untuk penghantaran pertama",
+    description: "Meja sortir gudang",
     interactable: true,
   },
   {
     id: "zone-delivery-1",
-    name: "Kedai Runcit Mak Amin",
+    name: "Kedai Runcit Mak Minah",
     type: "delivery",
     position: { x: 40, z: 40 },
     areaCode: "perumahan",
@@ -48,31 +52,23 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
     description: "Penghantaran kargo industri",
     interactable: true,
   },
-  {
-    id: "zone-pickup-2",
-    name: "Pejabat Pos Timur",
-    type: "pickup",
-    position: { x: 80, z: 40 },
-    areaCode: "bandar",
-    description: "Balik pos kedua untuk penghantaran baru",
-    interactable: true,
-  },
 ];
 
-// ── Pure State Functions (boleh diuji) ────────────────────────────
+const DESTINATIONS = DELIVERY_ZONES.filter((z) => z.type === "delivery");
 
-/** Cipta session baharu dari keadaan kosong. */
+// ── Session ───────────────────────────────────────────────────────
+
 export function createSession(): DeliverySession {
   return {
-    state: "idle",
-    packet: null,
+    phase: "idle",
+    inbound: [],
     manifest: null,
-    targetZone: null,
-    reward: 0,
-    xpReward: 0,
+    cargo: [],
+    targets: {},
+    panelOpen: false,
     nearbyZone: null,
     cooldownUntil: 0,
-    deliveredAt: null,
+    completedAt: null,
     completeMessage: null,
     completeMessageTime: null,
     interactionMessage: null,
@@ -80,11 +76,25 @@ export function createSession(): DeliverySession {
   };
 }
 
-/**
- * `tick` — panggil setiap frame. Uruskan auto-reset, cooldown,
- * dan pembersihan mesej selesai selepas 4000ms.
- * Mengembalikan session baharu (stateless, pure).
- */
+/** Cargo packets still to be handed over. */
+export function pendingCargo(s: DeliverySession): Packet[] {
+  return s.cargo.filter((p) => p.status === "out_for_delivery");
+}
+
+/** The cargo packet deliverable at `zone`, if any. */
+export function deliverableAt(s: DeliverySession, zone: DeliveryZone): Packet | null {
+  if (s.phase !== "delivering") return null;
+  return pendingCargo(s).find((p) => s.targets[p.id] === zone.id) ?? null;
+}
+
+/** Zone of the next pending packet (for HUD / zone highlight). */
+export function nextTargetZone(s: DeliverySession): DeliveryZone | null {
+  const next = pendingCargo(s)[0];
+  if (!next) return null;
+  return DELIVERY_ZONES.find((z) => z.id === s.targets[next.id]) ?? null;
+}
+
+/** Call every frame: auto-reset after completion and expire messages. */
 export function tickSession(
   session: DeliverySession,
   now: number,
@@ -93,34 +103,22 @@ export function tickSession(
 ): DeliverySession {
   const next = { ...session };
 
-  // Auto-reset: complete → idle selepas autoResetMs
-  if (next.state === "complete" && next.deliveredAt != null && now - next.deliveredAt >= autoResetMs) {
-    next.state = "idle";
-    next.packet = null;
+  if (next.phase === "complete" && next.completedAt != null && now - next.completedAt >= autoResetMs) {
+    next.phase = "idle";
     next.manifest = null;
-    next.targetZone = null;
-    next.reward = 0;
-    next.xpReward = 0;
-    next.deliveredAt = null;
+    next.cargo = [];
+    next.completedAt = null;
     next.cooldownUntil = 0;
+    // Targets of packets still waiting at the warehouse are kept.
+    next.targets = Object.fromEntries(next.inbound.map((p) => [p.id, session.targets[p.id]]));
   }
 
-  // Padam completeMessage selepas 4000ms
-  if (
-    next.completeMessage != null &&
-    next.completeMessageTime != null &&
-    now - next.completeMessageTime >= messageClearMs
-  ) {
+  if (next.completeMessageTime != null && now - next.completeMessageTime >= messageClearMs) {
     next.completeMessage = null;
     next.completeMessageTime = null;
   }
 
-  // Padam interactionMessage selepas 3000ms
-  if (
-    next.interactionMessage != null &&
-    next.interactionMessageTime != null &&
-    now - next.interactionMessageTime >= 3000
-  ) {
+  if (next.interactionMessageTime != null && now - next.interactionMessageTime >= 3000) {
     next.interactionMessage = null;
     next.interactionMessageTime = null;
   }
@@ -128,148 +126,83 @@ export function tickSession(
   return next;
 }
 
-/**
- * `interact` — panggil apabila pengguna menekan E.
- * Mengembalikan { result, session } atau `null` jika disekat.
- * Tiada side-effect: RNG, ID, tracking-number diterima sebagai argumen.
- *
- * "blocked" = cooldown aktif → E tidak boleh buat apa-apa
- * "nothing"  = zon ada tapi tiada aksi yang sah
- */
-export function interact(
-  session: DeliverySession,
-  nearbyZone: DeliveryZone | null,
-  now: number,
-  createId: () => string,
-  createTrackingNumber: (prefix: string) => string,
-  rng: () => number,
-  cargo: CargoLimits = STARTER_CARGO,
-): { result: DeliveryResult; session: DeliverySession } {
-  // Sektakan jika masih dalam cooldown → "blocked"
-  if (now < session.cooldownUntil) {
-    return {
-      result: { action: "blocked", message: "Tunggu sebentar..." },
-      session,
-    };
-  }
-
-  if (!nearbyZone) {
-    return {
-      result: { action: "nothing", message: "Tiada zon berdekatan" },
-      session,
-    };
-  }
-
-  const zone = nearbyZone;
-
-  // Ambil paket di zon pickup
-  if (zone.type === "pickup" && session.state === "idle") {
-    const deliveryZones = DELIVERY_ZONES.filter((z) => z.type === "delivery");
-    const targetZone = deliveryZones[Math.floor(rng() * deliveryZones.length)];
-    const xpReward = 25 + Math.floor(rng() * 25);
-    const trackingNumber = createTrackingNumber("MSK");
-    const packetId = createId();
-    const message = `Pilih paket dari ${zone.name}`;
-
-    // Section I flow: received → sorting → ready_to_dispatch (warehouse, Langkah 2)
-    // → loaded (manifest + capacity check) → in_transit → out_for_delivery.
-    const received = createPacket({
-      id: packetId,
-      trackingNumber,
-      senderAddress: zone.name,
-      receiverName: RECEIVER_NAMES[Math.floor(rng() * RECEIVER_NAMES.length)],
-      receiverAddress: targetZone.name,
-      areaCode: targetZone.areaCode,
-      weight: Math.round((0.5 + rng() * 2) * 10) / 10,
-      volume: 3,
-      now,
-    });
-    const ready = advance(received, ["sorting", "ready_to_dispatch"], "Disortir di gudang", now);
-    const load = loadPacket(createManifest(createId(), now), ready, cargo, now);
-    if (!load.ok) {
-      return { result: { action: "nothing", message: "Paket tidak muat dalam kenderaan" }, session };
-    }
-    const packet = advance(load.packet, ["in_transit", "out_for_delivery"], "Dalam penghantaran", now);
-
-    const sessionWithPacket: DeliverySession = {
-      ...session,
-      state: "carrying",
-      packet,
-      manifest: load.manifest,
-      targetZone,
-      reward: 0,
-      xpReward,
-      cooldownUntil: now + 500,
-      interactionMessage: message,
-      interactionMessageTime: now,
-    };
-
-    return {
-      result: { action: "pickup", message },
-      session: sessionWithPacket,
-    };
-  }
-
-  // Hantar paket di zon delivery
-  if (zone.type === "delivery" && session.state === "carrying" && zone.id === session.targetZone?.id) {
-    const reward = rollDeliveryReward(() => rng());
-    const xpReward = session.xpReward;
-    const message = `Penghantaran selesai! ${formatRinggit(reward)} | +${xpReward} XP`;
-
-    const current = session.packet;
-    if (!current) return { result: { action: "nothing", message: "Tiada paket" }, session };
-    // Handover = the interaction itself until receiver NPCs exist (Langkah 5).
-    const deliveredPacket = transition(current, "delivered", "Paket diserahkan kepada penerima", now, {
-      inOpenManifest: isCarrying(session.manifest, current.id),
-      hasHandover: true,
-    });
-    const closed = session.manifest ? closeManifest(session.manifest, [deliveredPacket], now) : null;
-    const closedManifest = closed?.ok ? closed.manifest : session.manifest;
-
-    const sessionComplete: DeliverySession = {
-      ...session,
-      state: "complete",
-      packet: deliveredPacket,
-      manifest: closedManifest,
-      reward,
-      deliveredAt: now,
-      cooldownUntil: now + 1000,
-      completeMessage: message,
-      completeMessageTime: now,
-      interactionMessage: null,
-      interactionMessageTime: null,
-    };
-
-    return {
-      result: { action: "deliver", message, reward, xpReward },
-      session: sessionComplete,
-    };
-  }
-
-  // Zon pickup tetapi sudah membawa paket
-  if (zone.type === "pickup" && session.state === "carrying") {
-    return {
-      result: { action: "nothing", message: "Anda sudah ada paket. Hantar dulu yang sedia ada." },
-      session,
-    };
-  }
-
+function say(session: DeliverySession, action: DeliveryAction, message: string, now: number) {
   return {
-    result: { action: "nothing", message: "Tiada aktiviti di sini" },
-    session,
+    result: { action, message },
+    session: { ...session, interactionMessage: message, interactionMessageTime: now },
   };
 }
 
 /**
- * `interactBlocksMotorSwap` — tulen: action → true jika motor swap disekat.
- * "pickup" / "deliver" / "blocked" → true  (swing disekat).
- * "nothing" / null    → false (biarkan motor swap).
+ * One interaction (E key / action button). Pure: ids, tracking numbers and
+ * randomness are injected.
+ *  - warehouse desk: open the panel (restocking inbound if empty)
+ *  - delivery zone: hand over the cargo packet addressed here
  */
-export function interactBlocksMotorSwap(action: string | null): boolean {
-  if (action === null) return false;
-  if (action === "nothing") return false;
-  return true;
+export function interact(
+  session: DeliverySession,
+  zone: DeliveryZone | null,
+  now: number,
+  deps: Deps,
+): { result: DeliveryResult; session: DeliverySession } {
+  if (zone && now < session.cooldownUntil) {
+    return { result: { action: "blocked", message: "Tunggu sebentar..." }, session };
+  }
+  if (!zone) return { result: { action: "nothing", message: "Tiada zon berdekatan" }, session };
+
+  if (zone.type === "pickup") {
+    if (session.phase === "delivering") return say(session, "nothing", "Hantar paket dalam motor dahulu", now);
+    if (session.phase === "complete") return say(session, "nothing", "Manifest selesai. Tunggu sebentar.", now);
+
+    let next: DeliverySession = { ...session, panelOpen: true, cooldownUntil: now + 300 };
+    if (next.inbound.length === 0 && next.cargo.length === 0) {
+      const batch = generateInbound(INBOUND_BATCH, DESTINATIONS, zone.name, deps, now);
+      next = { ...next, inbound: batch.packets, targets: { ...next.targets, ...batch.targets } };
+    }
+    return { result: { action: "open_warehouse", message: "Gudang dibuka" }, session: next };
+  }
+
+  const packet = deliverableAt(session, zone);
+  if (!packet) {
+    const msg =
+      session.phase === "delivering" ? "Tiada paket untuk alamat ini" : "Tiada paket. Muat paket di gudang dahulu.";
+    return say(session, "nothing", msg, now);
+  }
+
+  // Handover = this interaction until receiver NPCs exist (Langkah 5).
+  const delivered = transition(packet, "delivered", "Paket diserahkan kepada penerima", now, {
+    inOpenManifest: isCarrying(session.manifest, packet.id),
+    hasHandover: true,
+  });
+  const cargo = session.cargo.map((p) => (p.id === packet.id ? delivered : p));
+  const reward = rollDeliveryReward(deps.rng);
+  const xpReward = 25 + Math.floor(deps.rng() * 25);
+  const left = cargo.filter((p) => p.status === "out_for_delivery").length;
+
+  let next: DeliverySession = {
+    ...session,
+    cargo,
+    cooldownUntil: now + 1000,
+    interactionMessage: null,
+    interactionMessageTime: null,
+  };
+  let message = `Diserahkan kepada ${packet.receiverName}! ${formatRinggit(reward)} | +${xpReward} XP`;
+
+  if (left === 0 && session.manifest) {
+    const closed = closeManifest(session.manifest, cargo, now);
+    if (closed.ok) {
+      next = { ...next, manifest: closed.manifest, phase: "complete", completedAt: now };
+      message += " — semua paket selesai";
+    }
+  } else {
+    message += ` — ${left} lagi`;
+  }
+
+  next = { ...next, completeMessage: message, completeMessageTime: now };
+  return { result: { action: "deliver", message, reward, xpReward }, session: next };
 }
 
-// Semua komponen sudah guna useDeliveryStore.
-// Shim ini sudah boleh dibuang (2025-11-24).
+/** Whether this interaction result consumes the press (so no motor mount/dismount). */
+export function interactBlocksMotorSwap(action: DeliveryAction | null): boolean {
+  return action !== null && action !== "nothing";
+}

@@ -1,3 +1,4 @@
+import { deliverableAt } from "@/lib/delivery-system";
 import type { DeliverySession } from "@/types/delivery";
 
 export interface ButtonInfo {
@@ -16,12 +17,14 @@ export function getInteractButtonInfo(session: DeliverySession, now: number): Bu
   if (now < session.cooldownUntil) return { label: "Tunggu...", enabled: false };
 
   if (zone.type === "pickup") {
-    return session.packet ? { label: "Hantar dulu", enabled: false } : { label: "AMBIL PAKET", enabled: true };
+    if (session.phase === "delivering") return { label: "Hantar dulu", enabled: false };
+    if (session.phase === "complete") return { label: "Tunggu...", enabled: false };
+    return { label: "BUKA GUDANG", enabled: true };
   }
 
-  if (!session.packet) return { label: "Tiada paket", enabled: false };
-  if (zone.id !== session.targetZone?.id) return { label: "Bukan sini", enabled: false };
-  return { label: "HANTAR PAKET", enabled: true };
+  if (deliverableAt(session, zone)) return { label: "HANTAR PAKET", enabled: true };
+  if (session.phase === "delivering") return { label: "Bukan sini", enabled: false };
+  return { label: "Tiada paket", enabled: false };
 }
 
 export interface MotorContext {

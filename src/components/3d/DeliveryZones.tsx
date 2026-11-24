@@ -1,15 +1,23 @@
+import { pendingCargo } from "@/lib/delivery-system";
 import { useDeliveryStore } from "@/store/delivery";
+import type { DeliverySession } from "@/types/delivery";
 import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
+
+function pendingTargetIds(s: DeliverySession): string[] {
+  return pendingCargo(s).map((p) => s.targets[p.id]);
+}
 
 export function DeliveryZones() {
   const zones = useMemo(() => useDeliveryStore.getState().zones, []);
 
-  const session = useDeliveryStore((s) => s.session);
+  // Highlight every zone that still has a packet waiting to be handed over.
+  const activeIds = useDeliveryStore(useShallow((s) => pendingTargetIds(s.session)));
 
   return (
     <group>
       {zones.map((zone) => {
-        const isActive = zone.id === session.targetZone?.id;
+        const isActive = activeIds.includes(zone.id);
         const color = zone.type === "pickup" ? "#22c55e" : isActive ? "#f59e0b" : "#3b82f6";
         const emissive = zone.type === "pickup" ? "#22c55e" : isActive ? "#f59e0b" : "#1e40af";
 

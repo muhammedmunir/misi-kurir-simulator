@@ -1,3 +1,5 @@
+import { WarehouseBuilding } from "@/warehouse/WarehouseBuilding";
+import { WarehousePanel } from "@/warehouse/WarehousePanel";
 import { Canvas } from "@react-three/fiber";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import { Physics } from "@react-three/rapier";
@@ -82,6 +84,7 @@ export function GameScene3D() {
 
           {/* World */}
           <WorldEnvironment />
+          <WarehouseBuilding />
 
           {/* Delivery zones */}
           <DeliveryZones />
@@ -111,6 +114,7 @@ export function GameScene3D() {
 
       {/* Touch controls overlay */}
       <TouchJoystick />
+      <WarehousePanel />
     </div>
   );
 }

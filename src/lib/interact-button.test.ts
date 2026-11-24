@@ -1,171 +1,57 @@
-import { DELIVERY_ZONES, createSession } from "@/lib/delivery-system";
+import { createSession } from "@/lib/delivery-system";
 import { getActionButton, getInteractButtonInfo } from "@/lib/interact-button";
 import { consumeAction, requestAction } from "@/lib/touch";
+import { CAFE, DESK, SHOP, deliveringTo } from "@/test/delivery-fixtures";
 import type { DeliverySession } from "@/types/delivery";
-import { describe, expect, it, vi } from "vitest";
-
-// Mock Date.now untuk setiap ujian
-function mockNow(t: number) {
-  vi.useFakeTimers();
-  vi.setSystemTime(new Date(t));
-}
-
-function restoreNow() {
-  vi.useRealTimers();
-}
+import { describe, expect, it } from "vitest";
 
 function withSession(overrides: Partial<DeliverySession>): DeliverySession {
   return { ...createSession(), ...overrides };
 }
 
-describe("getInteractButtonInfo", () => {
-  const now = Date.now();
-
-  it("idle + tiada zon → { label: 'Tiada zon', enabled: false }", () => {
-    const s = createSession();
-    const info = getInteractButtonInfo(s, now);
-    expect(info.enabled).toBe(false);
-    expect(info.label).toBe("Tiada zon");
-  });
-
-  it("idle + zon pickup → { label: 'AMBIL PAKET', enabled: true }", () => {
-    const s = withSession({ nearbyZone: DELIVERY_ZONES[0] });
-    const info = getInteractButtonInfo(s, now);
-    expect(info.enabled).toBe(true);
-    expect(info.label).toBe("AMBIL PAKET");
-  });
-
-  it("hasPacket + zon pickup → { label: 'Hantar dulu', enabled: false }", () => {
-    const s = withSession({
-      nearbyZone: DELIVERY_ZONES[0],
-      packet: {
-        id: "pkt-1",
-        trackingNumber: "MSK-ABC",
-        senderName: "Pengirim",
-        receiverName: "Penerima",
-        senderAddress: "Kedai",
-        receiverAddress: "Rumah",
-        areaCode: "bandar",
-        weight: 1,
-        dimensions: { length: 20, width: 15, height: 10 },
-        volume: 3,
-        paymentMethod: "prepaid" as const,
-        codAmount: 0,
-        priority: "normal" as const,
-        specialInstructions: "",
-        status: "incoming" as const,
-        history: [],
-        createdAt: 0,
-        updatedAt: 0,
-      },
-      state: "carrying",
-    });
-    const info = getInteractButtonInfo(s, now);
-    expect(info.enabled).toBe(false);
-    expect(info.label).toBe("Hantar dulu");
-  });
-
-  it("hasPacket + zon delivery sasaran → { label: 'HANTAR PAKET', enabled: true }", () => {
-    const s = withSession({
-      nearbyZone: DELIVERY_ZONES[1],
-      targetZone: DELIVERY_ZONES[1],
-      packet: {
-        id: "pkt-1",
-        trackingNumber: "MSK-ABC",
-        senderName: "Pengirim",
-        receiverName: "Penerima",
-        senderAddress: "Kedai",
-        receiverAddress: "Rumah",
-        areaCode: "bandar",
-        weight: 1,
-        dimensions: { length: 20, width: 15, height: 10 },
-        volume: 3,
-        paymentMethod: "prepaid" as const,
-        codAmount: 0,
-        priority: "normal" as const,
-        specialInstructions: "",
-        status: "incoming" as const,
-        history: [],
-        createdAt: 0,
-        updatedAt: 0,
-      },
-      state: "carrying",
-    });
-    const info = getInteractButtonInfo(s, now);
-    expect(info.enabled).toBe(true);
-    expect(info.label).toBe("HANTAR PAKET");
-  });
-
-  it("idle + zon delivery + tiada paket → { label: 'Tiada paket', enabled: false }", () => {
-    const s = withSession({ nearbyZone: DELIVERY_ZONES[1] });
-    const info = getInteractButtonInfo(s, now);
-    expect(info.enabled).toBe(false);
-    expect(info.label).toBe("Tiada paket");
-  });
-
-  it("cooldown aktif → { label: 'Tunggu...', enabled: false }", () => {
-    const s = withSession({
-      nearbyZone: DELIVERY_ZONES[0],
-      cooldownUntil: Date.now() + 10000,
-    });
-    const info = getInteractButtonInfo(s, now);
-    expect(info.enabled).toBe(false);
-    expect(info.label).toBe("Tunggu...");
-  });
-
-  it("complete + cooldown habis → kembali ke idle, aktif jika zon pickup", () => {
-    mockNow(10000);
-    const s = withSession({
-      state: "complete",
-      deliveredAt: 5000,
-      cooldownUntil: 6000,
-      nearbyZone: DELIVERY_ZONES[0],
-    });
-    // cooldownUntil = 6000, now = 10000 → tidak disekat
-    // complete → idle (secara manual set)
-    const idle = { ...s, state: "idle" } as DeliverySession;
-    const info = getInteractButtonInfo(idle, 10000);
-    expect(info.enabled).toBe(true);
-    expect(info.label).toBe("AMBIL PAKET");
-    restoreNow();
-  });
-});
-
-describe("getInteractButtonInfo — padanan dengan interact()", () => {
+describe("getInteractButtonInfo — sepadan dengan interact()", () => {
   const now = 50_000;
 
-  it("hasPacket + zon delivery BUKAN sasaran → nyahaktif", () => {
-    const s = withSession({
-      nearbyZone: DELIVERY_ZONES[1],
-      targetZone: DELIVERY_ZONES[2],
-      packet: {
-        id: "pkt-1",
-        trackingNumber: "MSK-ABC",
-        senderName: "Pengirim",
-        receiverName: "Penerima",
-        senderAddress: "Kedai",
-        receiverAddress: "Rumah",
-        areaCode: "bandar",
-        weight: 1,
-        dimensions: { length: 20, width: 15, height: 10 },
-        volume: 3,
-        paymentMethod: "prepaid" as const,
-        codAmount: 0,
-        priority: "normal" as const,
-        specialInstructions: "",
-        status: "incoming" as const,
-        history: [],
-        createdAt: 0,
-        updatedAt: 0,
-      },
-      state: "carrying",
-    });
-    expect(getInteractButtonInfo(s, now)).toEqual({ label: "Bukan sini", enabled: false });
+  it("tiada zon → 'Tiada zon' walaupun cooldown", () => {
+    expect(getInteractButtonInfo({ ...createSession(), cooldownUntil: now + 1 }, now).label).toBe("Tiada zon");
   });
 
-  it("cooldown tanpa zon → 'Tiada zon' (cooldown hanya penting dalam zon)", () => {
-    const s = withSession({ cooldownUntil: now + 1000 });
-    expect(getInteractButtonInfo(s, now).label).toBe("Tiada zon");
+  it("meja gudang semasa idle → BUKA GUDANG", () => {
+    expect(getInteractButtonInfo(withSession({ nearbyZone: DESK }), now)).toEqual({
+      label: "BUKA GUDANG",
+      enabled: true,
+    });
+  });
+
+  it("meja gudang semasa menghantar → nyahaktif", () => {
+    expect(getInteractButtonInfo({ ...deliveringTo([SHOP]), nearbyZone: DESK }, now)).toEqual({
+      label: "Hantar dulu",
+      enabled: false,
+    });
+  });
+
+  it("alamat paket semasa menghantar → HANTAR PAKET", () => {
+    expect(getInteractButtonInfo({ ...deliveringTo([SHOP]), nearbyZone: SHOP }, now)).toEqual({
+      label: "HANTAR PAKET",
+      enabled: true,
+    });
+  });
+
+  it("alamat lain semasa menghantar → Bukan sini", () => {
+    expect(getInteractButtonInfo({ ...deliveringTo([SHOP]), nearbyZone: CAFE }, now)).toEqual({
+      label: "Bukan sini",
+      enabled: false,
+    });
+  });
+
+  it("zon penghantaran tanpa kargo → Tiada paket", () => {
+    expect(getInteractButtonInfo(withSession({ nearbyZone: SHOP }), now).label).toBe("Tiada paket");
+  });
+
+  it("cooldown dalam zon → Tunggu...", () => {
+    expect(getInteractButtonInfo(withSession({ nearbyZone: DESK, cooldownUntil: now + 1 }), now).label).toBe(
+      "Tunggu...",
+    );
   });
 });
 
