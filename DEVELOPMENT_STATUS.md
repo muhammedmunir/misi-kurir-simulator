@@ -42,7 +42,7 @@ Latar: Malaysia, RM, teks BM (TPD-016). Paparan wang masih Rp sehingga Pelan 005
 |------|--------|---------|
 | Grid jalan bandar kecil | Implemented | Satu kawasan |
 | Kawasan bersambung (perumahan, kampung, dll.) | Not started | |
-| Navigasi / minimap | Not started | Anak panah: Pelan 005 Langkah 4 |
+| Navigasi / minimap | In progress | Anak panah: Tested, minimap: Belum ditulis |
 | Chunk streaming, LOD | Not started | |
 
 ## Phase 3 — Warehouse

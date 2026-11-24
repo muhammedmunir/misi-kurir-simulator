@@ -1,3 +1,4 @@
+import { NavArrow } from "@/navigation/NavArrow";
 import { WarehouseBuilding } from "@/warehouse/WarehouseBuilding";
 import { WarehousePanel } from "@/warehouse/WarehousePanel";
 import { Canvas } from "@react-three/fiber";
@@ -117,6 +118,7 @@ export function GameScene3D() {
       {/* Touch controls overlay */}
       <TouchJoystick />
       <WarehousePanel />
+      <NavArrow />
     </div>
   );
 }
