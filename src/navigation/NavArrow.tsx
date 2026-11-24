@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 
 function read(): { name: string; dist: number; turn: number } | null {
   const session = useDeliveryStore.getState().session;
+  if (session.panelOpen) return null;
+
   const target = currentNavTarget(session);
   if (!target) return null;
 
@@ -16,10 +18,12 @@ function read(): { name: string; dist: number; turn: number } | null {
 }
 
 export function NavArrow() {
-  const initial = useRef(read());
+  const subRef = useRef<(() => void) | null>(null);
+  const dispRef = useRef<{ name: string; dist: number; turn: number } | null>(null);
 
   const [disp, setDisp] = useState(() => {
-    const r = initial.current;
+    const r = read();
+    dispRef.current = r;
     return {
       name: r?.name ?? "",
       dist: r?.dist ?? -1,
@@ -28,30 +32,44 @@ export function NavArrow() {
   });
 
   useEffect(() => {
-    if (disp.name === "") return;
+    // Langgan sesi supaya perubahan panelOpen serta-merta menyebabkan re-render.
+    subRef.current = useDeliveryStore.subscribe(() => {
+      setDisp((prev) => prev);
+    });
 
+    // Interval sentiasa dipasang, sekali sahaja semasa mount.
     const id = setInterval(() => {
       const next = read();
       if (next === null) {
         setDisp({ name: "", dist: -1, turn: 0 });
         return;
       }
+
       const rDist = next.dist;
       const rTurn = next.turn;
       const rName = next.name;
 
-      if (rDist !== disp.dist || rName !== disp.name || Math.abs(rTurn - disp.turn) > 0.05) {
-        setDisp({ name: rName, dist: rDist, turn: rTurn });
+      // Baca nilai terkini dari ref supaya tidak perlu dalam deps.
+      const cur = dispRef.current;
+      if (!cur || rDist !== cur.dist || rName !== cur.name || Math.abs(rTurn - cur.turn) > 0.05) {
+        const newVal = { name: rName, dist: rDist, turn: rTurn };
+        dispRef.current = newVal;
+        setDisp(newVal);
       }
     }, 100);
 
-    return () => clearInterval(id);
-  }, [disp.dist, disp.turn, disp.name]);
+    return () => {
+      clearInterval(id);
+      if (subRef.current) subRef.current();
+    };
+  }, []);
+
+  // Kemas kini ref setiap kali state berubah supaya interval sentiasa baca nilai terkini.
+  useEffect(() => {
+    dispRef.current = disp;
+  }, [disp]);
 
   if (disp.name === "") return null;
-
-  const session = useDeliveryStore.getState().session;
-  if (session.panelOpen) return null;
 
   return (
     <div className="nav-hud">

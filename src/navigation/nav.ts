@@ -1,4 +1,4 @@
-import { DELIVERY_ZONES } from "@/lib/delivery-system";
+import { DELIVERY_ZONES, nextTargetZone } from "@/lib/delivery-system";
 import type { DeliverySession, DeliveryZone } from "@/types/delivery";
 
 /**
@@ -62,10 +62,7 @@ export function currentNavTarget(session: DeliverySession): DeliveryZone | null 
   }
 
   if (session.phase === "delivering") {
-    const next = session.cargo.find((p) => p.status === "out_for_delivery" && session.targets[p.id]);
-    if (next) {
-      return DELIVERY_ZONES.find((z) => z.id === session.targets[next.id]) ?? null;
-    }
+    return nextTargetZone(session);
   }
 
   // Default: meja gudang
