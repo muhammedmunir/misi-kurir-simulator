@@ -51,7 +51,7 @@ describe("interact — hantar", () => {
   ): { result: ReturnType<typeof completeHandover>["result"]; session: ReturnType<typeof createSession> } {
     // Langkah 1: open_handover — gunakan nearbyZone dari session.
     const zone = s.nearbyZone ?? SHOP;
-    const next = interact(s, zone, now, deps);
+    const next = interact(s, zone, now, deps, { onFoot: true });
     expect(next.result.action).toBe("open_handover");
     // Langkah 2+3: takeProof + completeHandover
     return completeHandover(
@@ -97,14 +97,14 @@ describe("interact — hantar", () => {
 
   it("zon tanpa paket untuknya: tiada perubahan pada kargo", () => {
     const s = deliveringTo([SHOP]);
-    const { result, session } = interact(s, CAFE, 5000, testDeps());
+    const { result, session } = interact(s, CAFE, 5000, testDeps(), { onFoot: true });
     expect(result.action).toBe("nothing");
     expect(session.cargo).toEqual(s.cargo);
     expect(deliverableAt(s, CAFE)).toBeNull();
   });
 
   it("tanpa manifest (belum muat): tiada hantar", () => {
-    expect(interact(createSession(), SHOP, 5000, testDeps()).result.action).toBe("nothing");
+    expect(interact(createSession(), SHOP, 5000, testDeps(), { onFoot: true }).result.action).toBe("nothing");
   });
 
   it("dua paket ke alamat sama: dihantar satu demi satu", () => {
@@ -124,7 +124,7 @@ describe("interact — hantar", () => {
 describe("interact — cooldown", () => {
   it("dalam zon semasa cooldown: blocked, tiada perubahan", () => {
     const s = { ...deliveringTo([SHOP]), cooldownUntil: 6000 };
-    const { result, session } = interact(s, SHOP, 5999, testDeps());
+    const { result, session } = interact(s, SHOP, 5999, testDeps(), { onFoot: true });
     expect(result.action).toBe("blocked");
     expect(session).toBe(s);
     expect(interactBlocksMotorSwap(result.action)).toBe(true);
@@ -133,7 +133,7 @@ describe("interact — cooldown", () => {
   it("tepat pada had cooldown: dibenarkan", () => {
     const s = { ...deliveringTo([SHOP]), cooldownUntil: 6000 };
     // interact returns open_handover at cooldown boundary
-    const out = interact(s, SHOP, 6000, testDeps());
+    const out = interact(s, SHOP, 6000, testDeps(), { onFoot: true });
     expect(out.result.action).toBe("open_handover");
     // completeHandover should deliver
     const result = completeHandover(
@@ -195,7 +195,7 @@ function fullDeliverForTick(
   now: number,
 ): { result: ReturnType<typeof completeHandover>["result"]; session: ReturnType<typeof createSession> } {
   const deps = testDeps();
-  const next = interact({ ...s, nearbyZone: SHOP }, SHOP, now, deps);
+  const next = interact({ ...s, nearbyZone: SHOP }, SHOP, now, deps, { onFoot: true });
   expect(next.result.action).toBe("open_handover");
   return completeHandover(
     { ...next.session, handover: { ...next.session.handover, proofTaken: true } as DeliveryHandover },
@@ -252,7 +252,7 @@ describe("useDeliveryStore — gelung penuh dengan wang pemain", () => {
       store().setNearbyZone(null);
       store().setNearbyZone(zone);
       // interact → open_handover, then takeProof → confirmHandover → deliver
-      store().interact(t);
+      store().interact(t, { onFoot: true });
       expect(store().session.handover).not.toBeNull();
       store().takeProof();
       expect(store().session.handover?.proofTaken).toBe(true);
@@ -305,7 +305,7 @@ describe("useDeliveryStore — gelung penuh dengan wang pemain", () => {
     const zone = store().zones.find((z) => z.id === store().session.targets[id]);
     if (!zone) throw new Error("zon sasaran mesti wujud");
     store().setNearbyZone(zone);
-    store().interact(3000);
+    store().interact(3000, { onFoot: true });
     // confirmHandover triggers the actual delivery with reward
     store().takeProof();
     store().confirmHandover(3000);

@@ -73,7 +73,7 @@ describe("checkParking — kotak alamat sebenar", () => {
   const { zoneId, box } = PARKING_BOXES[0];
 
   it("setiap alamat penghantaran ada kotak parkir", () => {
-    expect(PARKING_BOXES).toHaveLength(4);
+    expect(PARKING_BOXES).toHaveLength(3);
   });
 
   it("dalam kotak → betul", () => {

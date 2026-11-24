@@ -71,8 +71,8 @@ function toggleMotor(): void {
  * One interaction (E key or touch action button): delivery first; if the
  * delivery result does not consume the press, mount/dismount the motor.
  */
-function performInteract(): void {
-  const { result } = useDeliveryStore.getState().interact(Date.now());
+export function performInteract(): void {
+  const { result } = useDeliveryStore.getState().interact(Date.now(), { onFoot });
   if (interactBlocksMotorSwap(result?.action ?? null)) return;
   toggleMotor();
 }

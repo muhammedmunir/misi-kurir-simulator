@@ -57,8 +57,7 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   },
   destination("zone-delivery-1", "Kedai Runcit Mak Minah", "perumahan", 60, 20, "Penghantaran ke kedai runcit"),
   destination("zone-delivery-2", "Kafe Kampung Digital", "pasar", -20, -20, "Penghantaran ke kafe tempatan"),
-  destination("zone-delivery-3", "Gudang Stokin Barat", "perindustrian", 90, 50, "Penghantaran kotak stokin"),
-  destination("zone-delivery-4", "Pusat Industri Timur", "industri", 100, -60, "Penghantaran kargo industri", false),
+  destination("zone-delivery-3", "Pusat Industri Timur", "industri", 100, -60, "Penghantaran kargo industri", false),
 ];
 
 const DESTINATIONS = DELIVERY_ZONES.filter((z) => z.type === "delivery");
@@ -157,15 +156,11 @@ export function interact(
   zone: DeliveryZone | null,
   now: number,
   deps: Deps,
-  onFoot?: boolean | { onFoot: boolean },
+  ctx?: { onFoot: boolean },
 ): { result: DeliveryResult; session: DeliverySession } {
-  // When onFoot is not specified, infer from zone type: delivery zones require on-foot.
-  let flag: boolean;
-  if (onFoot === undefined) {
-    flag = zone?.type === "delivery" || false;
-  } else {
-    flag = typeof onFoot === "object" ? onFoot.onFoot : onFoot;
-  }
+  // Default: no context = onFoot is false (not inferred from zone type).
+  const flag = ctx?.onFoot ?? false;
+
   if (zone && now < session.cooldownUntil) {
     return { result: { action: "blocked", message: "Tunggu sebentar..." }, session };
   }
@@ -217,7 +212,7 @@ export function interact(
   // ── Delivery zone ─────────────────────────────────────────────
   if (!flag) {
     // Still on motor — do nothing so the press dismounts first
-    return say(session, "nothing", "Tiada paket. Muat paket di gudang dahulu.", now);
+    return say(session, "nothing", "Turun dari motor dahulu", now);
   }
 
   const packet = deliverableAt(session, zone);

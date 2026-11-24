@@ -33,8 +33,8 @@ interface DeliveryStore {
   deps: Deps;
 
   tick: (now: number) => void;
-  /** E key / action button. Applies the reward to the player on "deliver". Accepts optional onFoot flag. */
-  interact: (now: number, onFoot?: boolean | { onFoot: boolean }) => { result: DeliveryResult | null };
+  /** E key / action button. Applies the reward to the player on "deliver". Accepts optional onFoot context. */
+  interact: (now: number, ctx?: { onFoot: boolean }) => { result: DeliveryResult | null };
 
   // Warehouse panel
   scan: (packetId: string, now: number) => void;
@@ -92,13 +92,10 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => {
       if (TICK_KEYS.some((k) => next[k] !== session[k])) set({ session: next });
     },
 
-    interact: (now, onFoot) => {
+    interact: (now, ctx) => {
       const s = get().session;
       if (!s.nearbyZone) return { result: null };
-      // Infer onFoot from zone type: delivery zones require onFoot=true,
-      // pickup zones (warehouse) are accessible from motor so onFoot doesn't matter.
-      const flag = onFoot ?? s.nearbyZone.type === "delivery";
-      const { result, session } = interactPure(s, s.nearbyZone, now, get().deps, flag);
+      const { result, session } = interactPure(s, s.nearbyZone, now, get().deps, ctx);
       set({ session });
       if (result.action === "deliver") {
         useGameStateStore.getState().addMoney(result.reward ?? 0);
