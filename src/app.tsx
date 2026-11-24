@@ -6,7 +6,6 @@ import { HUD } from "./components/HUD";
 import { LoadSavePanel } from "./components/LoadSavePanel";
 import { MainMenu } from "./components/MainMenu";
 import { SettingsPanel } from "./components/SettingsPanel";
-import { WarehouseUI } from "./components/WarehouseUI";
 
 export function App() {
   const { currentScene, nextScene, confirmScene } = useSceneStore();
@@ -23,7 +22,6 @@ export function App() {
       {currentScene === Scene.MENU && <MainMenu />}
       {currentScene === Scene.LOAD_SAVE && <LoadSavePanel />}
       {currentScene === Scene.GAME && <GameScene3D />}
-      {currentScene === Scene.WAREHOUSE && <WarehouseUI />}
       {currentScene === Scene.SETTINGS && <SettingsPanel />}
       <HUD />
     </div>

@@ -23,7 +23,7 @@ export function HUD() {
   const isOnFoot = playerState.isOnFoot();
   const speed = Math.abs(Math.round(playerState.getSpeed()));
 
-  if (!player || (currentScene !== Scene.GAME && currentScene !== Scene.WAREHOUSE)) return null;
+  if (!player || currentScene !== Scene.GAME) return null;
 
   const handleSave = async () => {
     const gamestate = useGameStateStore.getState();
