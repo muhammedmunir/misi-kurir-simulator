@@ -118,6 +118,7 @@ export function GameScene3D() {
           touchInput.joystick.active = input.joystick.active;
           touchInput.brake = input.brake;
           touchInput.horn = input.horn;
+          touchInput.action = input.action;
           touchInput.cameraAngle = input.cameraAngle;
         }}
       />

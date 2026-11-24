@@ -1,7 +1,7 @@
 import { DELIVERY_ZONES, createSession } from "@/lib/delivery-system";
 import { getInteractButtonInfo } from "@/lib/interact-button";
 import type { DeliverySession } from "@/types/delivery";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 // Mock Date.now untuk setiap ujian
 function mockNow(t: number) {
@@ -18,20 +18,18 @@ function withSession(overrides: Partial<DeliverySession>): DeliverySession {
 }
 
 describe("getInteractButtonInfo", () => {
-  beforeEach(() => {
-    vi.useRealTimers();
-  });
+  const now = Date.now();
 
   it("idle + tiada zon → { label: 'Tiada zon', enabled: false }", () => {
     const s = createSession();
-    const info = getInteractButtonInfo(s);
+    const info = getInteractButtonInfo(s, now);
     expect(info.enabled).toBe(false);
     expect(info.label).toBe("Tiada zon");
   });
 
   it("idle + zon pickup → { label: 'AMBIL PAKET', enabled: true }", () => {
     const s = withSession({ nearbyZone: DELIVERY_ZONES[0] });
-    const info = getInteractButtonInfo(s);
+    const info = getInteractButtonInfo(s, now);
     expect(info.enabled).toBe(true);
     expect(info.label).toBe("AMBIL PAKET");
   });
@@ -42,7 +40,7 @@ describe("getInteractButtonInfo", () => {
       hasPacket: true,
       state: "hasPacket",
     });
-    const info = getInteractButtonInfo(s);
+    const info = getInteractButtonInfo(s, now);
     expect(info.enabled).toBe(false);
     expect(info.label).toBe("Hantar dulu");
   });
@@ -53,14 +51,14 @@ describe("getInteractButtonInfo", () => {
       hasPacket: true,
       state: "hasPacket",
     });
-    const info = getInteractButtonInfo(s);
+    const info = getInteractButtonInfo(s, now);
     expect(info.enabled).toBe(true);
     expect(info.label).toBe("HANTAR PAKET");
   });
 
   it("idle + zon delivery + tiada paket → { label: 'Tiada paket', enabled: false }", () => {
     const s = withSession({ nearbyZone: DELIVERY_ZONES[1] });
-    const info = getInteractButtonInfo(s);
+    const info = getInteractButtonInfo(s, now);
     expect(info.enabled).toBe(false);
     expect(info.label).toBe("Tiada paket");
   });
@@ -70,7 +68,7 @@ describe("getInteractButtonInfo", () => {
       nearbyZone: DELIVERY_ZONES[0],
       cooldownUntil: Date.now() + 10000,
     });
-    const info = getInteractButtonInfo(s);
+    const info = getInteractButtonInfo(s, now);
     expect(info.enabled).toBe(false);
     expect(info.label).toBe("Tunggu...");
   });
@@ -86,7 +84,7 @@ describe("getInteractButtonInfo", () => {
     // cooldownUntil = 6000, now = 10000 → tidak disekat
     // complete → idle (secara manual set)
     const idle = { ...s, state: "idle" } as DeliverySession;
-    const info = getInteractButtonInfo(idle);
+    const info = getInteractButtonInfo(idle, 10000);
     expect(info.enabled).toBe(true);
     expect(info.label).toBe("AMBIL PAKET");
     restoreNow();

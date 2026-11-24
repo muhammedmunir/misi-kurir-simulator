@@ -1,3 +1,5 @@
+import { getInteractButtonInfo } from "@/lib/interact-button";
+import { useDeliveryStore } from "@/store/delivery";
 import { useCallback, useEffect, useRef } from "react";
 
 export interface JoystickInput {
@@ -18,8 +20,9 @@ export type TouchInputCallback = (input: TouchInput) => void;
 
 const JOYSTICK_RADIUS = 60;
 const KNOB_RADIUS = 25;
-const BTN_W = 60;
+const BTN_W = 80;
 const BTN_H = 48;
+const BTN_GAP = 8;
 
 export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -27,12 +30,46 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
   const baseRef = useRef<{ x: number; y: number } | null>(null);
   const knobRef = useRef<{ x: number; y: number } | null>(null);
   const isBrakingRef = useRef(false);
-  const isActionRef = useRef(false);
+
+  // One-shot pulse: set true pada touchstart, reset selepas digunakan oleh player.
+  const actionPulseRef = useRef(false);
+
+  // Button info untuk INTERAKSI button (dinamik dari delivery session)
+  const buttonInfoRef = useRef<{ label: string; enabled: boolean }>({ label: "Tiada", enabled: false });
 
   const getCanvasPos = useCallback((canvas: HTMLCanvasElement, clientX: number, clientY: number) => {
     const rect = canvas.getBoundingClientRect();
     return { x: clientX - rect.left, y: clientY - rect.top };
   }, []);
+
+  /** Hit-test satu titik terhadap semua butang. Return type atau null. */
+  const hitTestButtons = useCallback(
+    (clientX: number, clientY: number, canvasH: number, buttonEnabled: boolean): "horn" | "action" | "brake" | null => {
+      const rx = canvasH - BTN_W - 16;
+
+      // HORN: atas kanan
+      const hornY = 16;
+      if (clientX >= rx && clientX < rx + BTN_W && clientY >= hornY && clientY < hornY + BTN_H) {
+        return "horn";
+      }
+
+      // BRAKE: bawah kanan
+      const brakeY = canvasH - BTN_H - 16;
+      if (clientX >= rx && clientX < rx + BTN_W && clientY >= brakeY && clientY < brakeY + BTN_H) {
+        return "brake";
+      }
+
+      // INTERAKSI: di antara HORN dan BRAKE, jarak >= BTN_GAP
+      const topEdge = hornY + BTN_H + BTN_GAP;
+      const bottomEdge = brakeY - BTN_GAP;
+      if (buttonEnabled && clientX >= rx && clientX < rx + BTN_W && clientY >= topEdge && clientY < bottomEdge) {
+        return "action";
+      }
+
+      return null;
+    },
+    [], // Semua nilai berasal dari constant module-level (BTN_W, BTN_H, BTN_GAP)
+  );
 
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
@@ -46,23 +83,28 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
         const pos = getCanvasPos(canvas, touch.clientX, touch.clientY);
 
         if (pos.x < halfW) {
+          // Zon kiri: joystick
           touchStateRef.current[touch.identifier] = { type: "joystick" };
           baseRef.current = { x: pos.x, y: pos.y };
           knobRef.current = { x: pos.x, y: pos.y };
         } else {
-          // Zon kanan: HORN / ACTION / BRAKE
-          if (pos.y >= 280 && pos.y < 280 + BTN_H) {
+          // Zon kanan: hit-test butang
+          const btnType = hitTestButtons(pos.x, pos.y, canvas.height, buttonInfoRef.current.enabled);
+          if (btnType === "action") {
+            // One-shot: set pulse SEKALI pada touchstart
+            actionPulseRef.current = true;
             touchStateRef.current[touch.identifier] = { type: "action" };
-          } else if (pos.y > canvas.height / 2) {
+          } else if (btnType === "brake") {
             touchStateRef.current[touch.identifier] = { type: "brake" };
             isBrakingRef.current = true;
-          } else {
+          } else if (btnType === "horn") {
             touchStateRef.current[touch.identifier] = { type: "horn" };
           }
+          // Jika tiada butang disentuh di kanan, abaikan
         }
       }
     },
-    [getCanvasPos],
+    [getCanvasPos, hitTestButtons],
   );
 
   const handleTouchMove = useCallback(
@@ -94,7 +136,6 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
       const state = touchStateRef.current[touch.identifier];
       if (state) {
         if (state.type === "brake") isBrakingRef.current = false;
-        if (state.type === "action") isActionRef.current = false;
         if (state.type === "joystick") {
           baseRef.current = null;
           knobRef.current = null;
@@ -132,9 +173,13 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
+      // Baca button info setiap frame
+      const btnInfo = getInteractButtonInfo(useDeliveryStore.getState().session, Date.now());
+      buttonInfoRef.current = btnInfo;
+
       const rx = w - BTN_W - 16; // right edge x
 
-      // Joystick
+      // ── Joystick ──────────────────────────────────────────
       if (baseRef.current) {
         const { x: bx, y: by } = baseRef.current;
         ctx.beginPath();
@@ -157,44 +202,66 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
         }
       }
 
-      // ACTION button (tengah kanan)
-      const actionY = 280;
-      ctx.fillStyle = "rgba(59, 130, 246, 0.4)";
-      ctx.strokeStyle = "rgba(59, 130, 246, 0.8)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.roundRect(rx, actionY, BTN_W, BTN_H, 10);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#93c5fd";
-      ctx.font = "bold 13px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("INTERAKSI", rx + BTN_W / 2, actionY + BTN_H / 2 + 5);
-
-      // HORN button (atas kanan)
+      // ── HORN button (atas kanan) ─────────────────────────
+      const hornY = 16;
       ctx.fillStyle = "rgba(245, 158, 11, 0.3)";
       ctx.strokeStyle = "rgba(245, 158, 11, 0.6)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.roundRect(rx, 16, BTN_W, BTN_H, 10);
+      ctx.roundRect(rx, hornY, BTN_W, BTN_H, 10);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#f59e0b";
       ctx.font = "bold 16px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("HORN", rx + BTN_W / 2, 16 + BTN_H / 2 + 5);
+      ctx.fillText("HORN", rx + BTN_W / 2, hornY + BTN_H / 2 + 5);
 
-      // BRAKE button (bawah kanan)
+      // ── BRAKE button (bawah kanan) ───────────────────────
+      const brakeY = h - BTN_H - 16;
       ctx.fillStyle = isBrakingRef.current ? "rgba(239, 68, 68, 0.6)" : "rgba(239, 68, 68, 0.3)";
       ctx.strokeStyle = "rgba(239, 68, 68, 0.6)";
       ctx.beginPath();
-      ctx.roundRect(rx, h - BTN_H - 16, BTN_W, BTN_H, 10);
+      ctx.roundRect(rx, brakeY, BTN_W, BTN_H, 10);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#ef4444";
-      ctx.fillText("BRAKE", rx + BTN_W / 2, h - BTN_H - 16 + BTN_H / 2 + 5);
+      ctx.fillText("BRAKE", rx + BTN_W / 2, brakeY + BTN_H / 2 + 5);
 
-      // Report input
+      // ─— INTERAKSI button (tengah kanan, antara HORN & BRAKE) ──
+      const interactTop = hornY + BTN_H + BTN_GAP;
+      const interactBottom = brakeY - BTN_GAP;
+      const interactY = interactTop;
+      const interactH = interactBottom - interactTop;
+
+      if (btnInfo.enabled) {
+        ctx.fillStyle = "rgba(59, 130, 246, 0.4)";
+        ctx.strokeStyle = "rgba(59, 130, 246, 0.8)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(rx, interactY, BTN_W, interactH, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#93c5fd";
+        ctx.font = "bold 14px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(btnInfo.label, rx + BTN_W / 2, interactY + interactH / 2 + 5);
+      } else {
+        ctx.fillStyle = "rgba(100, 100, 120, 0.2)";
+        ctx.strokeStyle = "rgba(100, 100, 120, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.roundRect(rx, interactY, BTN_W, interactH, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#555568";
+        ctx.font = "bold 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(btnInfo.label, rx + BTN_W / 2, interactY + interactH / 2 + 4);
+      }
+
+      // ── Report input ─────────────────────────────────────
       let jx = 0;
       let jy = 0;
       if (baseRef.current && knobRef.current) {
@@ -211,7 +278,7 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
         joystick: { forward: -jy, right: jx, active: Math.abs(jx) > 0.1 || Math.abs(jy) > 0.1 },
         brake: isBrakingRef.current,
         horn: false,
-        action: isActionRef.current,
+        action: actionPulseRef.current, // one-shot, reset oleh player
         cameraAngle: 0,
       });
 

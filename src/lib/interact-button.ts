@@ -5,9 +5,9 @@ import type { DeliverySession } from "@/types/delivery";
  * Label berubah ikut konteks delivery state.
  * enabled = false apabila tiada zon berdekatan atau sesi sedang disekat.
  */
-export function getInteractButtonInfo(session: DeliverySession): { label: string; enabled: boolean } {
+export function getInteractButtonInfo(session: DeliverySession, now: number): { label: string; enabled: boolean } {
   // Sedang dalam cooldown → nyahaktif
-  if (Date.now() < session.cooldownUntil) {
+  if (now < session.cooldownUntil) {
     return { label: "Tunggu...", enabled: false };
   }
 
