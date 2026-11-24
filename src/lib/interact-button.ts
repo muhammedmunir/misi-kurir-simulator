@@ -1,41 +1,43 @@
 import type { DeliverySession } from "@/types/delivery";
 
+export interface ButtonInfo {
+  label: string;
+  enabled: boolean;
+}
+
 /**
- * `getInteractButtonInfo` — fungsi tulen: session → { label, enabled }.
- * Label berubah ikut konteks delivery state.
- * enabled = false apabila tiada zon berdekatan atau sesi sedang disekat.
+ * Delivery part of the action button. Mirrors `interact()` in delivery-system:
+ * no zone → nothing to do; cooldown only matters while standing in a zone.
  */
-export function getInteractButtonInfo(session: DeliverySession, now: number): { label: string; enabled: boolean } {
-  // Sedang dalam cooldown → nyahaktif
-  if (now < session.cooldownUntil) {
-    return { label: "Tunggu...", enabled: false };
+export function getInteractButtonInfo(session: DeliverySession, now: number): ButtonInfo {
+  const zone = session.nearbyZone;
+  if (!zone) return { label: "Tiada zon", enabled: false };
+
+  if (now < session.cooldownUntil) return { label: "Tunggu...", enabled: false };
+
+  if (zone.type === "pickup") {
+    return session.hasPacket ? { label: "Hantar dulu", enabled: false } : { label: "AMBIL PAKET", enabled: true };
   }
 
-  // Tiada zon berdekatan → nyahaktif
-  if (!session.nearbyZone) {
-    return { label: "Tiada zon", enabled: false };
-  }
+  if (!session.hasPacket) return { label: "Tiada paket", enabled: false };
+  if (zone.id !== session.targetZone?.id) return { label: "Bukan sini", enabled: false };
+  return { label: "HANTAR PAKET", enabled: true };
+}
 
-  // Zon pickup + tiada paket → AMBIL PAKET
-  if (session.nearbyZone.type === "pickup" && !session.hasPacket) {
-    return { label: "AMBIL PAKET", enabled: true };
-  }
+export interface MotorContext {
+  onFoot: boolean;
+  nearMotor: boolean;
+}
 
-  // Zon pickup + sudah ada paket → nothing (nyahaktif)
-  if (session.nearbyZone.type === "pickup" && session.hasPacket) {
-    return { label: "Hantar dulu", enabled: false };
-  }
-
-  // Zon delivery + ada paket → HANTAR PAKET
-  if (session.nearbyZone.type === "delivery" && session.hasPacket) {
-    return { label: "HANTAR PAKET", enabled: true };
-  }
-
-  // Zon delivery + tiada paket → nothing (nyahaktif)
-  if (session.nearbyZone.type === "delivery" && !session.hasPacket) {
-    return { label: "Tiada paket", enabled: false };
-  }
-
-  // Idle, tiada aksi
-  return { label: "Tiada", enabled: false };
+/**
+ * Full action button = what one tap (or the E key) will do.
+ * Same priority as PlayerController.performInteract(): a delivery action wins,
+ * a cooldown blocks everything, otherwise fall back to mounting/dismounting.
+ */
+export function getActionButton(delivery: ButtonInfo, motor: MotorContext): ButtonInfo {
+  if (delivery.enabled) return delivery;
+  if (delivery.label === "Tunggu...") return delivery;
+  if (!motor.onFoot) return { label: "TURUN MOTOR", enabled: true };
+  if (motor.nearMotor) return { label: "NAIK MOTOR", enabled: true };
+  return delivery;
 }

@@ -1,5 +1,5 @@
 import { interactBlocksMotorSwap } from "@/lib/delivery-system";
-import { touchInput } from "@/lib/touch";
+import { consumeAction, touchInput } from "@/lib/touch";
 import { useDeliveryStore } from "@/store/delivery";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
@@ -37,19 +37,39 @@ export const playerState = {
     onFoot ? (Math.abs(vel.x) > 0.1 || Math.abs(vel.z) > 0.1 ? Math.atan2(vel.x, vel.z) : motorHeading) : motorHeading,
   getSpeed: () => motorSpeed,
   isOnFoot: () => onFoot,
+  isNearMotor: () => onFoot && distanceToMotor() <= INTERACT_DISTANCE,
 };
 
+function distanceToMotor(): number {
+  const dx = pos.x - MOTOR_POSITION.x;
+  const dz = pos.z - MOTOR_POSITION.z;
+  return Math.sqrt(dx * dx + dz * dz);
+}
+
+function toggleMotor(): void {
+  if (onFoot) {
+    if (distanceToMotor() > INTERACT_DISTANCE) return;
+    onFoot = false;
+    motorHeading = Math.atan2(pos.x - MOTOR_POSITION.x, pos.z - MOTOR_POSITION.z);
+    motorSpeed = 0;
+  } else {
+    onFoot = true;
+    motorSpeed = 0;
+    pos.x = MOTOR_POSITION.x + 1.5;
+    pos.z = MOTOR_POSITION.z;
+    pos.y = 1.6;
+    vel.set(0, 0, 0);
+  }
+}
+
 /**
- * `handleInteract` — panggil store.interact(now).
- * Gunakan `interactBlocksMotorSwap()` untuk tentukan apakah
- * motor swap disekat atau tidak.
+ * One interaction (E key or touch action button): delivery first; if the
+ * delivery result does not consume the press, mount/dismount the motor.
  */
-function handleInteract(): boolean {
-  const now = Date.now();
-  const { result } = useDeliveryStore.getState().interact(now);
-  const action = result?.action ?? null;
-  const blocks = interactBlocksMotorSwap(action);
-  return blocks;
+function performInteract(): void {
+  const { result } = useDeliveryStore.getState().interact(Date.now());
+  if (interactBlocksMotorSwap(result?.action ?? null)) return;
+  toggleMotor();
 }
 
 // ── Component ─────────────────────────────────────────────────────
@@ -80,28 +100,7 @@ export function PlayerController() {
       if (e.code !== "KeyE" || e.repeat) return;
       e.preventDefault();
 
-      // Priority: delivery interaction first
-      const blocks = handleInteract();
-      if (blocks) return;
-
-      // Fallback: motor swap
-      if (onFoot) {
-        const dx = pos.x - MOTOR_POSITION.x;
-        const dz = pos.z - MOTOR_POSITION.z;
-        const dist = Math.sqrt(dx * dx + dz * dz);
-        if (dist <= INTERACT_DISTANCE) {
-          onFoot = false;
-          motorHeading = Math.atan2(dx, dz);
-          motorSpeed = 0;
-        }
-      } else {
-        onFoot = true;
-        motorSpeed = 0;
-        pos.x = MOTOR_POSITION.x + 1.5;
-        pos.z = MOTOR_POSITION.z;
-        pos.y = 1.6;
-        vel.set(0, 0, 0);
-      }
+      performInteract();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -115,11 +114,7 @@ export function PlayerController() {
     useDeliveryStore.getState().setPlayerPosition({ x: pos.x, z: pos.z });
 
     // ── Handle touch action button ────────────────────────────
-    if (touchInput.action) {
-      touchInput.action = false;
-      const blocks = handleInteract();
-      if (blocks) return; // disekat, jangan teruskan
-    }
+    if (consumeAction()) performInteract();
 
     // ── Gather input from keyboard + touch ────────────────────
     let inputForward = 0;

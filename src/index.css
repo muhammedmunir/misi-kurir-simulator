@@ -76,3 +76,81 @@ select {
   background: rgba(245, 158, 11, 0.3);
   color: var(--color-text);
 }
+
+/* ── Touch controls ─────────────────────────────────────────── */
+/* Sits above the bottom HUD bar (status + mission cards, ~120px). */
+.touch-controls {
+  --touch-bottom: calc(120px + env(safe-area-inset-bottom));
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+}
+
+.touch-stick {
+  position: absolute;
+  left: 0;
+  bottom: var(--touch-bottom);
+  width: 50%;
+  height: 40%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.touch-buttons {
+  position: absolute;
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: var(--touch-bottom);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.touch-btn {
+  min-width: 128px;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  font: 700 14px / 1 var(--font-main);
+  letter-spacing: 0.04em;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.touch-btn:disabled {
+  cursor: default;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.touch-btn--action {
+  min-height: 64px;
+  font-size: 15px;
+}
+
+.touch-btn--action:enabled {
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary-strong);
+  color: var(--color-bg);
+}
+
+.touch-btn--action:enabled:active {
+  background: var(--color-primary-strong);
+}
+
+.touch-btn--brake:enabled {
+  background: var(--color-surface-elevated);
+  border: 2px solid var(--color-error);
+  color: var(--color-text);
+}
+
+.touch-btn--brake[data-active="true"] {
+  background: var(--color-error);
+  color: var(--color-bg);
+}

@@ -1,5 +1,6 @@
 import { DELIVERY_ZONES, createSession } from "@/lib/delivery-system";
-import { getInteractButtonInfo } from "@/lib/interact-button";
+import { getActionButton, getInteractButtonInfo } from "@/lib/interact-button";
+import { consumeAction, requestAction } from "@/lib/touch";
 import type { DeliverySession } from "@/types/delivery";
 import { describe, expect, it, vi } from "vitest";
 
@@ -45,9 +46,10 @@ describe("getInteractButtonInfo", () => {
     expect(info.label).toBe("Hantar dulu");
   });
 
-  it("hasPacket + zon delivery → { label: 'HANTAR PAKET', enabled: true }", () => {
+  it("hasPacket + zon delivery sasaran → { label: 'HANTAR PAKET', enabled: true }", () => {
     const s = withSession({
       nearbyZone: DELIVERY_ZONES[1],
+      targetZone: DELIVERY_ZONES[1],
       hasPacket: true,
       state: "hasPacket",
     });
@@ -88,5 +90,71 @@ describe("getInteractButtonInfo", () => {
     expect(info.enabled).toBe(true);
     expect(info.label).toBe("AMBIL PAKET");
     restoreNow();
+  });
+});
+
+describe("getInteractButtonInfo — padanan dengan interact()", () => {
+  const now = 50_000;
+
+  it("hasPacket + zon delivery BUKAN sasaran → nyahaktif", () => {
+    const s = withSession({
+      nearbyZone: DELIVERY_ZONES[1],
+      targetZone: DELIVERY_ZONES[2],
+      hasPacket: true,
+      state: "hasPacket",
+    });
+    expect(getInteractButtonInfo(s, now)).toEqual({ label: "Bukan sini", enabled: false });
+  });
+
+  it("cooldown tanpa zon → 'Tiada zon' (cooldown hanya penting dalam zon)", () => {
+    const s = withSession({ cooldownUntil: now + 1000 });
+    expect(getInteractButtonInfo(s, now).label).toBe("Tiada zon");
+  });
+});
+
+describe("getActionButton — keutamaan sama seperti performInteract()", () => {
+  const ambil = { label: "AMBIL PAKET", enabled: true };
+  const tunggu = { label: "Tunggu...", enabled: false };
+  const tiadaZon = { label: "Tiada zon", enabled: false };
+  const hantarDulu = { label: "Hantar dulu", enabled: false };
+
+  it("tindakan penghantaran menang walaupun dekat motor", () => {
+    expect(getActionButton(ambil, { onFoot: true, nearMotor: true })).toEqual(ambil);
+  });
+
+  it("cooldown menyekat naik/turun motor", () => {
+    expect(getActionButton(tunggu, { onFoot: false, nearMotor: false })).toEqual(tunggu);
+    expect(getActionButton(tunggu, { onFoot: true, nearMotor: true })).toEqual(tunggu);
+  });
+
+  it("atas motor + tiada tindakan → TURUN MOTOR", () => {
+    expect(getActionButton(tiadaZon, { onFoot: false, nearMotor: false })).toEqual({
+      label: "TURUN MOTOR",
+      enabled: true,
+    });
+  });
+
+  it("berjalan dekat motor + tiada tindakan → NAIK MOTOR (termasuk di zon pickup dengan paket)", () => {
+    const naik = { label: "NAIK MOTOR", enabled: true };
+    expect(getActionButton(tiadaZon, { onFoot: true, nearMotor: true })).toEqual(naik);
+    expect(getActionButton(hantarDulu, { onFoot: true, nearMotor: true })).toEqual(naik);
+  });
+
+  it("berjalan jauh dari motor + tiada tindakan → label penghantaran, nyahaktif", () => {
+    expect(getActionButton(tiadaZon, { onFoot: true, nearMotor: false })).toEqual(tiadaZon);
+  });
+});
+
+describe("requestAction / consumeAction — satu ketikan, satu tindakan", () => {
+  it("consume sekali sahaja selepas satu request", () => {
+    consumeAction();
+    requestAction();
+    expect(consumeAction()).toBe(true);
+    expect(consumeAction()).toBe(false);
+  });
+
+  it("tiada request → false", () => {
+    consumeAction();
+    expect(consumeAction()).toBe(false);
   });
 });

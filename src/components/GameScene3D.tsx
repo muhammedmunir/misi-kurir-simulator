@@ -1,4 +1,3 @@
-import { touchInput } from "@/lib/touch";
 import { Canvas } from "@react-three/fiber";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import { Physics } from "@react-three/rapier";
@@ -111,17 +110,7 @@ export function GameScene3D() {
       <HUD3D />
 
       {/* Touch controls overlay */}
-      <TouchJoystick
-        onInput={(input) => {
-          touchInput.joystick.forward = input.joystick.forward;
-          touchInput.joystick.right = input.joystick.right;
-          touchInput.joystick.active = input.joystick.active;
-          touchInput.brake = input.brake;
-          touchInput.horn = input.horn;
-          touchInput.action = input.action;
-          touchInput.cameraAngle = input.cameraAngle;
-        }}
-      />
+      <TouchJoystick />
     </div>
   );
 }
