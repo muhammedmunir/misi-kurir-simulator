@@ -1,4 +1,4 @@
-import { generateNPCTraffic, updateNPCTraffic, type NPCTrafficVehicle } from "@/lib/delivery-system";
+import { type NPCTrafficVehicle, generateNPCTraffic, updateNPCTraffic } from "@/lib/npc-traffic";
 import { useFrame } from "@react-three/fiber";
 import { useRef, useState } from "react";
 import type { Group } from "three";
@@ -13,12 +13,12 @@ export function NPCTraffic() {
 
   useFrame((_state, delta) => {
     if (!groupRef.current) return;
-    delta = Math.min(delta, 0.05);
+    const dt = Math.min(delta, 0.05);
 
     const now = performance.now();
     if (now - lastUpdateRef.current > 50) {
       lastUpdateRef.current = now;
-      npcDataRef.current = updateNPCTraffic(npcDataRef.current, delta);
+      npcDataRef.current = updateNPCTraffic(npcDataRef.current, dt);
     }
 
     for (let i = 0; i < vehicleRefs.current.length; i++) {
@@ -87,7 +87,7 @@ function NPCVehicle({
       </mesh>
       {/* Wheels */}
       {wheelPositions.map(([x, y, z], wi) => (
-        <mesh key={wi} position={[x, y, z]} rotation={[0, 0, Math.PI / 2]}>
+        <mesh key={`wheel-${npc.id}-${wi}`} position={[x, y, z]} rotation={[0, 0, Math.PI / 2]}>
           <cylinderGeometry args={[0.3, 0.3, 0.2, 12]} />
           <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
         </mesh>

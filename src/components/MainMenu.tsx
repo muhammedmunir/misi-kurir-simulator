@@ -45,7 +45,8 @@ export function MainMenu() {
             <span style={{ fontSize: "16px" }}>🚀 Mula Misi</span>
           </button>
         )}
-        <button type="button"
+        <button
+          type="button"
           onClick={() => navigate(Scene.LOAD_SAVE)}
           style={menuButtonStyle(isNewGame ? "Permulaan" : "Muat / Simpan")}
         >

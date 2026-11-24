@@ -87,6 +87,7 @@ export function WarehouseUI() {
           </p>
         </div>
         <button
+          type="button"
           onClick={() => navigate(Scene.GAME)}
           style={{
             padding: "8px 16px",
@@ -127,6 +128,7 @@ export function WarehouseUI() {
         />
         {["all", "normal", "express", "urgent"].map((f) => (
           <button
+            type="button"
             key={f}
             onClick={() => setFilter(f)}
             style={{

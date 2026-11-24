@@ -1,51 +1,11 @@
-import { generateId, generateTrackingNumber } from "./utils";
-
-// ── Delivery Zone ──────────────────────────────────────────────────
-
-interface DeliveryZone {
-  id: string;
-  name: string;
-  type: "pickup" | "delivery";
-  position: { x: number; z: number };
-  areaCode: string;
-  description: string;
-  interactable?: boolean;
-}
-
-// ── Delivery System State ────────────────────────────────────────
-
-interface DeliverySession {
-  state: "idle" | "hasPacket" | "enRoute" | "arrived" | "complete";
-  packetId: string | null;
-  trackingNumber: string | null;
-  targetZone: DeliveryZone | null;
-  reward: number;
-  xpReward: number;
-  hasPacket: boolean;
-  nearbyZone: DeliveryZone | null;
-  interactionCooldown: number;
-  deliveredAt: number | null;
-}
-
-const session: DeliverySession = {
-  state: "idle",
-  packetId: null,
-  trackingNumber: null,
-  targetZone: null,
-  reward: 0,
-  xpReward: 0,
-  hasPacket: false,
-  nearbyZone: null,
-  interactionCooldown: 0,
-  deliveredAt: null,
-};
+import type { DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
 
 // ── Zone Data ────────────────────────────────────────────────────
 
-const DELIVERY_ZONES: DeliveryZone[] = [
+export const DELIVERY_ZONES: DeliveryZone[] = [
   {
     id: "zone-pickup-1",
-    name: "Balik Pos Pusat",
+    name: "Pejabat Pos Pusat",
     type: "pickup",
     position: { x: 0, z: 0 },
     areaCode: "bandar",
@@ -81,7 +41,7 @@ const DELIVERY_ZONES: DeliveryZone[] = [
   },
   {
     id: "zone-pickup-2",
-    name: "Balik Pos Timur",
+    name: "Pejabat Pos Timur",
     type: "pickup",
     position: { x: 80, z: 40 },
     areaCode: "bandar",
@@ -90,165 +50,147 @@ const DELIVERY_ZONES: DeliveryZone[] = [
   },
 ];
 
-// ── Public API ───────────────────────────────────────────────────
+// ── Pure State Functions (boleh diuji) ─────────────────────────
 
-export const DELIVERY_SYSTEM = {
-  getSession: () => session,
-  getZones: () => DELIVERY_ZONES,
-  getPlayerPosition: () => {
-    // Will be set by PlayerController
-    return playerPosRef.current;
-  },
+/** Cipta session baharu dari keadaan kosong. */
+export function createSession(): DeliverySession {
+  return {
+    state: "idle",
+    packetId: null,
+    trackingNumber: null,
+    targetZone: null,
+    reward: 0,
+    xpReward: 0,
+    hasPacket: false,
+    nearbyZone: null,
+    cooldownUntil: 0,
+    deliveredAt: null,
+  };
+}
 
-  setPlayerPosition: (pos: { x: number; z: number }) => {
-    playerPosRef.current = pos;
-  },
+/**
+ * `tick` — panggil setiap frame. Uruskan auto-reset dan cooldown.
+ * Mengembalikan session baharu (stateless, pure).
+ */
+export function tickSession(session: DeliverySession, now: number, autoResetMs = 5000): DeliverySession {
+  const next = { ...session };
 
-  setNearbyZone: (zone: DeliveryZone | null) => {
-    session.nearbyZone = zone;
-  },
+  // Auto-reset: complete → idle selepas autoResetMs
+  if (next.state === "complete" && next.deliveredAt != null && now - next.deliveredAt >= autoResetMs) {
+    next.state = "idle";
+    next.targetZone = null;
+    next.reward = 0;
+    next.xpReward = 0;
+    next.deliveredAt = null;
+  }
 
-  resetSession: () => {
-    session.state = "idle";
-    session.packetId = null;
-    session.trackingNumber = null;
-    session.targetZone = null;
-    session.reward = 0;
-    session.xpReward = 0;
-    session.hasPacket = false;
-    session.nearbyZone = null;
-    session.interactionCooldown = 0;
-    session.deliveredAt = null;
-  },
+  return next;
+}
 
-  checkInteract: (): { action: "pickup" | "deliver" | "nothing"; message: string } | null => {
-    if (session.interactionCooldown > 0) {
-      session.interactionCooldown -= 0.016;
-      if (session.interactionCooldown < 0) session.interactionCooldown = 0;
-      return null;
-    }
+/**
+ * `interact` — panggil apabila pengguna menekan E.
+ * Mengembalikan { result, session } atau `null` jika disekat.
+ * Tiada side-effect: RNG, ID, tracking-number diterima sebagai argumen.
+ */
+export function interact(
+  session: DeliverySession,
+  nearbyZone: DeliveryZone | null,
+  now: number,
+  createId: () => string,
+  createTrackingNumber: (prefix: string) => string,
+  rng: () => number,
+): { result: DeliveryResult | null; session: DeliverySession } | null {
+  // Sektakan jika masih dalam cooldown
+  if (now < session.cooldownUntil) {
+    return null;
+  }
 
-    if (!session.nearbyZone) return null;
-    const zone = session.nearbyZone;
+  if (!nearbyZone) {
+    return null;
+  }
 
-    if (zone.type === "pickup" && !session.hasPacket) {
-      // Pick up packet
-      session.hasPacket = true;
-      session.packetId = generateId();
-      session.trackingNumber = generateTrackingNumber("MSK");
-      session.state = "hasPacket";
+  const zone = nearbyZone;
 
-      // Pick random delivery zone (not the pickup zone)
-      const deliveryZones = DELIVERY_ZONES.filter((z) => z.type === "delivery");
-      session.targetZone = deliveryZones[Math.floor(Math.random() * deliveryZones.length)];
-      session.reward = Math.floor(2000 + Math.random() * 5000);
-      session.xpReward = 25 + Math.floor(Math.random() * 25);
+  // Ambil paket
+  if (zone.type === "pickup" && !session.hasPacket) {
+    const deliveryZones = DELIVERY_ZONES.filter((z) => z.type === "delivery");
+    const targetZone = deliveryZones[Math.floor(rng() * deliveryZones.length)];
+    const reward = Math.floor(2000 + rng() * 5000);
+    const xpReward = 25 + Math.floor(rng() * 25);
+    const trackingNumber = createTrackingNumber("MSK");
+    const packetId = createId();
 
-      session.interactionCooldown = 0.5;
-      return {
-        action: "pickup",
-        message: `Pilih paket dari ${zone.name}`,
-      };
-    }
+    const newSession: DeliverySession = {
+      ...session,
+      state: "hasPacket",
+      packetId,
+      trackingNumber,
+      targetZone,
+      reward,
+      xpReward,
+      hasPacket: true,
+      cooldownUntil: now + 500, // 500ms cooldown selepas ambil
+    };
 
-    if (zone.type === "delivery" && session.hasPacket && zone.id === session.targetZone?.id) {
-      // Deliver packet
-      session.hasPacket = false;
-      session.state = "complete";
-      session.deliveredAt = Date.now();
+    return {
+      result: { action: "pickup", message: `Pilih paket dari ${zone.name}` },
+      session: newSession,
+    };
+  }
 
-      session.interactionCooldown = 1.0;
-      return {
+  // Hantar paket
+  if (zone.type === "delivery" && session.hasPacket && zone.id === session.targetZone?.id) {
+    const newSession: DeliverySession = {
+      ...session,
+      state: "complete",
+      hasPacket: false,
+      deliveredAt: now,
+      cooldownUntil: now + 1000, // 1s cooldown selepas hantar
+    };
+
+    return {
+      result: {
         action: "deliver",
         message: `Penghantaran selesai! +Rp ${session.reward.toLocaleString("id-ID")} | +${session.xpReward} XP`,
-      };
-    }
+      },
+      session: newSession,
+    };
+  }
 
-    if (zone.type === "pickup" && session.hasPacket) {
-      return { action: "nothing", message: "Anda sudah ada paket. Hantar dulu yang sedia ada." };
-    }
+  // Zon pickup tetapi sudah ada paket
+  if (zone.type === "pickup" && session.hasPacket) {
+    return {
+      result: { action: "nothing", message: "Anda sudah ada paket. Hantar dulu yang sedia ada." },
+      session,
+    };
+  }
 
-    return { action: "nothing", message: "Tiada aktiviti di sini" };
+  return {
+    result: { action: "nothing", message: "Tiada aktiviti di sini" },
+    session,
+  };
+}
+
+// ── Backward-compatible shim (DEPRECATED) ───────────────────────
+//
+// Fail komponen yang lain masih mengimport DELIVERY_SYSTEM.
+// Shim ini menggunakan Zustand store baharu di bawah siling.
+// Kami akan mengemas kini satu-per-satu hingga shim boleh dibuang.
+
+import { useDeliveryStore } from "@/store/delivery";
+
+export const DELIVERY_SYSTEM = {
+  getSession: (): DeliverySession => useDeliveryStore.getState().session,
+  getZones: (): DeliveryZone[] => DELIVERY_ZONES,
+  getPlayerPosition: () => useDeliveryStore.getState().playerPos,
+  setPlayerPosition: (pos: { x: number; z: number }) => useDeliveryStore.getState().setPlayerPosition(pos),
+  setNearbyZone: (zone: DeliveryZone | null) => useDeliveryStore.getState().setNearbyZone(zone),
+  resetSession: () => useDeliveryStore.getState().reset(),
+  checkInteract: (): DeliveryResult | null => {
+    const store = useDeliveryStore.getState();
+    const now = Date.now();
+    const result = store.interact(now);
+    if (!result || !result.result) return null;
+    return result.result;
   },
 };
-
-// ── Player Position (set from PlayerController) ──────────────────
-
-const playerPosRef = { current: { x: 0, z: 0 } as { x: number; z: number } };
-
-// ── Auto-reset after complete ────────────────────────────────────
-
-setInterval(() => {
-  if (session.state === "complete" && session.deliveredAt && Date.now() - session.deliveredAt > 5000) {
-    // Return to idle after 5 seconds
-    session.state = "idle";
-    session.targetZone = null;
-    session.reward = 0;
-    session.xpReward = 0;
-  }
-}, 1000);
-
-// ── NPC Traffic ────────────────────────────────────────────────────
-
-export interface NPCTrafficVehicle {
-  id: string;
-  position: { x: number; z: number };
-  heading: number;
-  speed: number;
-  color: string;
-  roadAxis: "x" | "z";
-  roadValue: number;
-  direction: 1 | -1;
-}
-
-const NPC_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#eab308", "#8b5cf6", "#06b6d4", "#f97316"];
-
-const ROAD_VALUES: number[] = [];
-for (let i = -3; i <= 3; i++) {
-  ROAD_VALUES.push(i * 40);
-}
-
-export function generateNPCTraffic(count: number): NPCTrafficVehicle[] {
-  const vehicles: NPCTrafficVehicle[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const roadIdx = Math.floor(Math.random() * ROAD_VALUES.length);
-    const roadValue = ROAD_VALUES[roadIdx];
-    const isZAxis = Math.random() > 0.5;
-    const direction = Math.random() > 0.5 ? 1 : -1;
-
-    vehicles.push({
-      id: generateId(),
-      position: {
-        x: isZAxis ? roadValue : (Math.random() - 0.5) * 400,
-        z: isZAxis ? (Math.random() - 0.5) * 400 : roadValue,
-      },
-      heading: direction === 1 ? 0 : Math.PI,
-      speed: 2 + Math.random() * 4,
-      color: NPC_COLORS[Math.floor(Math.random() * NPC_COLORS.length)],
-      roadAxis: isZAxis ? "z" : "x",
-      roadValue,
-      direction,
-    });
-  }
-
-  return vehicles;
-}
-
-export function updateNPCTraffic(vehicles: NPCTrafficVehicle[], delta: number): NPCTrafficVehicle[] {
-  return vehicles.map((v) => {
-    const moveAmount = v.speed * v.direction * delta;
-
-    if (v.roadAxis === "z") {
-      let newPos = v.position.z + moveAmount;
-      if (newPos > 200) newPos = -200;
-      if (newPos < -200) newPos = 200;
-      return { ...v, position: { ...v.position, z: newPos } };
-    } else {
-      let newPos = v.position.x + moveAmount;
-      if (newPos > 200) newPos = -200;
-      if (newPos < -200) newPos = 200;
-      return { ...v, position: { ...v.position, x: newPos } };
-    }
-  });
-}

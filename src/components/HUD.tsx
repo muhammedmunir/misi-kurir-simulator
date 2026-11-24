@@ -1,11 +1,11 @@
-import { saveGame } from "@/lib/idb";
 import { DELIVERY_SYSTEM } from "@/lib/delivery-system";
+import { saveGame } from "@/lib/idb";
+import { useDeliveryUIStore } from "@/store/delivery-ui";
 import { useSceneStore } from "@/store/game";
 import { useGameStateStore } from "@/store/gamestate";
-import { useDeliveryUIStore } from "@/store/delivery-ui";
 import { Scene } from "@/types/scene";
-import { playerState } from "./3d/PlayerController";
 import { useEffect, useState } from "react";
+import { playerState } from "./3d/PlayerController";
 
 export function HUD() {
   const navigate = useSceneStore((s) => s.navigate);
@@ -124,6 +124,7 @@ export function HUD() {
 
         <div style={{ display: "flex", gap: "8px", pointerEvents: "auto" }}>
           <button
+            type="button"
             onClick={handleSave}
             style={{
               padding: "8px 12px",
@@ -139,6 +140,7 @@ export function HUD() {
             💾 Simpan
           </button>
           <button
+            type="button"
             onClick={() => navigate(Scene.MENU)}
             style={{
               padding: "8px 12px",
@@ -191,9 +193,7 @@ export function HUD() {
           {/* Delivery / Mission info */}
           <div
             style={{
-              background: deliveryState.hasPacket
-                ? "rgba(245, 158, 11, 0.25)"
-                : "rgba(34, 197, 94, 0.2)",
+              background: deliveryState.hasPacket ? "rgba(245, 158, 11, 0.25)" : "rgba(34, 197, 94, 0.2)",
               border: deliveryState.hasPacket
                 ? "1px solid rgba(245, 158, 11, 0.5)"
                 : "1px solid rgba(34, 197, 94, 0.4)",
@@ -206,9 +206,7 @@ export function HUD() {
               {deliveryState.hasPacket ? "📦 Bawa Paket" : "🔍 Cari Paket"}
             </p>
             {deliveryState.hasPacket && deliveryState.trackingNumber && (
-              <p style={{ fontSize: "11px", color: "#e8e8f0", margin: "0 0 2px" }}>
-                {deliveryState.trackingNumber}
-              </p>
+              <p style={{ fontSize: "11px", color: "#e8e8f0", margin: "0 0 2px" }}>{deliveryState.trackingNumber}</p>
             )}
             {completeMessage && (
               <p style={{ fontSize: "13px", fontWeight: 700, color: "#22c55e", margin: "4px 0 0" }}>
@@ -216,14 +214,10 @@ export function HUD() {
               </p>
             )}
             {interactionMessage && !completeMessage && (
-              <p style={{ fontSize: "11px", color: "#f59e0b", margin: "4px 0 0" }}>
-                {interactionMessage}
-              </p>
+              <p style={{ fontSize: "11px", color: "#f59e0b", margin: "4px 0 0" }}>{interactionMessage}</p>
             )}
             {!deliveryState.hasPacket && !interactionMessage && (
-              <p style={{ fontSize: "12px", fontWeight: 600 }}>
-                Ke Balik Pos Pusat (E)
-              </p>
+              <p style={{ fontSize: "12px", fontWeight: 600 }}>Ke Balik Pos Pusat (E)</p>
             )}
           </div>
         </div>

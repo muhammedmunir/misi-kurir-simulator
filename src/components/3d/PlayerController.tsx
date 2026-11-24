@@ -123,7 +123,7 @@ export function PlayerController() {
 
   useFrame((_state, delta) => {
     if (!groupRef.current) return;
-    delta = Math.min(delta, 0.05);
+    const dt = Math.min(delta, 0.05);
 
     // ── Sync player position to delivery system ───────────────
     DELIVERY_SYSTEM.setPlayerPosition({ x: pos.x, z: pos.z });
@@ -164,11 +164,11 @@ export function PlayerController() {
         grounded = false;
       }
 
-      if (!grounded) vel.y += GRAVITY * delta;
+      if (!grounded) vel.y += GRAVITY * dt;
 
-      pos.x += vel.x * delta;
-      pos.y += vel.y * delta;
-      pos.z += vel.z * delta;
+      pos.x += vel.x * dt;
+      pos.y += vel.y * dt;
+      pos.z += vel.z * dt;
 
       if (pos.y <= 1.6) {
         pos.y = 1.6;
@@ -185,7 +185,7 @@ export function PlayerController() {
         let dA = targetAngle - curRot;
         if (dA > Math.PI) dA -= Math.PI * 2;
         if (dA < -Math.PI) dA += Math.PI * 2;
-        groupRef.current.rotation.y += dA * 12 * delta;
+        groupRef.current.rotation.y += dA * 12 * dt;
       }
 
       groupRef.current.visible = true;
@@ -196,15 +196,15 @@ export function PlayerController() {
 
       // Throttle / brake
       if (inputForward > 0.15) {
-        motorSpeed += MOTOR_ACCEL * delta;
+        motorSpeed += MOTOR_ACCEL * dt;
       } else if (inputForward < -0.15) {
-        motorSpeed += MOTOR_BREAKING * delta;
+        motorSpeed += MOTOR_BREAKING * dt;
       } else {
         // Natural friction
         if (motorSpeed > 0.5) {
-          motorSpeed -= 5 * delta;
+          motorSpeed -= 5 * dt;
         } else if (motorSpeed < -0.5) {
-          motorSpeed += 5 * delta;
+          motorSpeed += 5 * dt;
         } else {
           motorSpeed = 0;
         }
@@ -212,8 +212,8 @@ export function PlayerController() {
 
       // Brake button
       if (ti.brake) {
-        if (motorSpeed > 0.5) motorSpeed -= 25 * delta;
-        else if (motorSpeed < -0.5) motorSpeed += 25 * delta;
+        if (motorSpeed > 0.5) motorSpeed -= 25 * dt;
+        else if (motorSpeed < -0.5) motorSpeed += 25 * dt;
         else motorSpeed = 0;
       }
 
@@ -224,12 +224,12 @@ export function PlayerController() {
       if (Math.abs(inputRight) > 0.15 && Math.abs(motorSpeed) > 0.5) {
         const turnFactor = Math.min(Math.abs(motorSpeed) / 10, 1);
         motorHeading +=
-          (inputRight > 0 ? 1 : -1) * MOTOR_TURN_SPEED * turnFactor * delta * (Math.abs(motorSpeed) / MOTOR_MAX_SPEED);
+          (inputRight > 0 ? 1 : -1) * MOTOR_TURN_SPEED * turnFactor * dt * (Math.abs(motorSpeed) / MOTOR_MAX_SPEED);
       }
 
       // Move motor
-      pos.x += Math.sin(motorHeading) * motorSpeed * delta;
-      pos.z += Math.cos(motorHeading) * motorSpeed * delta;
+      pos.x += Math.sin(motorHeading) * motorSpeed * dt;
+      pos.z += Math.cos(motorHeading) * motorSpeed * dt;
       pos.y = 0.6;
 
       groupRef.current.position.copy(pos);

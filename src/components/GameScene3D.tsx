@@ -47,6 +47,7 @@ export function GameScene3D() {
           Pelayar anda tidak menyokong WebGL 2 atau sumber terhad.
         </p>
         <button
+          type="button"
           onClick={() => window.location.reload()}
           style={{
             padding: "12px 24px",

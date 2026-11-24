@@ -15,8 +15,13 @@ export function Roads() {
 
   return (
     <group>
-      {roads.map((road, i) => (
-        <mesh key={i} rotation={[-Math.PI / 2, road.rotY, 0]} position={[road.x, 0.05, road.z]} receiveShadow>
+      {roads.map((road) => (
+        <mesh
+          key={`${road.x}-${road.z}-${road.rotY}`}
+          rotation={[-Math.PI / 2, road.rotY, 0]}
+          position={[road.x, 0.05, road.z]}
+          receiveShadow
+        >
           <planeGeometry args={[road.w, road.d]} />
           <meshStandardMaterial color="#2a2a2a" roughness={0.95} />
         </mesh>
@@ -25,7 +30,7 @@ export function Roads() {
       {Array.from({ length: 40 }, (_, i) => {
         const z = (i - 20) * 10;
         return (
-          <mesh key={`mark-${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.08, z]}>
+          <mesh key={`mark-${z}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.08, z]}>
             <planeGeometry args={[0.3, 4]} />
             <meshStandardMaterial color="#ffffff" />
           </mesh>
@@ -35,7 +40,7 @@ export function Roads() {
       {Array.from({ length: 12 }, (_, i) => {
         const z = (i - 6) * 30;
         return (
-          <group key={`light-${i}`} position={[8, 0, z]}>
+          <group key={`light-${z}`} position={[8, 0, z]}>
             {/* Pole */}
             <mesh position={[0, 4, 0]} castShadow>
               <cylinderGeometry args={[0.1, 0.15, 8, 8]} />

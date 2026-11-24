@@ -15,6 +15,7 @@ function SettingToggle({ label, value, onChange }: { label: string; value: boole
     >
       <span style={{ fontSize: "15px", color: "#e8e8f0" }}>{label}</span>
       <button
+        type="button"
         onClick={() => onChange(!value)}
         style={{
           width: "48px",
@@ -108,6 +109,7 @@ export function SettingsPanel() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", marginBottom: "24px" }}>
         <button
+          type="button"
           onClick={() => navigate(Scene.MENU)}
           style={{
             padding: "8px 12px",
@@ -215,6 +217,7 @@ export function SettingsPanel() {
           Data
         </h3>
         <button
+          type="button"
           style={{
             width: "100%",
             padding: "12px",

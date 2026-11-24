@@ -41,8 +41,8 @@ export function Buildings() {
 
   return (
     <group>
-      {buildings.map((b, i) => (
-        <group key={i} position={[b.x, b.y, b.z]}>
+      {buildings.map((b) => (
+        <group key={`b-${b.x}-${b.z}`} position={[b.x, b.y, b.z]}>
           {/* Main building */}
           <mesh castShadow receiveShadow>
             <boxGeometry args={[b.width, b.height, b.depth]} />
@@ -55,7 +55,7 @@ export function Buildings() {
               const wx = -b.width / 3 + wi * (b.width / 4);
               const wy = -b.height / 2 + 2 + floor * 3;
               return (
-                <mesh key={`${i}-${floor}-${wi}`} position={[wx, wy, b.depth / 2 + 0.05]}>
+                <mesh key={`w-${b.x}-${b.z}-${floor}-${wi}`} position={[wx, wy, b.depth / 2 + 0.05]}>
                   <planeGeometry args={[1.2, 1.5]} />
                   <meshStandardMaterial color="#87ceeb" emissive="#334455" emissiveIntensity={0.3} />
                 </mesh>

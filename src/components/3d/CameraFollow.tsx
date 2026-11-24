@@ -14,7 +14,7 @@ export function CameraFollow() {
 
   useFrame((_state, delta) => {
     if (!camRef.current) return;
-    delta = Math.min(delta, 0.05);
+    const dt = Math.min(delta, 0.05);
 
     const target = playerState.getPosition();
     const heading = playerState.getHeading();
@@ -26,7 +26,7 @@ export function CameraFollow() {
     const targetHeight = isOnFoot ? CAMERA_HEIGHT_FOOT : CAMERA_HEIGHT_MOTOR;
 
     // Lerp toward target
-    const lerpFactor = Math.min(CAMERA_LERP * delta, 1);
+    const lerpFactor = Math.min(CAMERA_LERP * dt, 1);
     camPos.current.x += (camTargetX - camPos.current.x) * lerpFactor;
     camPos.current.y += (targetHeight - camPos.current.y) * lerpFactor * 0.5;
     camPos.current.z += (camTargetZ - camPos.current.z) * lerpFactor;

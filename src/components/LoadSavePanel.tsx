@@ -36,6 +36,7 @@ export function LoadSavePanel() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", marginBottom: "24px" }}>
         <button
+          type="button"
           onClick={() => navigate(Scene.MENU)}
           style={{
             padding: "8px 12px",
@@ -80,6 +81,7 @@ export function LoadSavePanel() {
           <p style={{ color: "#ef4444", fontSize: "13px", margin: "0 0 0 0", marginTop: "4px" }}>{nameError}</p>
         )}
         <button
+          type="button"
           onClick={handleNewGame}
           style={{
             width: "100%",
@@ -101,9 +103,9 @@ export function LoadSavePanel() {
       <div>
         <h3 style={{ fontSize: "16px", fontWeight: 600, marginBottom: "12px" }}>Slot Simpan</h3>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {["Slot 1", "Slot 2", "Slot 3"].map((slot, i) => (
+          {["Slot 1", "Slot 2", "Slot 3"].map((slot) => (
             <div
-              key={i}
+              key={slot}
               style={{
                 padding: "12px 16px",
                 background: "rgba(255,255,255,0.03)",

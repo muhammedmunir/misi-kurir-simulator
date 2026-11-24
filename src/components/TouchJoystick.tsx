@@ -115,8 +115,10 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
     if (!ctx) return;
 
     const loop = () => {
-      const w = canvasRef.current!.width;
-      const h = canvasRef.current!.height;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const w = canvas.width;
+      const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
       // Joystick
@@ -169,8 +171,8 @@ export function TouchJoystick({ onInput }: { onInput: TouchInputCallback }) {
       ctx.fillText("BRAKE", rx + btnW / 2, h - btnH / 2 + 5);
 
       // Report input
-      let jx = 0,
-        jy = 0;
+      let jx = 0;
+      let jy = 0;
       if (baseRef.current && knobRef.current) {
         jx = (knobRef.current.x - baseRef.current.x) / JOYSTICK_RADIUS;
         jy = (knobRef.current.y - baseRef.current.y) / JOYSTICK_RADIUS;

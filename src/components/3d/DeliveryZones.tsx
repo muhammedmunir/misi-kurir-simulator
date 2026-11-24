@@ -39,19 +39,20 @@ export function DeliveryZones() {
 
             {/* Point light for delivery zones */}
             {zone.type === "delivery" && (
-              <pointLight
-                color={color}
-                intensity={isActive ? 2 : 0.5}
-                distance={8}
-                position={[0, 3, 0]}
-              />
+              <pointLight color={color} intensity={isActive ? 2 : 0.5} distance={8} position={[0, 3, 0]} />
             )}
 
             {/* Beacon for active zone */}
             {isActive && (
               <mesh position={[0, 6, 0]}>
                 <sphereGeometry args={[0.3, 16, 16]} />
-                <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={1} transparent opacity={0.8} />
+                <meshStandardMaterial
+                  color="#f59e0b"
+                  emissive="#f59e0b"
+                  emissiveIntensity={1}
+                  transparent
+                  opacity={0.8}
+                />
               </mesh>
             )}
           </group>
