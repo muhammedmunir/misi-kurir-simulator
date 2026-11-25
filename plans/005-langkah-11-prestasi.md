@@ -209,3 +209,11 @@ SATU commit, tanpa `@`, BUKAN here-string PowerShell:
 Berhenti dan lapor jika: susun atur tidak sepadan dengan kontrak selepas dua cubaan; bajet draw call gagal; perlu menyentuh fail di luar §3.
 
 Larangan: jangan sunting kontrak/E2E, jangan ubah `git config`, jangan stash/reset/amend/rebase, jangan push, jangan tinggalkan fail untracked.
+
+---
+
+## 11b — Semakan (Claude)
+
+`2ad40f8` diterima: 3 fail dalam skop; tsc, biome, Vitest 402, knip, E2E 7 passed + 1 skipped. Bajet (larian penyemak): desktop 78/71/48, pixel-7 25/44/46 (mula/gudang/alamat). Tangkapan skrin desktop di kedudukan mula sama dengan sebelum 11b. Nit: pemboleh ubah tempatan `window` dalam `Buildings.tsx` membayangi global `window` (tidak menjejaskan fungsi).
+
+**11c ditangguhkan** atas arahan pemilik (2026-11-26): ukur FPS Redmi 9 (dev + produksi) apabila telefon tersedia.

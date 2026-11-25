@@ -79,6 +79,15 @@ tsc --noEmit: tiada ralat · biome check src/: 0 ralat · npm run build: berjaya
 | Panel Serah Terima terbuka | 27 FPS (p95 50 ms, maks 100 ms) | 33 FPS |
 | Panel Ringkasan terbuka | 27 FPS (p95 50 ms, maks 83 ms) | — |
 
+### Draw call (Playwright, selepas Pelan 005 Langkah 11)
+
+| | Sebelum 11b | Selepas 11b (`2ad40f8`) |
+|---|---|---|
+| desktop-chrome, kedudukan mula | 265–274 | 51–78 |
+| pixel-7 (emulasi), kedudukan mula | 127–145 | 25–40 |
+
+Bloom dibuang dalam 11a (`c21b328`). **FPS selepas Langkah 11 belum diukur di Redmi 9** (11c, ditangguhkan oleh pemilik). Jadual FPS di atas ialah sebelum Langkah 11.
+
 **Tafsiran:** boleh dimainkan pada ~30 FPS, tetapi bukan 60. Landskap (lebih sedikit piksel) lebih laju daripada potret, jadi telefon ini terhad oleh GPU/fill-rate. Calon pertama: matikan Bloom (`EffectComposer`) pada peranti sentuh. Ukuran dibuat pada build dev; build produksi belum diukur.
 
 Ulangan pada `97da0f4` (selepas beberapa larian berturut-turut, telefon mungkin panas): potret 24–29 FPS, landskap 29–33 FPS. Tiada perubahan ketara daripada HUD yang kini ditinjau 10 kali sesaat.

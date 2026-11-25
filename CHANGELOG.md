@@ -27,6 +27,7 @@ Vertical slice mudah alih (Pelan 004 & 005).
 - Latar Malaysia: mata wang RM dan teks BM (TPD-016), termasuk huraian manifest PWA.
 - Manifest tidak lagi ditutup secara automatik di alamat terakhir. Pemain mesti kembali ke gudang (master prompt H.10).
 - **Prestasi telefon:** kesan Bloom dan pakej `@react-three/postprocessing` dibuang (~5 FPS pada Redmi 9).
+- **Prestasi:** bangunan dan jalan dilukis dengan instancing (`2ad40f8`). Draw call di kedudukan mula turun daripada 265 ke 51–78 (desktop) dan daripada 127–145 ke 25–40 (emulasi Pixel 7); susun atur bandar tidak berubah.
 
 ### Dibaiki
 - **B1–B13:** kestabilan gelung penghantaran, butang sentuh, kamera tidak mengikut pemain (B12) dan lain-lain (Pelan 004).
