@@ -1,3 +1,6 @@
+import gameSceneSrc from "@/components/GameScene3D.tsx?raw";
+import { createFpsMeter, shouldShowFps } from "@/dev/fps";
+import { describe, expect, it } from "vitest";
 /// <reference types="vite/client" />
 /**
  * Kontrak Pelan 005 Langkah 9a — paparan FPS dev, skrip host, dokumen wajib (master prompt seksyen S).
@@ -5,14 +8,11 @@
  */
 import changelog from "/CHANGELOG.md?raw";
 import devStatus from "/DEVELOPMENT_STATUS.md?raw";
-import pkgRaw from "/package.json?raw";
-import manifestRaw from "/public/manifest.json?raw";
 import qaReport from "/QA_REPORT.md?raw";
 import techDecisions from "/TECHNICAL_DECISIONS.md?raw";
 import notices from "/THIRD_PARTY_NOTICES.md?raw";
-import gameSceneSrc from "@/components/GameScene3D.tsx?raw";
-import { createFpsMeter, shouldShowFps } from "@/dev/fps";
-import { describe, expect, it } from "vitest";
+import pkgRaw from "/package.json?raw";
+import manifestRaw from "/public/manifest.json?raw";
 
 // ── FPS ──────────────────────────────────────────────────────
 
