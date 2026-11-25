@@ -26,6 +26,7 @@ Vertical slice mudah alih (Pelan 004 & 005).
 ### Diubah
 - Latar Malaysia: mata wang RM dan teks BM (TPD-016), termasuk huraian manifest PWA.
 - Manifest tidak lagi ditutup secara automatik di alamat terakhir. Pemain mesti kembali ke gudang (master prompt H.10).
+- **Prestasi telefon:** kesan Bloom dan pakej `@react-three/postprocessing` dibuang (~5 FPS pada Redmi 9).
 
 ### Dibaiki
 - **B1–B13:** kestabilan gelung penghantaran, butang sentuh, kamera tidak mengikut pemain (B12) dan lain-lain (Pelan 004).

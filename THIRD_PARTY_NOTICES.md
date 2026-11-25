@@ -8,7 +8,6 @@ Misi Kurir Simulator menggunakan perisian sumber terbuka di bawah. Versi dan les
 |-------|-------|-------|------------|----------|
 | `@react-three/drei` | 10.7.9 | MIT | https://github.com/pmndrs/drei | Pembantu R3F (belum digunakan dalam kod; disenaraikan oleh knip) |
 | `@react-three/fiber` | 9.8.2 | MIT | https://github.com/pmndrs/react-three-fiber | Pemapar React untuk Three.js |
-| `@react-three/postprocessing` | 3.2.2 | MIT | https://github.com/pmndrs/react-postprocessing | Kesan Bloom; dibuang dalam Pelan 005 Langkah 11a (prestasi telefon) |
 | `@react-three/rapier` | 2.2.0 | Tidak dinyatakan dalam pakej npm (perlu disahkan dengan upstream sebelum rilis) | https://github.com/pmndrs/react-three-rapier | `<Physics>` sahaja; tiada `RigidBody` (TPD-017) |
 | `@supabase/supabase-js` | 2.119.2 | MIT | https://github.com/supabase/supabase-js | Belum digunakan (disenaraikan oleh knip) |
 | `idb` | 8.0.4 | ISC | https://github.com/jakearchibald/idb | Belum digunakan; simpanan guna API IndexedDB terus |
