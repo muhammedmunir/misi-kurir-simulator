@@ -12,7 +12,7 @@ export function createFpsMeter(windowSize = 60) {
       if (timestamps.length < 2) return 0;
       const totalMs = timestamps[timestamps.length - 1] - timestamps[0];
       if (totalMs === 0) return 0;
-      return Math.round((timestamps.length - 1) * 1000 / totalMs);
+      return Math.round(((timestamps.length - 1) * 1000) / totalMs);
     },
   };
 }

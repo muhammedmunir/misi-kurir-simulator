@@ -1,4 +1,5 @@
 import { Receiver } from "@/delivery/Receiver";
+import { FpsOverlay, shouldShowFps } from "@/dev/fps";
 import { NavArrow } from "@/navigation/NavArrow";
 import { startAutosave } from "@/save/autosave";
 import { saveBackends } from "@/save/backend";
@@ -18,7 +19,6 @@ import { NPCTraffic } from "./3d/NPCTraffic";
 import { PlayerController } from "./3d/PlayerController";
 import { WorldEnvironment } from "./3d/WorldEnvironment";
 import { TouchJoystick } from "./TouchJoystick";
-import { FpsOverlay, shouldShowFps } from "@/dev/fps";
 
 export function GameScene3D() {
   const [contextLost, setContextLost] = useState(false);
