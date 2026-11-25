@@ -146,9 +146,15 @@ describe("QA_REPORT, CHANGELOG, TECHNICAL_DECISIONS, DEVELOPMENT_STATUS", () => 
     expect(qaReport).toMatch(/\b3[5-9]\d passed\b/);
   });
 
-  it("QA_REPORT tidak mendakwa FPS tanpa ukuran; peranti sebenar ditanda BELUM DIUJI", () => {
-    expect(qaReport).not.toMatch(/\d+\s*FPS/i);
-    expect(qaReport).toMatch(/BELUM DIUJI/);
+  // Dikemas kini selepas 9b: FPS kini diukur pada telefon sebenar (Redmi 9, 2026-11-25).
+  it("QA_REPORT: FPS hanya daripada telefon sebenar yang dinamakan; peranti lain BELUM DIUJI", () => {
+    expect(qaReport).toMatch(/Redmi 9/);
+    expect(qaReport).toMatch(/Android 12/);
+    expect(qaReport).toMatch(/\d+\s*FPS/i);
+    const phoneRow = qaReport.split("\n").find((l) => l.includes("Redmi 9") && l.startsWith("|")) ?? "";
+    expect(phoneRow).toMatch(/DIUJI/);
+    expect(phoneRow).not.toMatch(/BELUM/);
+    expect(qaReport).toMatch(/BELUM DIUJI/); // iPhone/Safari, Firefox
   });
 
   it("QA_REPORT & TECHNICAL_DECISIONS merekod Rapier tidak digunakan sebagai had diketahui; QA menyebut B14 dan B17", () => {

@@ -1,11 +1,12 @@
 # Bug Tracker — Courier Life Simulator 3D
 
-**Kemas kini terakhir:** 2026-11-24
+**Kemas kini terakhir:** 2026-11-25
 
 ## Ringkasan
 
 Pelan 004 selesai: B1–B11 dan B13 dibaiki. B12 dibaiki dalam Pelan 005 Langkah 2.
-Belum diuji: telefon sebenar, skrin 360px, hantar paket dalam permainan sebenar (logik dilindungi ujian unit).
+Pelan 005: B15–B16 dibaiki. Ujian telefon sebenar (Redmi 9, Langkah 9b) menemui B18–B21; B18–B20 dalam Pelan 005 Langkah 10.
+Belum diuji: skrin 360px, iPhone/Safari.
 
 ## Pepijat
 
@@ -127,3 +128,34 @@ Belum diuji: telefon sebenar, skrin 360px, hantar paket dalam permainan sebenar 
 - **Kesan:** "Tambah ke skrin utama" di Android tanpa ikon; audit PWA gagal.
 - **Ditemui:** semakan untuk Pelan 005 Langkah 9.
 - **Status:** DIRAKAM — memerlukan reka bentuk ikon (keputusan visual pemilik); bukan dalam Langkah 9a
+
+### B18 — Landskap: panel Serah Terima tidak boleh ditatal (pemain tersekat)
+- **Fail:** `src/index.css` (`.wh-panel`)
+- **Masalah:** `.wh-panel` ada `max-height: min(78dvh, 640px)` tetapi tiada `overflow-y`. Dalam landskap Redmi 9 (viewport 823×309), kandungan panel Serah Terima 444 px dipotong pada 241 px dan tidak boleh ditatal.
+- **Kesan:** butang Serahkan paket, Penerima tiada dan Batal berada di luar skrin (y = 329–521). Pemain tidak boleh menyelesaikan atau membatalkan serah terima. **Menyekat.**
+- **Ditemui:** ujian telefon sebenar, Pelan 005 Langkah 9b. Emulasi Pixel 7 (potret) tidak menangkapnya.
+- **Status:** DIRAKAM — Pelan 005 Langkah 10
+- **Pengesahan:** kontrak `005-langkah-10-pepijat-telefon.test.tsx` (B18) + E2E `tests/contract/e2e/landscape-panels.spec.ts`
+
+### B19 — Kad status HUD kekal "Berjalan" semasa memandu
+- **Fail:** `src/components/HUD.tsx` (baris `const isOnFoot = playerState.isOnFoot()`)
+- **Masalah:** `playerState` ialah pemboleh ubah modul, bukan stor React. HUD hanya membaca nilainya semasa render atas sebab lain, jadi naik motor tidak mengemas kini kad (label, warna, km/j).
+- **Kesan:** semasa memandu, kad menunjukkan "Berjalan / Tekan E untuk naik motor" (tangkapan skrin telefon 9b).
+- **Ditemui:** ujian telefon sebenar, Pelan 005 Langkah 9b.
+- **Status:** DIRAKAM — Pelan 005 Langkah 10
+- **Pengesahan:** kontrak `005-langkah-10-pepijat-telefon.test.tsx` (B19)
+
+### B20 — Petunjuk "Tekan E" dipaparkan di telefon
+- **Fail:** `src/components/HUD.tsx`
+- **Masalah:** teks "Tekan E untuk …" dan "Masuk gudang, tekan E di meja sortir" tidak bergantung pada mod input.
+- **Kesan:** pemain telefon diberitahu menekan kekunci yang tidak wujud.
+- **Ditemui:** ujian telefon sebenar, Pelan 005 Langkah 9b.
+- **Status:** DIRAKAM — Pelan 005 Langkah 10
+- **Pengesahan:** kontrak `005-langkah-10-pepijat-telefon.test.tsx` (B20)
+
+### B21 — Landskap: unsur bertindih
+- **Fail:** `src/components/HUD.tsx` (penunjuk arah), `src/components/MainMenu.tsx` (teks versi)
+- **Masalah:** dalam viewport 823×309, penunjuk arah ("Kafe Kampung Digital 0 m") menutup tajuk panel Serah Terima; di menu utama, "Versi 0.0.0-alpha" dan "© 2026" bertindih dengan butang Tetapan.
+- **Kesan:** kosmetik; tidak menyekat.
+- **Ditemui:** ujian telefon sebenar, Pelan 005 Langkah 9b.
+- **Status:** DIRAKAM — selepas Langkah 10
