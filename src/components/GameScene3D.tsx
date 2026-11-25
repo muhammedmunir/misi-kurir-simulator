@@ -1,12 +1,12 @@
 import { Receiver } from "@/delivery/Receiver";
 import { FpsOverlay, shouldShowFps } from "@/dev/fps";
+import { RenderInfoProbe } from "@/dev/render-info";
 import { NavArrow } from "@/navigation/NavArrow";
 import { startAutosave } from "@/save/autosave";
 import { saveBackends } from "@/save/backend";
 import { WarehouseBuilding } from "@/warehouse/WarehouseBuilding";
 import { WarehousePanel } from "@/warehouse/WarehousePanel";
 import { Canvas } from "@react-three/fiber";
-import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import { Physics } from "@react-three/rapier";
 import { useCallback, useEffect, useState } from "react";
 import { CameraFollow } from "./3d/CameraFollow";
@@ -118,10 +118,7 @@ export function GameScene3D() {
           <HUD3D />
         </Physics>
 
-        {/* Post-processing */}
-        <EffectComposer enableNormalPass={false}>
-          <Bloom luminanceThreshold={0.9} intensity={0.15} />
-        </EffectComposer>
+        {import.meta.env.DEV && <RenderInfoProbe />}
       </Canvas>
 
       {/* Touch controls overlay */}
