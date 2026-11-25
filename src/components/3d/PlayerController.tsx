@@ -32,6 +32,31 @@ let onFoot = true;
 /** The motor stays wherever it was left. */
 const motor: MotorState = { x: MOTOR_START.x, z: MOTOR_START.z, heading: 0, speed: 0 };
 
+// ── World state for save/load ─────────────────────────────────────
+export interface WorldState {
+  pos: { x: number; z: number };
+  onFoot: boolean;
+  motor: { x: number; z: number; heading: number };
+}
+
+export function getWorldState(): WorldState {
+  return {
+    pos: { x: pos.x, z: pos.z },
+    onFoot,
+    motor: { x: motor.x, z: motor.z, heading: motor.heading },
+  };
+}
+
+export function restoreWorld(w: WorldState): void {
+  onFoot = w.onFoot;
+  motor.x = w.motor.x;
+  motor.z = w.motor.z;
+  motor.heading = w.motor.heading;
+  motor.speed = 0;
+  vel.set(0, 0, 0);
+  pos.set(w.pos.x, onFoot ? 1.6 : MOTOR_Y, w.pos.z);
+}
+
 // Exposed for camera, HUD and touch controls
 export const playerState = {
   getPosition: () => pos,

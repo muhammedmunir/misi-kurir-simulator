@@ -1,8 +1,9 @@
 import { HandoverPanel } from "@/delivery/HandoverPanel";
 import { ManifestSummaryPanel } from "@/delivery/ManifestSummaryPanel";
 import { nextTargetZone, pendingCargo } from "@/lib/delivery-system";
-import { saveGame } from "@/lib/idb";
 import { formatRinggit } from "@/lib/utils";
+import { saveBackends } from "@/save/backend";
+import { saveNow } from "@/save/save-game";
 import { useDeliveryStore } from "@/store/delivery";
 import { useSceneStore } from "@/store/game";
 import { useGameStateStore } from "@/store/gamestate";
@@ -28,27 +29,7 @@ export function HUD() {
   if (!player || currentScene !== Scene.GAME) return null;
 
   const handleSave = async () => {
-    const gamestate = useGameStateStore.getState();
-    if (!gamestate.player) return;
-    const saveData = {
-      slots: [
-        {
-          id: "slot-1",
-          timestamp: Date.now(),
-          player: gamestate.player,
-          manifest: gamestate.activeManifest,
-          packets: [],
-          deliveries: [],
-          vehicles: gamestate.vehicles,
-          settings: gamestate.settings,
-          version: "0.0.0",
-        },
-      ],
-      selectedSlot: 0,
-      lastPlayTime: Date.now(),
-      totalPlayTime: 0,
-    };
-    await saveGame(saveData);
+    await saveNow(saveBackends.current, Date.now());
   };
 
   return (
