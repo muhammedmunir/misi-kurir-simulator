@@ -10,7 +10,7 @@ export function ManifestSummaryPanel() {
   const { delivered, returned, earned, xp, durationMs } = summary;
 
   return (
-    <dialog open className="wh-panel wh-summary">
+    <dialog open className="wh-panel wh-summary" style={{ pointerEvents: "auto" }}>
       <div className="wh-panel__title">Ringkasan Manifest</div>
       <dl className="wh-summary__grid">
         <div className="wh-summary__row">

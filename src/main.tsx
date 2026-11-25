@@ -10,3 +10,9 @@ createRoot(root).render(
     <App />
   </StrictMode>,
 );
+
+if (import.meta.env.DEV) {
+  import("./dev/test-api").then((m) => {
+    window.__mks = m.createTestApi();
+  });
+}

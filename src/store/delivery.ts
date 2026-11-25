@@ -149,11 +149,11 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => {
     },
     confirmHandover: (now) => {
       const { result, session } = completeHandover(get().session, now, get().deps);
-      set({ session });
       if (result.action === "deliver") {
         useGameStateStore.getState().addMoney(result.reward ?? 0);
         useGameStateStore.getState().addXP(result.xpReward ?? 0);
       }
+      set({ session });
     },
     reportAbsent: (now) => {
       const s = get().session;

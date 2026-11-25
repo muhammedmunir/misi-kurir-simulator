@@ -28,7 +28,7 @@ export function HandoverPanel() {
   const hasProof = session.handover.proofTaken;
 
   return (
-    <dialog className="wh-panel" open aria-label="Panel Serah Terima">
+    <dialog className="wh-panel" open aria-label="Panel Serah Terima" style={{ pointerEvents: "auto" }}>
       <h3>📦 Serah Terima</h3>
 
       <div className="wh-panel__row">
