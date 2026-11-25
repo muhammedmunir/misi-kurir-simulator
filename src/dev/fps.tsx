@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 /** FPS meter — purata bergolek sepanjang tetingkap bingkai. */
 export function createFpsMeter(windowSize = 60) {
@@ -17,28 +17,38 @@ export function createFpsMeter(windowSize = 60) {
   };
 }
 
-/** Sahkan sama ada meter FPS perlu dipaparkan. */
+/** Sahkan sama ada meter FPS perlu dipaparkan — parameter `fps` sebenar sahaja. */
 export function shouldShowFps(isDev: boolean, search: string): boolean {
-  if (!isDev) return false;
-  return search.includes("fps");
+  return isDev && new URLSearchParams(search).has("fps");
 }
 
-/** React component untuk paparan FPS di skrin. */
+/** React component untuk paparan FPS di skrin — mengukur bingkai rAF sebenar. */
 export function FpsOverlay() {
-  const meterRef = useRef(createFpsMeter(60));
-  const [, setTick] = useState(0);
+  const [fps, setFps] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 1000 / 30);
-    return () => clearInterval(id);
+    const meter = createFpsMeter(60);
+    let lastShown = Number.NEGATIVE_INFINITY;
+    let rafId = 0;
+    const loop = (t: number) => {
+      const value = meter.tick(t);
+      // setState paling kerap sekali setiap 500 ms masa rAF
+      if (value > 0 && t - lastShown >= 500) {
+        lastShown = t;
+        setFps(value);
+      }
+      rafId = requestAnimationFrame(loop);
+    };
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
   }, []);
 
   return (
-    <div
+    <output
       style={{
         position: "fixed",
         top: 8,
-        right: 8,
+        left: 8,
         background: "rgba(0,0,0,0.6)",
         color: "#fff",
         padding: "4px 8px",
@@ -46,10 +56,12 @@ export function FpsOverlay() {
         fontFamily: "monospace",
         fontSize: 12,
         zIndex: 9999,
+        pointerEvents: "none",
         userSelect: "none",
+        fontVariantNumeric: "tabular-nums",
       }}
     >
-      {meterRef.current.tick(Date.now())} FPS
-    </div>
+      {fps} FPS
+    </output>
   );
 }
