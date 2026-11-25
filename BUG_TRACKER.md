@@ -103,7 +103,7 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Fail:** `src/components/3d/CameraFollow.tsx`
 - **Masalah:** Kamera diletak 8 unit di belakang pemain tanpa semakan halangan. Bila pemain berdiri di pintu rumah alamat dan menghadap jalan, kamera berada di dalam kotak rumah.
 - **Kesan:** Bumbung/dinding rumah menutup separuh skrin (dilihat di Chrome semasa semakan Langkah 4).
-- **Status:** DIRAKAM — pelan berasingan selepas Pelan 005 Langkah 5
+- **Status:** DIRANCANG — Pelan 005 Langkah 12 (`plans/005-langkah-12-kamera-landskap.md`)
 - **Pengesahan:** berdiri di pintu Kafe Kampung Digital menghadap jalan; skrin tidak patut dilindungi dinding.
 
 ### B15 — Panel serah terima & ringkasan manifest tidak boleh diklik
@@ -158,4 +158,4 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Masalah:** dalam viewport 823×309, penunjuk arah ("Kafe Kampung Digital 0 m") menutup tajuk panel Serah Terima; di menu utama, "Versi 0.0.0-alpha" dan "© 2026" bertindih dengan butang Tetapan.
 - **Kesan:** kosmetik; tidak menyekat.
 - **Ditemui:** ujian telefon sebenar, Pelan 005 Langkah 9b.
-- **Status:** DIRAKAM — selepas Langkah 10
+- **Status:** DIRANCANG — Pelan 005 Langkah 12 (punca: NavArrow abaikan `handover`; footer menu `position: absolute`)
