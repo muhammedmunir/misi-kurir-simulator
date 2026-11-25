@@ -1,6 +1,6 @@
 # Laporan QA — Misi Kurir Simulator
 
-**Tarikh:** 2026-11-25 · **Versi:** 0.1.0-alpha (belum dikeluarkan) · **Commit diuji:** `8bd8696`
+**Tarikh:** 2026-11-25 · **Versi:** 0.1.0-alpha (belum dikeluarkan) · **Commit diuji:** `97da0f4` (ujian awal 9b: `8bd8696`)
 
 Laporan ini hanya merekod apa yang **benar-benar** dijalankan. "Emulasi" bermaksud Chrome desktop yang meniru saiz skrin dan sentuhan sesebuah peranti, bukan peranti itu sendiri.
 
@@ -53,14 +53,16 @@ Spec `tests/contract/e2e/vertical-slice.spec.ts`. Tindakan permainan dibuat mela
 
 Tiada ralat konsol.
 
-**Landskap — GAGAL (B18).** Gudang dan berangkat berjaya, tetapi panel Serah Terima (444 px) melebihi viewport (309 px) dan tidak boleh ditatal. Serahkan paket, Penerima tiada dan Batal tidak boleh dicapai, jadi pemain tersekat. Muat semula → Teruskan memulihkan sesi dengan betul.
+**Landskap — GAGAL pada `8bd8696` (B18), LULUS pada `97da0f4`.** Pada `8bd8696` panel Serah Terima (444 px) melebihi viewport (309 px) dan tidak boleh ditatal; pemain tersekat. Pada `97da0f4` aliran penuh yang sama lulus dalam landskap: panel ditatal dengan leretan jari sebenar untuk mencapai Ambil bukti dan Penerima tiada.
+
+**Selepas Langkah 10 (`97da0f4`), potret dan landskap:** kad status menunjukkan "Memandu Motor" dan km/j semasa memandu (B19); tiada "Tekan E", diganti "Ketik butang tindakan" (B20). Tiada ralat konsol.
 
 ## Keputusan
 
 ```
-Vitest:     Test Files  20 passed (20)
-            Tests  376 passed (376)
-Playwright: 2 passed (27.4s)        # desktop-chrome + pixel-7
+Vitest:     Test Files  21 passed (21)
+            Tests  383 passed (383)
+Playwright: 3 passed, 1 skipped (29.8s)   # desktop-chrome + pixel-7; landskap 823×309 pada pixel-7 sahaja
 tsc --noEmit: tiada ralat · biome check src/: 0 ralat · npm run build: berjaya
 ```
 
@@ -79,6 +81,8 @@ tsc --noEmit: tiada ralat · biome check src/: 0 ralat · npm run build: berjaya
 
 **Tafsiran:** boleh dimainkan pada ~30 FPS, tetapi bukan 60. Landskap (lebih sedikit piksel) lebih laju daripada potret, jadi telefon ini terhad oleh GPU/fill-rate. Calon pertama: matikan Bloom (`EffectComposer`) pada peranti sentuh. Ukuran dibuat pada build dev; build produksi belum diukur.
 
+Ulangan pada `97da0f4` (selepas beberapa larian berturut-turut, telefon mungkin panas): potret 24–29 FPS, landskap 29–33 FPS. Tiada perubahan ketara daripada HUD yang kini ditinjau 10 kali sesaat.
+
 ## Bukti
 
 | Bukti | Rujukan |
@@ -88,14 +92,11 @@ tsc --noEmit: tiada ralat · biome check src/: 0 ralat · npm run build: berjaya
 | Serah terima, ringkasan manifest | `2c33f7a`, `2600f2f`, `daac015` |
 | Meter FPS dev (`?fps`) | `8bd8696` |
 | Kontrak setiap langkah | `src/__contract__/005-*.test.ts(x)` |
-| Pepijat telefon B18–B20 (kontrak + E2E landskap) | `src/__contract__/005-langkah-10-pepijat-telefon.test.tsx`, `tests/contract/e2e/landscape-panels.spec.ts` |
+| Pepijat telefon B18–B20 (kontrak + E2E landskap; dibaiki `97da0f4`) | `src/__contract__/005-langkah-10-pepijat-telefon.test.tsx`, `tests/contract/e2e/landscape-panels.spec.ts` |
 | Ulang | `npx vitest run` · `npm run test:e2e` · `npm run build` |
 
 ## Had diketahui
 
-- **B18 (menyekat):** landskap — panel Serah Terima tidak boleh ditatal; pemain tersekat. Pelan 005 Langkah 10.
-- **B19:** kad status HUD kekal "Berjalan" semasa memandu. Pelan 005 Langkah 10.
-- **B20:** petunjuk "Tekan E" dipaparkan di telefon. Pelan 005 Langkah 10.
 - **B21:** landskap — penunjuk arah bertindih dengan tajuk panel; teks versi menu bertindih dengan butang Tetapan.
 - **Rapier tidak digunakan** (TPD-017): tiada collision, jadi motor dan pemain menembusi bangunan.
 - **B14:** kamera boleh masuk ke dalam rumah di pintu alamat, dan di meja gudang model pemain menutup bahagian atas skrin (dilihat di telefon).

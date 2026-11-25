@@ -5,7 +5,7 @@ Fasa ikut roadmap master prompt (seksyen Q). Skala status (seksyen S):
 
 - **Implemented**: kod wujud dan berjalan, belum ada ujian atau bukti visual
 - **Tested**: ada ujian unit dan/atau disahkan di pelayar (bukti dalam `BUG_TRACKER.md` / commit)
-- **Accepted**: diuji di telefon sebenar dan diterima pemilik (belum ada setakat ini; telefon sebenar diuji 2026-11-25, menunggu B18)
+- **Accepted**: diuji di telefon sebenar dan diterima pemilik (belum ada setakat ini; telefon sebenar Redmi 9 lulus potret + landskap 2026-11-25, menunggu keputusan pemilik)
 
 Latar: Malaysia, RM, teks BM (TPD-016).
 
@@ -14,7 +14,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Ciri | Status | Catatan |
 |------|--------|---------|
 | Vite + React 19 + TypeScript strict | Tested | typecheck + build lulus |
-| Vitest | Tested | 376 ujian (`8bd8696`) |
+| Vitest | Tested | 383 ujian (`97da0f4`) |
 | Biome | Tested | 0 ralat |
 | Playwright | Tested | E2E vertical slice, `desktop-chrome` + `pixel-7` (emulasi), `bacccb5` |
 | PWA manifest | Implemented | Service worker belum ada |
@@ -29,11 +29,11 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Karakter berjalan/berlari | Implemented | Kedudukan dikira manual, bukan Rapier |
 | Kamera orang ketiga | Tested | B12 dibaiki: kamera kini benar-benar mengikut pemain; disahkan di Chrome |
 | Kawalan papan kekunci (WASD, E) | Implemented | Belum diuji di pelayar; logik E dikongsi dengan butang sentuh |
-| Kawalan sentuh (joystick, tindakan, BREK) | Tested | `1b88949`; telefon sebenar Redmi 9 (9b): joystick memandu, butang tindakan berfungsi. Landskap: B18 |
+| Kawalan sentuh (joystick, tindakan, BREK) | Tested | `1b88949`; telefon sebenar Redmi 9 (9b): joystick memandu, butang tindakan berfungsi; potret + landskap lulus selepas B18 (`97da0f4`) |
 | Motor: naik, pandu, brek, turun | Tested | Motor kekal di tempat ditinggalkan; turun hanya bila < 1 unit/s; disahkan di Chrome |
 | Kotak parkir di setiap alamat | Tested | Direkod betul/tidak (tiada penalti lagi); ujian unit sahaja, belum dipandu ke kotak di pelayar |
 | Fizik Rapier / collision | Not started | `<Physics>` tanpa `RigidBody`; motor menembusi bangunan |
-| HUD asas | Tested | Wang, level, kad misi reaktif. Status pandu tidak reaktif (B19); petunjuk E di telefon (B20) |
+| HUD asas | Tested | Wang, level, kad misi dan status pandu reaktif (B19); petunjuk ikut mod input (B20). Disahkan di telefon sebenar |
 | Simpan/muat | Tested | Skema v1 + validasi + autosave + Teruskan (Pelan 005 Langkah 7); E2E muat semula halaman |
 
 ## Phase 2 — World

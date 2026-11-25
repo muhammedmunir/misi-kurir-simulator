@@ -5,7 +5,7 @@
 ## Ringkasan
 
 Pelan 004 selesai: B1–B11 dan B13 dibaiki. B12 dibaiki dalam Pelan 005 Langkah 2.
-Pelan 005: B15–B16 dibaiki. Ujian telefon sebenar (Redmi 9, Langkah 9b) menemui B18–B21; B18–B20 dalam Pelan 005 Langkah 10.
+Pelan 005: B15–B16 dibaiki. Ujian telefon sebenar (Redmi 9, Langkah 9b) menemui B18–B21; B18–B20 dibaiki dalam Langkah 10 (`97da0f4`) dan disahkan di telefon. B21 belum.
 Belum diuji: skrin 360px, iPhone/Safari.
 
 ## Pepijat
@@ -134,7 +134,7 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Masalah:** `.wh-panel` ada `max-height: min(78dvh, 640px)` tetapi tiada `overflow-y`. Dalam landskap Redmi 9 (viewport 823×309), kandungan panel Serah Terima 444 px dipotong pada 241 px dan tidak boleh ditatal.
 - **Kesan:** butang Serahkan paket, Penerima tiada dan Batal berada di luar skrin (y = 329–521). Pemain tidak boleh menyelesaikan atau membatalkan serah terima. **Menyekat.**
 - **Ditemui:** ujian telefon sebenar, Pelan 005 Langkah 9b. Emulasi Pixel 7 (potret) tidak menangkapnya.
-- **Status:** DIRAKAM — Pelan 005 Langkah 10
+- **Status:** SELESAI (`97da0f4`) — disahkan di Redmi 9 sebenar, potret + landskap (2026-11-25)
 - **Pengesahan:** kontrak `005-langkah-10-pepijat-telefon.test.tsx` (B18) + E2E `tests/contract/e2e/landscape-panels.spec.ts`
 
 ### B19 — Kad status HUD kekal "Berjalan" semasa memandu
@@ -142,7 +142,7 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Masalah:** `playerState` ialah pemboleh ubah modul, bukan stor React. HUD hanya membaca nilainya semasa render atas sebab lain, jadi naik motor tidak mengemas kini kad (label, warna, km/j).
 - **Kesan:** semasa memandu, kad menunjukkan "Berjalan / Tekan E untuk naik motor" (tangkapan skrin telefon 9b).
 - **Ditemui:** ujian telefon sebenar, Pelan 005 Langkah 9b.
-- **Status:** DIRAKAM — Pelan 005 Langkah 10
+- **Status:** SELESAI (`97da0f4`) — disahkan di Redmi 9 sebenar, potret + landskap (2026-11-25)
 - **Pengesahan:** kontrak `005-langkah-10-pepijat-telefon.test.tsx` (B19)
 
 ### B20 — Petunjuk "Tekan E" dipaparkan di telefon
@@ -150,7 +150,7 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Masalah:** teks "Tekan E untuk …" dan "Masuk gudang, tekan E di meja sortir" tidak bergantung pada mod input.
 - **Kesan:** pemain telefon diberitahu menekan kekunci yang tidak wujud.
 - **Ditemui:** ujian telefon sebenar, Pelan 005 Langkah 9b.
-- **Status:** DIRAKAM — Pelan 005 Langkah 10
+- **Status:** SELESAI (`97da0f4`) — disahkan di Redmi 9 sebenar, potret + landskap (2026-11-25)
 - **Pengesahan:** kontrak `005-langkah-10-pepijat-telefon.test.tsx` (B20)
 
 ### B21 — Landskap: unsur bertindih
