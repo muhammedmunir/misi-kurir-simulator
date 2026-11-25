@@ -7,7 +7,7 @@ Fasa ikut roadmap master prompt (seksyen Q). Skala status (seksyen S):
 - **Tested**: ada ujian unit dan/atau disahkan di pelayar (bukti dalam `BUG_TRACKER.md` / commit)
 - **Accepted**: diuji di telefon sebenar dan diterima pemilik (belum ada setakat ini)
 
-Latar: Malaysia, RM, teks BM (TPD-016). Paparan wang masih Rp sehingga Pelan 005 Langkah 0.
+Latar: Malaysia, RM, teks BM (TPD-016).
 
 ## Phase 0 — Audit & fondasi
 
@@ -16,9 +16,9 @@ Latar: Malaysia, RM, teks BM (TPD-016). Paparan wang masih Rp sehingga Pelan 005
 | Vite + React 19 + TypeScript strict | Tested | typecheck + build lulus |
 | Vitest | Tested | 88 ujian |
 | Biome | Tested | 0 ralat |
-| Playwright | Not started | Pelan 005 Langkah 8 |
+| Playwright | Tested | Pelan 005 Langkah 8 |
 | PWA manifest | Implemented | Service worker belum ada |
-| Dokumen wajib (seksyen S) | In progress | Ada: README, DEVELOPMENT_STATUS, BUG_TRACKER, TECHNICAL_DECISIONS. Belum: THIRD_PARTY_NOTICES, QA_REPORT, CHANGELOG |
+| Dokumen wajib (seksyen S) | Tested | README, DEVELOPMENT_STATUS, BUG_TRACKER, TECHNICAL_DECISIONS, THIRD_PARTY_NOTICES, QA_REPORT, CHANGELOG |
 
 ## Phase 1 — Playable foundation
 
@@ -34,7 +34,7 @@ Latar: Malaysia, RM, teks BM (TPD-016). Paparan wang masih Rp sehingga Pelan 005
 | Kotak parkir di setiap alamat | Tested | Direkod betul/tidak (tiada penalti lagi); ujian unit sahaja, belum dipandu ke kotak di pelayar |
 | Fizik Rapier / collision | Not started | `<Physics>` tanpa `RigidBody`; motor menembusi bangunan |
 | HUD asas | Tested | Wang, level, status pandu, kad misi reaktif |
-| Simpan/muat | In progress | IndexedDB wujud; tidak simpan paket/kedudukan (Pelan 005 Langkah 7) |
+| Simpan/muat | Tested | IndexedDB dengan autosave (Pelan 005 Langkah 7) |
 
 ## Phase 2 — World
 

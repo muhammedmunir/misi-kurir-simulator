@@ -18,6 +18,7 @@ import { NPCTraffic } from "./3d/NPCTraffic";
 import { PlayerController } from "./3d/PlayerController";
 import { WorldEnvironment } from "./3d/WorldEnvironment";
 import { TouchJoystick } from "./TouchJoystick";
+import { FpsOverlay, shouldShowFps } from "@/dev/fps";
 
 export function GameScene3D() {
   const [contextLost, setContextLost] = useState(false);
@@ -127,6 +128,7 @@ export function GameScene3D() {
       <TouchJoystick />
       <WarehousePanel />
       <NavArrow />
+      {shouldShowFps(import.meta.env.DEV, window.location.search) && <FpsOverlay />}
     </div>
   );
 }

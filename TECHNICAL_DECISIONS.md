@@ -5,7 +5,7 @@
 | TPD-001 | 2026-11-24 | React 19 + TypeScript Strict | Vue / Svelte / Vanilla JS | React ecosystem R3F paling matang untuk 3D web. TypeScript strict memastikan keselamatan data. |
 | TPD-002 | 2026-11-24 | Vite sebagai build tool | Webpack / Rollup / esbuild | Vite pantas, HCD baik, plugin React stabil, ESM-first. |
 | TPD-003 | 2026-11-24 | React Three Fiber (R3F) | Raw Three.js / Babylon.js / PixiJS | R3F component model sesuai dengan React. Community besar, Drei helpers banyak. |
-| TPD-004 | 2026-11-24 | Rapier 3D (via @react-three/rapier) | Cannon.js / Ammo.js / Matter.js | Rapier cepat (WASM), enkapsul API, R3F integration langsung. |
+| TPD-004 | 2026-11-24 | Rapier 3D (via @react-three/rapier) | Cannon.js / Ammo.js / Matter.js | Rapier cepat (WASM), enkapsul API, R3F integration langsung. **Rapier tidak digunakan sebagai had diketahui** — `<Physics>` sedia tetapi tiada `RigidBody` atau collision aktif; motor menembusi bangunan (lihat B14). |
 | TPD-005 | 2026-11-24 | Zustand untuk state management | Redux / Jotai / Recoil | Zustand ringkas, boilerplate minimum, TypeScript friendly, bundle kecil. |
 | TPD-006 | 2026-11-24 | IndexedDB (via idb) | localStorage / Supabase / Firebase | IndexedDB capacity besar, offline-first, tiada server required. Supabase opsional. |
 | TPD-007 | 2026-11-24 | Biome untuk lint/format | ESLint + Prettier / TSLint | Biome lebih pantas, konfigurasi ringkas, Rust-backed. |
