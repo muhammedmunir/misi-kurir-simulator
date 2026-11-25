@@ -110,7 +110,7 @@ Belum diuji: telefon sebenar, skrin 360px, hantar paket dalam permainan sebenar 
 - **Masalah:** bekas akar `<HUD>` ialah `pointerEvents: "none"`. Kedua-dua panel dirender di dalamnya tanpa `pointer-events: auto`, jadi klik/sentuhan menembusi ke kanvas 3D.
 - **Kesan:** pemain sebenar tidak boleh menekan Ambil bukti, Serahkan paket, Penerima tiada, Batal atau Manifest baharu. Aliran permainan tersekat. Semakan pelayar Langkah 5/6 terlepas pepijat ini kerana event dihantar terus melalui JS.
 - **Ditemui:** E2E Playwright semasa menulis Pelan 005 Langkah 8 ("canvas … intercepts pointer events").
-- **Status:** DIRAKAM — dibaiki dalam Pelan 005 Langkah 8
+- **Status:** SELESAI (`bacccb5`) — disahkan oleh E2E desktop-chrome + pixel-7
 - **Pengesahan:** kontrak `005-langkah-8-test-api.test.tsx` (B15) + E2E `tests/contract/e2e/vertical-slice.spec.ts`
 
 ### B16 — Autosave selepas serahan menyimpan wang lama
@@ -118,5 +118,5 @@ Belum diuji: telefon sebenar, skrin 360px, hantar paket dalam permainan sebenar 
 - **Masalah:** `set({ session })` dipanggil sebelum `addMoney`/`addXP`. Langganan autosave terus memanggil `saveNow`, dan `buildSave` membaca wang sebelum ganjaran ditambah.
 - **Kesan:** selepas muat semula → Teruskan, ganjaran serahan terakhir hilang (E2E: dijangka 504, dapat 500).
 - **Ditemui:** E2E Playwright semasa menulis Pelan 005 Langkah 8.
-- **Status:** DIRAKAM — dibaiki dalam Pelan 005 Langkah 8
+- **Status:** SELESAI (`bacccb5`) — disahkan oleh E2E desktop-chrome + pixel-7
 - **Pengesahan:** kontrak `005-langkah-8-test-api.test.tsx` (B16) + E2E
