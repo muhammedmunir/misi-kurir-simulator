@@ -1,5 +1,7 @@
 import { Receiver } from "@/delivery/Receiver";
 import { NavArrow } from "@/navigation/NavArrow";
+import { startAutosave } from "@/save/autosave";
+import { saveBackends } from "@/save/backend";
 import { WarehouseBuilding } from "@/warehouse/WarehouseBuilding";
 import { WarehousePanel } from "@/warehouse/WarehousePanel";
 import { Canvas } from "@react-three/fiber";
@@ -24,6 +26,8 @@ export function GameScene3D() {
     e.preventDefault();
     setContextLost(true);
   }, []);
+
+  useEffect(() => startAutosave(saveBackends.current), []);
 
   useEffect(() => {
     const canvas = document.querySelector("canvas");

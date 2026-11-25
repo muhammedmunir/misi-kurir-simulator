@@ -1,6 +1,9 @@
+import { saveBackends } from "@/save/backend";
+import { loadSaved } from "@/save/save-game";
 import { useSceneStore } from "@/store/game";
 import { useGameStateStore } from "@/store/gamestate";
 import { Scene } from "@/types/scene";
+import { useEffect, useState } from "react";
 
 function menuButtonStyle(label: string): React.CSSProperties {
   // Label is ignored but kept for potential future use (e.g., dynamic styling)
@@ -26,6 +29,33 @@ function menuButtonStyle(label: string): React.CSSProperties {
 export function MainMenu() {
   const navigate = useSceneStore((s) => s.navigate);
   const isNewGame = useGameStateStore((s) => s.isNewGame);
+  const [hasSave, setHasSave] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const backend = saveBackends.current;
+    backend
+      .read()
+      .then((data) => {
+        if (!cancelled) setHasSave(data != null);
+      })
+      .catch(() => {
+        if (!cancelled) setHasSave(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleContinue = async () => {
+    const r = await loadSaved(saveBackends.current);
+    if (r.ok) {
+      navigate(Scene.GAME);
+    } else {
+      setError(r.error);
+    }
+  };
 
   return (
     <div className="menu-screen" style={containerStyle}>
@@ -40,6 +70,19 @@ export function MainMenu() {
 
       {/* Menu buttons */}
       <div style={buttonContainerStyle}>
+        {hasSave && (
+          <button
+            type="button"
+            onClick={handleContinue}
+            style={{
+              ...menuButtonStyle("Teruskan"),
+              background: "var(--color-primary, #f59e0b)",
+              color: "var(--color-primary-text, #000)",
+            }}
+          >
+            <span style={{ fontSize: "16px" }}>▶ Teruskan</span>
+          </button>
+        )}
         {!isNewGame && (
           <button type="button" onClick={() => navigate(Scene.GAME)} style={menuButtonStyle("Mulakan Misi")}>
             <span style={{ fontSize: "16px" }}>🚀 Mula Misi</span>
@@ -56,6 +99,18 @@ export function MainMenu() {
           <span style={{ fontSize: "16px" }}>⚙️ Tetapan</span>
         </button>
       </div>
+
+      {/* Error message */}
+      {error && (
+        <p
+          role="alert"
+          style={{ color: "var(--color-error, #ef4444)", textAlign: "center", maxWidth: "320px", margin: "0 20px" }}
+        >
+          {error}
+          <br />
+          <span style={{ fontSize: "14px" }}>Mulakan Permainan Baru untuk bermain semula.</span>
+        </p>
+      )}
 
       {/* Footer */}
       <div style={footerStyle}>
