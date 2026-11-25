@@ -120,3 +120,10 @@ Belum diuji: telefon sebenar, skrin 360px, hantar paket dalam permainan sebenar 
 - **Ditemui:** E2E Playwright semasa menulis Pelan 005 Langkah 8.
 - **Status:** SELESAI (`bacccb5`) — disahkan oleh E2E desktop-chrome + pixel-7
 - **Pengesahan:** kontrak `005-langkah-8-test-api.test.tsx` (B16) + E2E
+
+### B17 — Ikon PWA dan favicon tidak wujud
+- **Fail:** `index.html` (`/favicon.svg`, `/apple-touch-icon.png`), `public/manifest.json` (`/icon-192.png`, `/icon-512.png`)
+- **Masalah:** keempat-empat fail dirujuk tetapi tiada dalam `public/`. Vite dev memulangkan `index.html` (SPA fallback), jadi tiada ralat konsol, tetapi PWA tidak boleh dipasang dengan ikon dan tab tiada favicon.
+- **Kesan:** "Tambah ke skrin utama" di Android tanpa ikon; audit PWA gagal.
+- **Ditemui:** semakan untuk Pelan 005 Langkah 9.
+- **Status:** DIRAKAM — memerlukan reka bentuk ikon (keputusan visual pemilik); bukan dalam Langkah 9a
