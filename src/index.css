@@ -163,6 +163,8 @@ select {
   transform: translateX(-50%);
   width: min(100%, 520px);
   max-height: min(78dvh, 640px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 12px;

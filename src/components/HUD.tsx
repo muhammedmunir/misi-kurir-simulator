@@ -8,7 +8,9 @@ import { useDeliveryStore } from "@/store/delivery";
 import { useSceneStore } from "@/store/game";
 import { useGameStateStore } from "@/store/gamestate";
 import { Scene } from "@/types/scene";
+import { useEffect, useState } from "react";
 import { playerState } from "./3d/PlayerController";
+import { shouldShowTouchControls } from "./TouchJoystick";
 
 export function HUD() {
   const navigate = useSceneStore((s) => s.navigate);
@@ -23,8 +25,19 @@ export function HUD() {
   const interactionMessage = session.interactionMessage;
   const completeMessage = session.completeMessage;
 
-  const isOnFoot = playerState.isOnFoot();
-  const speed = Math.abs(Math.round(playerState.getSpeed()));
+  const [touch] = useState(shouldShowTouchControls);
+  const [isOnFoot, setIsOnFoot] = useState(() => playerState.isOnFoot());
+  const [speed, setSpeed] = useState(() => Math.abs(Math.round(playerState.getSpeed())));
+
+  // Poll game state at 10 Hz so the status card tracks mounting/dismounting and
+  // live speed without subscribing to the render loop.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setIsOnFoot(playerState.isOnFoot());
+      setSpeed(Math.abs(Math.round(playerState.getSpeed())));
+    }, 100);
+    return () => window.clearInterval(id);
+  }, []);
 
   if (!player || currentScene !== Scene.GAME) return null;
 
@@ -164,7 +177,7 @@ export function HUD() {
             </p>
             {!isOnFoot && <p style={{ fontSize: "20px", fontWeight: 700, color: "#fff", margin: 0 }}>{speed} km/j</p>}
             <p style={{ fontSize: "11px", color: "#8888a0", margin: "4px 0 0" }}>
-              Tekan E untuk {isOnFoot ? "naik motor" : "turun motor / interaksi"}
+              {touch ? "Ketik butang tindakan" : "Tekan E"} untuk {isOnFoot ? "naik motor" : "turun motor / interaksi"}
             </p>
           </div>
 
@@ -202,7 +215,9 @@ export function HUD() {
               <p style={{ fontSize: "11px", color: "#f59e0b", margin: "4px 0 0" }}>{interactionMessage}</p>
             )}
             {!hasPacket && !interactionMessage && (
-              <p style={{ fontSize: "12px", fontWeight: 600 }}>Masuk gudang, tekan E di meja sortir</p>
+              <p style={{ fontSize: "12px", fontWeight: 600 }}>
+                {touch ? "Masuk gudang, ketik butang tindakan di meja sortir" : "Masuk gudang, tekan E di meja sortir"}
+              </p>
             )}
           </div>
         </div>
