@@ -1,17 +1,37 @@
-# CHANGELOG
+# Changelog
 
-Semua perubahan penting dalam projek ini dicatatkan di sini. Format mengikuti [Keep a Changelog](https://keepachangelog.com/) (v1.1.0).
+Semua perubahan penting dicatat di sini. Format: [Keep a Changelog 1.1.0](https://keepachangelog.com/ms/1.1.0/). Butiran pepijat: `BUG_TRACKER.md`. Keputusan: `TECHNICAL_DECISIONS.md`.
 
-## [0.1.0-alpha] — 2026-11-25
+## [0.1.0-alpha] — Belum dikeluarkan
+
+Vertical slice mudah alih (Pelan 004 & 005).
 
 ### Ditambah
-- **Serah terima**: Panel handover dengan ambil bukti, sahkan penghantaran, laporkan penerima tiada, dan batal.
-- **Ringkasan manifest**: Panel ringkasan selepas penghantaran lengkap.
-- **Simpan/muat**: Autosave di titik selamat (menu utama, gudang, selepas serahan); Teruskan dari menu utama.
-- **E2E**: Playwright E2E (desktop-chrome + Pixel 7), API ujian dev (`window.__mks`).
-- **B15**: Panel serah terima & manifest boleh diklik (`pointerEvents: auto`).
-- **B16**: Susunan `confirmHandover` — ganjaran (`addMoney`/`addXP`) sebelum `set session` untuk autosave betul.
+- **Gudang 3D:** bangunan gudang, meja sortir dan panel gudang (imbas, muat, berangkat) dengan had kargo berat/isi padu. Status paket ikut mesin keadaan dengan sejarah.
+- **Motor:** naik/turun, motor kekal di tempat ditinggalkan, turun hanya bila hampir berhenti, kotak parkir di setiap alamat.
+- **Kawalan sentuh:** joystick, butang tindakan kontekstual dan BREK.
+- **Navigasi:** anak panah ke sasaran seterusnya (gudang atau alamat), dengan jarak.
+- **Serah terima:** pemain mesti turun dari motor. Panel menunjukkan penerima, alamat dan nombor penjejakan, dengan butang Ambil bukti → Serahkan paket, Penerima tiada dan Batal. Paket gagal dipulangkan ke gudang.
+- **Ringkasan manifest:** manifest ditutup di meja gudang (TUTUP MANIFEST / PULANGKAN PAKET). Ringkasan memaparkan dihantar, dipulangkan, pendapatan RM, XP dan masa.
+- **Simpan/muat:**
+  - skema save v1 dengan validasi dan migrasi
+  - butang Simpan
+  - autosave selepas berangkat, selepas setiap serah terima, dan selepas manifest ditutup
+  - butang **▶ Teruskan** di menu utama
+  - simpanan rosak ditolak dengan mesej yang jelas
+- **E2E:** Playwright (`npm run test:e2e`) untuk vertical slice penuh pada `desktop-chrome` dan `pixel-7` (emulasi). API ujian `window.__mks` hanya wujud dalam mod dev.
+- **Dev:** `npm run dev:host` untuk ujian telefon di rangkaian tempatan; paparan FPS `?fps` (dev sahaja).
+- **Dokumen:** `THIRD_PARTY_NOTICES.md`, `QA_REPORT.md` dan `CHANGELOG.md`.
 
-### Baik Dipulihkan
-- B15: `<dialog>` panel tidak lagi menembusi klik ke kanvas 3D.
-- B16: Wang dan XP serahan kini disimpan dengan betul selepas muat semula.
+### Diubah
+- Latar Malaysia: mata wang RM dan teks BM (TPD-016), termasuk huraian manifest PWA.
+- Manifest tidak lagi ditutup secara automatik di alamat terakhir. Pemain mesti kembali ke gudang (master prompt H.10).
+
+### Dibaiki
+- **B1–B13:** kestabilan gelung penghantaran, butang sentuh, kamera tidak mengikut pemain (B12) dan lain-lain (Pelan 004).
+- **B15:** panel serah terima dan ringkasan tidak boleh diklik kerana HUD `pointerEvents: none`.
+- **B16:** autosave selepas serahan menyimpan wang lama; ganjaran hilang selepas Teruskan.
+- Simpan sebelum ini gagal secara senyap (rekod IndexedDB tanpa `id`); diganti dengan backend baharu.
+
+### Diketahui
+- B14 (kamera dalam rumah), B17 (ikon PWA tiada), Rapier tidak digunakan (TPD-017). Lihat `QA_REPORT.md`.

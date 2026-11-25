@@ -14,11 +14,11 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Ciri | Status | Catatan |
 |------|--------|---------|
 | Vite + React 19 + TypeScript strict | Tested | typecheck + build lulus |
-| Vitest | Tested | 88 ujian |
+| Vitest | Tested | 370 ujian (`0f0af83`) |
 | Biome | Tested | 0 ralat |
-| Playwright | Tested | Pelan 005 Langkah 8 |
+| Playwright | Tested | E2E vertical slice, `desktop-chrome` + `pixel-7` (emulasi), `bacccb5` |
 | PWA manifest | Implemented | Service worker belum ada |
-| Dokumen wajib (seksyen S) | Tested | README, DEVELOPMENT_STATUS, BUG_TRACKER, TECHNICAL_DECISIONS, THIRD_PARTY_NOTICES, QA_REPORT, CHANGELOG |
+| Dokumen wajib (seksyen S) | Implemented | README, DEVELOPMENT_STATUS, BUG_TRACKER, TECHNICAL_DECISIONS, THIRD_PARTY_NOTICES, QA_REPORT, CHANGELOG |
 
 ## Phase 1 — Playable foundation
 
@@ -34,7 +34,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Kotak parkir di setiap alamat | Tested | Direkod betul/tidak (tiada penalti lagi); ujian unit sahaja, belum dipandu ke kotak di pelayar |
 | Fizik Rapier / collision | Not started | `<Physics>` tanpa `RigidBody`; motor menembusi bangunan |
 | HUD asas | Tested | Wang, level, status pandu, kad misi reaktif |
-| Simpan/muat | Tested | IndexedDB dengan autosave (Pelan 005 Langkah 7) |
+| Simpan/muat | Tested | Skema v1 + validasi + autosave + Teruskan (Pelan 005 Langkah 7); E2E muat semula halaman |
 
 ## Phase 2 — World
 
@@ -51,7 +51,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 |------|--------|---------|
 | Gudang 3D (bangunan, rak, meja sortir) | Tested | Placeholder geometri; tiada collision. Disahkan di Chrome |
 | Imbas (simulasi), muat, kapasiti berat/isipadu, berangkat | Tested | Ujian unit + Chrome: paket ke-5 ditolak pada 20/20 unit |
-| Manifest | Tested | Dibuka pada muatan pertama, ditutup bila semua paket selesai (Langkah 6 akan pindah ke meja gudang) |
+| Manifest | Tested | Dibuka pada muatan pertama, ditutup di meja gudang dengan ringkasan (Langkah 6, `2600f2f`); E2E |
 
 ## Phase 4 — Delivery
 
@@ -59,8 +59,8 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 |------|--------|---------|
 | Gelung gudang → hantar berbilang paket → ganjaran → ulang | Tested | Ujian unit stor (3 manifest); Chrome: 4 paket ke 2 alamat, RM500 → RM518 |
 | Zon gudang/penghantaran | Tested | 1 meja gudang, 3 alamat |
-| Pelanggan NPC, serah terima, bukti | Not started | Pelan 005 Langkah 5 |
-| Penghantaran gagal / retur | Not started | Pelan 005 Langkah 5–6 |
+| Pelanggan NPC, serah terima, bukti | Tested | Langkah 5 (`2c33f7a`); NPC penerima ialah placeholder kotak; E2E melalui UI sebenar |
+| Penghantaran gagal / retur | Tested | Penerima tiada → failed → PULANGKAN PAKET → returned (Langkah 5–6); E2E |
 | COD | Not started | Pelan 006 |
 
 ## Phase 5 — Realism

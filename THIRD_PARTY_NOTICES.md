@@ -1,40 +1,52 @@
-# THIRD-PARTY NOTICES
+# Notis Pihak Ketiga
 
-Projek Misi Kurir Simulator menggunakan pakej sumber terbuka berikut.
+Misi Kurir Simulator menggunakan perisian sumber terbuka di bawah. Versi dan lesen dibaca daripada `node_modules/<pakej>/package.json` pada 2026-11-25. Versi boleh berubah apabila `package-lock.json` dikemas kini.
 
-## Kebergantungan Utama (Production)
+## Kebergantungan terus — produksi (`dependencies`)
+
+| Pakej | Versi | Lesen | Repositori | Kegunaan |
+|-------|-------|-------|------------|----------|
+| `@react-three/drei` | 10.7.9 | MIT | https://github.com/pmndrs/drei | Pembantu R3F (belum digunakan dalam kod; disenaraikan oleh knip) |
+| `@react-three/fiber` | 9.8.2 | MIT | https://github.com/pmndrs/react-three-fiber | Pemapar React untuk Three.js |
+| `@react-three/postprocessing` | 3.2.2 | MIT | https://github.com/pmndrs/react-postprocessing | Kesan Bloom |
+| `@react-three/rapier` | 2.2.0 | Tidak dinyatakan dalam pakej npm (perlu disahkan dengan upstream sebelum rilis) | https://github.com/pmndrs/react-three-rapier | `<Physics>` sahaja; tiada `RigidBody` (TPD-017) |
+| `@supabase/supabase-js` | 2.119.2 | MIT | https://github.com/supabase/supabase-js | Belum digunakan (disenaraikan oleh knip) |
+| `idb` | 8.0.4 | ISC | https://github.com/jakearchibald/idb | Belum digunakan; simpanan guna API IndexedDB terus |
+| `react` | 19.3.1 | MIT | https://github.com/react/react | UI |
+| `react-dom` | 19.3.1 | MIT | https://github.com/react/react | UI |
+| `react-router-dom` | 7.18.6 | MIT | https://github.com/remix-run/react-router | Belum digunakan (disenaraikan oleh knip) |
+| `three` | 0.172.0 | MIT | https://github.com/mrdoob/three.js | Enjin 3D |
+| `zustand` | 5.1.0 | MIT | https://github.com/pmndrs/zustand | Keadaan permainan |
+
+## Kebergantungan terus — pembangunan (`devDependencies`)
+
+| Pakej | Versi | Lesen | Repositori | Kegunaan |
+|-------|-------|-------|------------|----------|
+| `@biomejs/biome` | 1.9.4 | MIT OR Apache-2.0 | https://github.com/biomejs/biome | Lint & format |
+| `@playwright/test` | 1.65.1 | Apache-2.0 | https://github.com/microsoft/playwright | Ujian E2E |
+| `@types/react` | 19.3.0 | MIT | https://github.com/DefinitelyTyped/DefinitelyTyped | Jenis TypeScript |
+| `@types/react-dom` | 19.3.0 | MIT | https://github.com/DefinitelyTyped/DefinitelyTyped | Jenis TypeScript |
+| `@types/three` | 0.172.0 | MIT | https://github.com/DefinitelyTyped/DefinitelyTyped | Jenis TypeScript |
+| `@vitejs/plugin-react` | 4.7.0 | MIT | https://github.com/vitejs/vite-plugin-react | Pemalam Vite |
+| `jsdom` | 26.1.0 | MIT | https://github.com/jsdom/jsdom | DOM untuk Vitest |
+| `typescript` | 5.7.3 | Apache-2.0 | https://github.com/microsoft/TypeScript | Pengkompil |
+| `vite` | 6.4.6 | MIT | https://github.com/vitejs/vite | Pelayan dev & build |
+| `vitest` | 3.2.7 | MIT | https://github.com/vitest-dev/vitest | Ujian unit |
+
+## Kebergantungan transitif yang penting
 
 | Pakej | Lesen | Nota |
 |-------|-------|------|
-| `react` | MIT | |
-| `react-dom` | MIT | |
-| `react-router-dom` | MIT | |
-| `three` | MIT | |
-| `@react-three/fiber` | MIT | |
-| `@react-three/drei` | MIT | |
-| `@react-three/postprocessing` | MIT | |
-| `@react-three/rapier` | Tidak dinyatakan | Enjin fizik: `@dimforge/rapier3d-compat` Apache-2.0 |
-| `@supabase/supabase-js` | MIT | Opsional, tidak diaktifkan secara lalai |
-| `zustand` | MIT | |
-| `idb` | ISC | |
+| `@dimforge/rapier3d-compat` | Apache-2.0 | Enjin fizik WASM, dibawa oleh `@react-three/rapier` |
 
-## Kebergantungan Pembangunan (DevDependencies)
+## Fon
 
-| Pakej | Lesen | Nota |
-|-------|-------|------|
-| `typescript` | Apache-2.0 | |
-| `vite` | MIT | |
-| `vitest` | MIT | |
-| `@biomejs/biome` | MIT OR Apache-2.0 | |
-| `@playwright/test` | Apache-2.0 | |
-| `@types/react` | MIT | |
-| `@types/react-dom` | MIT | |
-| `@types/three` | MIT | |
-| `@vitejs/plugin-react` | MIT | |
-| `jsdom` | MIT | |
+| Fon | Lesen | Sumber |
+|-----|-------|--------|
+| Inter | SIL Open Font License 1.1 (OFL) | Dimuat dari `https://fonts.googleapis.com` dalam `index.html` |
 
-## Aset Ketiga
+**Nota privasi:** pelayar pemain menghubungi pelayan Google Fonts untuk memuat Inter.
 
-- **Font Inter:** Dikompilasi dari sumber GitHub, dilisensikan di bawah SIL Open Font License 1.1 (OFL). Dimuat dari `fonts.googleapis.com`.
-- **Enjin fizik transitif:** `@dimforge/rapier3d-compat` dilisensikan di bawah Apache-2.0.
-- **Tiada model 3D atau aset media pihak ketiga** digunakan dalam projek ini. Semua geometri adalah placeholder prosedural.
+## Aset media
+
+Tiada model 3D, tekstur, audio atau imej pihak ketiga digunakan. Semua geometri dijana dalam kod sebagai placeholder (TPD-013). Ikon PWA belum wujud (B17).

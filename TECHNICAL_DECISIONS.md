@@ -5,7 +5,7 @@
 | TPD-001 | 2026-11-24 | React 19 + TypeScript Strict | Vue / Svelte / Vanilla JS | React ecosystem R3F paling matang untuk 3D web. TypeScript strict memastikan keselamatan data. |
 | TPD-002 | 2026-11-24 | Vite sebagai build tool | Webpack / Rollup / esbuild | Vite pantas, HCD baik, plugin React stabil, ESM-first. |
 | TPD-003 | 2026-11-24 | React Three Fiber (R3F) | Raw Three.js / Babylon.js / PixiJS | R3F component model sesuai dengan React. Community besar, Drei helpers banyak. |
-| TPD-004 | 2026-11-24 | Rapier 3D (via @react-three/rapier) | Cannon.js / Ammo.js / Matter.js | Rapier cepat (WASM), enkapsul API, R3F integration langsung. **Rapier tidak digunakan sebagai had diketahui** — `<Physics>` sedia tetapi tiada `RigidBody` atau collision aktif; motor menembusi bangunan (lihat B14). |
+| TPD-004 | 2026-11-24 | Rapier 3D (via @react-three/rapier) | Cannon.js / Ammo.js / Matter.js | Rapier cepat (WASM), enkapsul API, R3F integration langsung. (Lihat TPD-017: Rapier belum digunakan.) |
 | TPD-005 | 2026-11-24 | Zustand untuk state management | Redux / Jotai / Recoil | Zustand ringkas, boilerplate minimum, TypeScript friendly, bundle kecil. |
 | TPD-006 | 2026-11-24 | IndexedDB (via idb) | localStorage / Supabase / Firebase | IndexedDB capacity besar, offline-first, tiada server required. Supabase opsional. |
 | TPD-007 | 2026-11-24 | Biome untuk lint/format | ESLint + Prettier / TSLint | Biome lebih pantas, konfigurasi ringkas, Rust-backed. |
@@ -18,6 +18,7 @@
 | TPD-014 | 2026-11-24 | Cloudflare Pages untuk deploy | Vercel / Netlify / GitHub Pages | Cloudflare Pages gratis, KV support untuk PWA caching, worldwide CDN. |
 | TPD-015 | 2026-11-24 | Nama projek: Misi Kurir Simulator | Courier Life Simulator / Kurir Megah / Laju Express | "Misi Kurir" lebih Melayu/Malaysia, ringkas, jelas maksudnya. |
 | TPD-016 | 2026-11-24 | Latar Malaysia: mata wang RM (`ms-MY`), kawasan & nama tempatan Malaysia, teks UI BM | Indonesia + Rp (ikut master prompt seksyen B/K/M); latar Indonesia + teks BM | Keputusan pemilik. **Penyimpangan sengaja daripada master prompt** (Indonesia/Rupiah). Semua rujukan "Indonesia"/"Rp" dalam master prompt dibaca sebagai "Malaysia"/"RM". Ganjaran & harga perlu ditentukur semula ke skala RM. |
+| TPD-017 | 2026-11-25 | Rapier tidak digunakan lagi untuk collision: pergerakan pemain & motor dikira manual; `<Physics>` tanpa `RigidBody` | Pasang `RigidBody`/collider sekarang | Vertical slice (Pelan 005) diutamakan. **Had diketahui:** tiada collision, motor & pemain menembusi bangunan. Collision dirancang dalam Pelan 007 (dunia/minimap). |
 
 ---
 

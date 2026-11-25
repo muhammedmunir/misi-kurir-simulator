@@ -185,3 +185,42 @@ Selepas 9a diterima. Tiada kod.
 5. Claude merekod keputusan dalam `QA_REPORT.md`, termasuk nombor FPS sebenar. Kontrak "tiada nombor FPS" akan dikemas kini oleh Claude pada masa itu. Masalah yang ditemui menjadi B18 dan seterusnya.
 
 Selepas 9b, status vertical slice (seksyen Q) boleh dinilai untuk **Accepted** oleh pemilik.
+
+---
+
+## 9a Semakan 1 (selepas `fab768b`, `aaadb84`)
+
+**Diterima:** `dev:host`, manifest, sambungan `GameScene3D`.
+
+**Dokumen:** C9 menulis dakwaan yang tidak benar, jadi dokumen dibetulkan oleh penyemak dalam commit kontrak ini. Contohnya:
+- "Telefon Android (Pixel 7) | DIUJI" — sebenarnya emulasi
+- "WASD | DIUJI" — tiada ujian
+- "Dikompilasi dari sumber GitHub" — direka
+- Rapier dirujuk ke B14 — B14 ialah pepijat kamera
+- titik autosave salah dalam CHANGELOG
+
+**C9 jangan sunting dokumen dalam semakan ini.**
+
+**Pepijat kod (C9 baiki).** Kontrak: `src/__contract__/005-langkah-9a-semakan.test.tsx` (6 ujian, 5 gagal sekarang).
+
+| # | Masalah | Baiki dalam `src/dev/fps.tsx` |
+|---|---------|-------------------------------|
+| F1 | `FpsOverlay` tidak mengukur bingkai: `setInterval(33 ms)` + `tick(Date.now())` semasa render, jadi nombor ialah kadar `setInterval` (~30), bukan FPS permainan | Gelung `requestAnimationFrame(loop)` dalam `useEffect`. `meter.tick(t)` dipanggil dengan **timestamp rAF** setiap bingkai. `cancelAnimationFrame` semasa unmount. Buang `setInterval` dan `useRef`. |
+| F2 | Render semula 30×/s | `setState` paling kerap sekali setiap 500 ms masa rAF (`t - lastShown >= 500`, dan sekali pada bingkai pertama yang ada nilai) |
+| F3 | Kotak di kanan atas menutup butang Simpan/Menu HUD | Elemen akar mempunyai `style.pointerEvents: "none"`; letak di **kiri atas** (`top: 8, left: 8`) |
+| F4 | `search.includes("fps")` benar untuk `?nofps` | `new URLSearchParams(search).has("fps")` |
+
+Teks paparan kekal `"{n} FPS"`. `createFpsMeter` kekal; kontrak 9a mengujinya.
+
+**Fail:** `src/dev/fps.tsx` sahaja.
+
+**Verify:**
+- `npx tsc --noEmit`, `npx biome check src/`
+- `npx vitest run` → 0 gagal (≥ 376)
+- knip tiada baris baharu
+- `npm run test:e2e` → 2 passed
+- pelayar `http://localhost:5179/?touch=1&fps=1`: nombor di kiri atas berubah mengikut beban; butang Simpan/Menu boleh ditekan
+
+**Commit (satu):** `005 Langkah 9a Semakan 1: FpsOverlay ukur bingkai rAF sebenar`. **Jangan** awali mesej commit dengan `@`.
+
+**STOP** jika kontrak tidak boleh lulus tanpa menyunting `src/__contract__/`.
