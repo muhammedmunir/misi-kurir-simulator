@@ -5,7 +5,7 @@ import { useDeliveryStore } from "@/store/delivery";
 import { useSceneStore } from "@/store/game";
 import { useGameStateStore } from "@/store/gamestate";
 import type { ManifestSummary } from "@/types/delivery";
-import { readRenderInfo } from "./render-info";
+import { type CameraSample, readCameraSamples, readRenderInfo } from "./render-info";
 
 export type { ManifestSummary } from "@/types/delivery";
 
@@ -28,6 +28,8 @@ export interface MksTestApi {
   state(): MksState;
   goTo(zoneId: string): void;
   renderInfo(): { calls: number; triangles: number } | null;
+  /** Sampel kamera per frame (dev): untuk mengukur gegaran kamera. */
+  cameraSamples(): CameraSample[];
 }
 
 declare global {
@@ -80,6 +82,10 @@ export function createTestApi(): MksTestApi {
       }
       const motor = getWorldState().motor;
       restoreWorld({ pos: zone.position, onFoot: true, motor });
+    },
+
+    cameraSamples() {
+      return readCameraSamples();
     },
 
     renderInfo() {

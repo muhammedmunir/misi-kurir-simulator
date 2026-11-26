@@ -31,6 +31,7 @@ Vertical slice mudah alih (Pelan 004 & 005).
 - **Prestasi:** bangunan dan jalan dilukis dengan instancing (`2ad40f8`). Draw call di kedudukan mula turun daripada 265 ke 51–78 (desktop) dan daripada 127–145 ke 25–40 (emulasi Pixel 7); susun atur bandar tidak berubah.
 
 ### Dibaiki
+- **Kamera motor (B27):** kamera kini dikemas kini selepas motor bergerak dalam setiap frame, dengan redaman yang tidak bergantung pada FPS. Ini mengurangkan gegaran semasa memandu (Pelan 007b).
 - **Pergerakan (B24–B26):** watak dan motor kini berdiri di atas jalan (tidak terapung); A/D dan joystick ikut arah skrin, termasuk stereng motor; watak dan motor tidak lagi tembus bangunan, rumah, dinding gudang, meja dan rak. Penunggang kelihatan di atas motor (Pelan 007).
 - **COD (B23):** memilih baki yang salah kini memaparkan "Baki salah — kira semula" di dalam panel Serah Terima (Pelan 006b).
 - **Panel (B22):** label dan nilai dalam panel kini berjarak ("Penerima: Aminah") (`75883b4`).

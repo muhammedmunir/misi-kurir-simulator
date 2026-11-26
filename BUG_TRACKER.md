@@ -195,3 +195,15 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Kesan:** boleh berjalan atau memandu menembusi apa-apa.
 - **Ditemui:** laporan pemilik, 2026-11-26.
 - **Status:** SELESAI (Pelan 007) — `world-collision.ts` (bulatan vs segi empat XZ); motor kehilangan separuh laju bila terlanggar. Disahkan oleh kontrak 007 dan E2E (berhenti di dinding rumah, z = 27.35).
+
+### B27 — Skrin bergegar semasa menunggang motor
+- **Fail:** `src/components/3d/PlayerController.tsx`, `src/components/3d/CameraFollow.tsx`
+- **Masalah:**
+  - `CameraFollow` dipasang sebelum `PlayerController`, jadi dalam setiap frame kamera dikemas kini sebelum motor bergerak dan mengejar kedudukan frame lepas.
+  - Lerp `min(6·dt, 1)` berubah mengikut FPS.
+  - Bila FPS tidak sekata (telefon, PC sibuk), sudut pandangan melompat-lompat.
+- **Kesan:** skrin kelihatan bergegar semasa memandu.
+- **Ditemui:** laporan pemilik, 2026-11-26.
+- **Status:** SELESAI (Pelan 007b) — useFrame pemain pada keutamaan −1 (sebelum kamera), dan redaman eksponen `1 − e^(−k·dt)`.
+  - Diukur dengan probe kamera per frame (`__mks.cameraSamples()`) di bawah CPU ×6: lompatan sudut pandangan p99 turun 0.083 → 0.066–0.070 rad; lompatan yang tinggal sepadan dengan frame panjang (~48 ms).
+  - Belum disahkan oleh pemilik di peranti sebenar.

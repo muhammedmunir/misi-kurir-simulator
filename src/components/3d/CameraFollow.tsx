@@ -26,9 +26,10 @@ export function CameraFollow() {
     const camTargetZ = target.z - Math.cos(heading) * CAMERA_DISTANCE;
     const targetHeight = isOnFoot ? CAMERA_HEIGHT_FOOT : CAMERA_HEIGHT_MOTOR;
 
-    const lerpFactor = Math.min(CAMERA_LERP * dt, 1);
+    // Redaman eksponen: hasil sama tanpa mengira FPS (30 atau 120).
+    const lerpFactor = 1 - Math.exp(-CAMERA_LERP * dt);
     camPos.current.x += (camTargetX - camPos.current.x) * lerpFactor;
-    camPos.current.y += (targetHeight - camPos.current.y) * lerpFactor * 0.5;
+    camPos.current.y += (targetHeight - camPos.current.y) * (1 - Math.exp(-CAMERA_LERP * 0.5 * dt));
     camPos.current.z += (camTargetZ - camPos.current.z) * lerpFactor;
 
     // Klamp kamera supaya tidak masuk ke dalam bangunan atau rumah alamat.

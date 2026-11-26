@@ -29,6 +29,13 @@ const VIEW_FOLLOW = 2.5;
 
 const COLLIDERS = worldColliders();
 
+/**
+ * Keutamaan useFrame: negatif = berjalan SEBELUM kamera (keutamaan 0), supaya
+ * kamera mengikut kedudukan frame ini, bukan frame lepas (punca gegaran).
+ * Nilai negatif tidak mengambil alih render R3F.
+ */
+export const PLAYER_FRAME_PRIORITY = -1;
+
 const MOTOR_ACCEL = 15;
 const MOTOR_MAX_SPEED = 25;
 const MOTOR_TURN_SPEED = 2.5;
@@ -286,7 +293,7 @@ export function PlayerController() {
       motorRef.current.position.set(motor.x, MOTOR_Y, motor.z);
       motorRef.current.rotation.y = motor.heading;
     }
-  });
+  }, PLAYER_FRAME_PRIORITY);
 
   return (
     <>
