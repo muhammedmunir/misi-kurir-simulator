@@ -26,7 +26,12 @@ Setiap serahan berbeza. Kini penerima sentiasa ada, kecuali Pusat Industri Timur
    - COD hanya untuk `home` dan `neighbour`.
 4. **Ringkasan manifest:** tambah kiraan `refused`. Kemas kini jenis `ManifestSummary` secara serasi (medan pilihan, nilai lalai 0 dalam `loadSaved`).
 5. **Ujian:** fail ujian biasa `src/delivery/customer.test.ts` (taburan 1000 gulungan dalam ±3%; setiap laluan panel). JANGAN sunting `src/__contract__/`. Jika kontrak lama gagal kerana mood baharu, buat mood lalai `home` bila `deps.rng` tidak dipanggil dalam laluan ujian itu, dan JANGAN ubah kontrak. Jika masih bercanggah, BERHENTI dan laporkan.
-6. **E2E:** `vertical-slice` dan `landscape-panels` mesti kekal lulus. Rawak boleh menyebabkan `refuse`; jika ujian E2E gagal kerana itu, tambah API ujian `__mks.setNextCustomer(mood)` (dev sahaja) dan JANGAN ubah ujian E2E kontrak. Laporkan.
+6. **E2E:** kontrak `vertical-slice` dan `landscape-panels` **sudah dikemas kini oleh perancang**. Ia memanggil `__mks.setNextCustomer(mood)` sebelum setiap serah terima: paket 1 `"home"`, paket 2 `"absent"`, dan untuk panel landskap yang dibuka semula selepas Batal, `"home"` sekali lagi. C9 MESTI melaksanakan API ini (dev sahaja, dalam `src/dev/test-api.ts` dan jenis `MksTestApi`):
+   - `setNextCustomer(mood: CustomerMood): void` menetapkan mood untuk **SATU** serah terima yang dibuka seterusnya (sekali guna). Selepas itu, kembali kepada `rollCustomer`.
+   - Keutamaan: `zone.receiverHome === false` → sentiasa `"absent"`, walaupun `setNextCustomer` dipanggil. Pusat Industri tiada orang, dan laluan "Penerima tiada" dalam E2E bergantung pada ini.
+   - Mood `"absent"` mesti memaparkan butang "Penerima tiada" (bersama "Titip pada jiran" jika `neighbourAvailable`).
+   - Simpan mood tertunda dalam stor (contohnya `useDeliveryStore` atau pemboleh ubah modul dalam logik serah terima), dan baca ketika `open_handover`. JANGAN baca daripada `window` dalam logik produksi.
+   - Kontrak E2E ini akan GAGAL sehingga API ini wujud. Itu dijangka.
 7. **Dokumen:** CHANGELOG, DEVELOPMENT_STATUS (baris pelanggan NPC).
 
 ## Gate
