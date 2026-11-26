@@ -109,13 +109,25 @@ describe("jubin jalan, simpang dan lampu jalan", () => {
 });
 
 describe("komponen melukis dengan instancedMesh", () => {
-  it("Buildings.tsx: 3 instancedMesh (badan, tingkap, pintu), guna city-layout, tiada mesh setiap tingkap", () => {
-    expect(buildingsSrc.match(/<instancedMesh\b/g) ?? []).toHaveLength(3);
+  // Pelan 016 (dikemas kini oleh perancang): bangunan kini model GLB Kenney City Kit (Commercial),
+  // satu instancedMesh bagi setiap jenis model, diletakkan dengan fitMatrix pada dimensi
+  // buildingLayout() yang sama (susun atur di atas kekal dikunci). Kotak badan/tingkap/pintu
+  // dan setColorAt lama tidak lagi diperlukan.
+  it("Buildings.tsx: model GLB Kenney melalui useMergedModels + fitMatrix, instancing ikut jenis model, dalam Suspense", () => {
     expect(buildingsSrc).toMatch(/from "\.\/city-layout"/);
-    expect(buildingsSrc).not.toMatch(/Array\.from/);
-    expect(buildingsSrc).not.toMatch(/pseudoRandom/);
-    expect(buildingsSrc).toMatch(/setColorAt/);
+    expect(buildingsSrc).toMatch(/buildingLayout\(\)/);
+    expect(buildingsSrc).toMatch(/from "\.\/merged-model"/);
+    expect(buildingsSrc).toMatch(/useMergedModels\(/);
+    expect(buildingsSrc).toMatch(/fitMatrix\(/);
+    expect(buildingsSrc).toMatch(/<Suspense\b/);
+    expect(buildingsSrc).toMatch(/\/models\/city-kit-commercial\//);
+    // Satu instancedMesh dijana bagi setiap model (bukan mesh setiap bangunan).
+    expect(buildingsSrc).toMatch(/\.map\([\s\S]*?<instancedMesh\b/);
     expect(buildingsSrc).toMatch(/computeBoundingSphere\(\)/);
+    // Tiada lagi geometri kotak lama.
+    expect(buildingsSrc).not.toMatch(/<boxGeometry\b/);
+    expect(buildingsSrc).not.toMatch(/<planeGeometry\b/);
+    expect(buildingsSrc).not.toMatch(/pseudoRandom/);
   });
 
   it("CityRoads.tsx: 3 instancedMesh (jubin lurus, simpang, lampu), guna road-tiles", () => {
