@@ -16,6 +16,20 @@ async function hold(page: Page, key: string, ms: number) {
   await page.waitForTimeout(150);
 }
 
+/**
+ * Tekan `key` sehingga `moved` benar (atau tamat masa). Bebas FPS: di bawah beban
+ * (banyak ujian selari), dt permainan dihadkan 50 ms jadi tempoh tetap tidak mencukupi.
+ */
+async function holdUntil(page: Page, key: string, moved: (s: MksState) => boolean, timeout = 8000) {
+  await page.keyboard.down(key);
+  try {
+    await expect.poll(async () => moved(await state(page)), { timeout, intervals: [50] }).toBe(true);
+  } finally {
+    await page.keyboard.up(key);
+  }
+  await page.waitForTimeout(150);
+}
+
 test.beforeEach(async ({ page, isMobile }) => {
   test.skip(isMobile, "kawalan papan kekunci: desktop sahaja");
   await page.goto("/");
@@ -28,7 +42,8 @@ test.beforeEach(async ({ page, isMobile }) => {
   await expect
     .poll(() =>
       page.evaluate(
-        () => (window as unknown as { __mks: { renderInfo(): { calls: number } | null } }).__mks.renderInfo()?.calls ?? 0,
+        () =>
+          (window as unknown as { __mks: { renderInfo(): { calls: number } | null } }).__mks.renderInfo()?.calls ?? 0,
       ),
     )
     .toBeGreaterThan(0);
@@ -41,13 +56,13 @@ test("watak di tanah; D ke kanan skrin, A ke kiri skrin", async ({ page }) => {
   // Kamera memandang +z (heading 0), jadi kanan skrin = −x.
   expect(Math.abs(s0.heading)).toBeLessThan(0.01);
 
-  await hold(page, "KeyD", 600);
+  await holdUntil(page, "KeyD", (s) => s.pos.x < s0.pos.x - 1.5);
   const s1 = await state(page);
   expect(s1.pos.x).toBeLessThan(s0.pos.x - 1.5);
   expect(Math.abs(s1.pos.z - s0.pos.z)).toBeLessThan(0.3);
   expect(Math.abs(s1.heading)).toBeLessThan(0.01); // kamera tidak berpusing bila bergerak ke sisi
 
-  await hold(page, "KeyA", 600);
+  await holdUntil(page, "KeyA", (s) => s.pos.x > s1.pos.x + 1.5);
   const s2 = await state(page);
   expect(s2.pos.x).toBeGreaterThan(s1.pos.x + 1.5);
 });
@@ -56,7 +71,9 @@ test("rumah alamat tidak boleh ditembusi", async ({ page }) => {
   // Kedai Runcit Mak Minah: rumah x 56–64, z 21–27; pintu (60, 29).
   await page.evaluate(() => (window as unknown as { __mks: { goTo(z: string): void } }).__mks.goTo("zone-delivery-1"));
   await expect.poll(async () => (await state(page)).nearbyZoneId).toBe("zone-delivery-1");
-  await hold(page, "KeyS", 1500); // berjalan ke −z, terus ke dinding rumah
+  // Berjalan ke −z sehingga sampai ke dinding rumah, kemudian terus menolak 1 s lagi.
+  await holdUntil(page, "KeyS", (s) => s.pos.z < 27.6);
+  await hold(page, "KeyS", 1000);
   const s = await state(page);
   expect(s.pos.z).toBeGreaterThanOrEqual(27.3);
   expect(s.pos.z).toBeLessThan(27.5);
