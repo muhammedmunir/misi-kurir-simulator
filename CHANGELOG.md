@@ -7,6 +7,7 @@ Semua perubahan penting dicatat di sini. Format: [Keep a Changelog 1.1.0](https:
 Vertical slice mudah alih (Pelan 004 & 005).
 
 ### Ditambah
+- **Watak sebenar dan interaksi fizikal (Pelan 012a + 013b):** kurier dan penerima kini watak 3D beranimasi (Kenney Mini Characters, CC0): berjalan, berlari, menunggang, memegang kotak dengan dua tangan, dan menghulur tangan semasa serahan. Kotak (1–3) atau guni (≥ 4) kelihatan di tangan; penerima COD menghulur wang kertas. Kamera serah terima sinematik membingkai kurier dan penerima; pada skrin lebar panel berada di kanan.
 - **Siang hari (Pelan 011):** langit bergradien, kabus jarak jauh, cahaya matahari petang dengan bayang-bayang lembut (desktop; ditutup di telefon pada tetapan Sederhana), jalan asfalt kelabu, bangunan berwarna pastel, dan HUD legap supaya mudah dibaca.
 - **Angkat dan bawa paket (Pelan 013a):** selepas Berangkat kurier memegang paket dan mesti meletakkannya dalam motor sebelum menunggang. Di alamat, paket diambil dari motor dan dibawa ke penerima. Tangan kosong di pintu = "AMBIL DI MOTOR". Paket di tangan disimpan bersama simpanan permainan.
 - **Kandungan (Pelan 010):** 9 alamat penghantaran (sebelum ini 3), penerima dengan baju berbeza, dan minimap bulat (arah hadapan ke atas) yang menunjukkan jalan, gudang dan sasaran. Rumah dan penanda dilukis dengan instancing; lampu titik per zon dibuang. Draw call turun walaupun alamat bertambah.

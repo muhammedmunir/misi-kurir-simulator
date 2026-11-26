@@ -1,4 +1,4 @@
-import { inHand, takeableFromMotor } from "@/delivery/carry";
+import { carryKind, inHand, takeableFromMotor } from "@/delivery/carry";
 import { interactBlocksMotorSwap } from "@/lib/delivery-system";
 import { PARKING_BOXES } from "@/lib/delivery-system";
 import type { MotorContext } from "@/lib/interact-button";
@@ -9,9 +9,10 @@ import { stepMotor } from "@/vehicles/motor-physics";
 import { type MotorState, canDismount, canMount, checkParking, dismountPosition } from "@/vehicles/motor-state";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
+import { Suspense } from "react";
 import { type Group, Vector3 } from "three";
-import { CourierModel, type CourierRig, HIP_HEIGHT, applyPose, emptyRig } from "./CourierModel";
-import { advancePhase, courierPose } from "./courier-pose";
+import { CharacterGLB } from "./CharacterGLB";
+import { courierClip } from "./courier-anim";
 import { MOTOR_RADIUS, PLAYER_RADIUS, angleDelta, moveHeading, resolveCircle, worldColliders } from "./world-collision";
 
 // ── Keyboard state ────────────────────────────────────────────────
@@ -31,9 +32,8 @@ const GROUND_Y = 0;
 /** Bahagian atas tempat duduk kapcai, dalam koordinat setempat motor. */
 const SEAT_TOP = 1.02;
 /** Kedudukan pinggul penunggang di atas tempat duduk (setempat motor). */
-const RIDER_OFFSET: [number, number, number] = [0, SEAT_TOP + 0.04 - HIP_HEIGHT, -0.12];
-/** Laju lari penuh berjalan kaki (m/s), untuk gaya langkah. */
-const GAIT_FULL = 9;
+/** Kedudukan tapak kaki penunggang (klip `drive`) supaya punggung di atas tempat duduk. */
+const RIDER_OFFSET: [number, number, number] = [0, SEAT_TOP - 0.51, -0.12];
 /** Kadar kamera berjalan kaki menyusul arah hadapan watak (rad/s). */
 const VIEW_FOLLOW = 2.5;
 
@@ -63,8 +63,8 @@ let motorLean = 0;
 let lastCrashNotice = 0;
 /** Input pendikit terakhir (-1..1), untuk bunyi enjin. */
 let lastThrottle = 0;
-/** Fasa langkah kurier (rad). */
-let stepPhase = 0;
+/** Laju berjalan kaki semasa (m/s), untuk animasi. */
+let footSpeed = 0;
 /** The motor stays wherever it was left. */
 const motor: MotorState = { x: MOTOR_START.x, z: MOTOR_START.z, heading: 0, speed: 0 };
 
@@ -153,6 +153,15 @@ export function performInteract(): void {
   toggleMotor();
 }
 
+/** Klip animasi kurier berjalan kaki setiap frame. */
+function pickCourierClip() {
+  return courierClip({
+    riding: false,
+    speed: footSpeed,
+    carrying: inHand(useDeliveryStore.getState().session).length > 0,
+  });
+}
+
 /** Konteks motor untuk butang tindakan (sama keutamaan dengan performInteract). */
 export function motorContext(): MotorContext {
   const session = useDeliveryStore.getState().session;
@@ -171,13 +180,8 @@ export function PlayerController() {
   const motorRef = useRef<Group>(null);
   const wheelRefs = useRef<(Group | null)[]>([]);
   const riderRef = useRef<Group>(null);
-  const walkRig = useRef<CourierRig>(emptyRig());
-  const rideRig = useRef<CourierRig>(emptyRig());
-
-  // Postur duduk penunggang tidak berubah: tetapkan sekali selepas dipasang.
-  useEffect(() => {
-    applyPose(rideRig.current, courierPose({ mode: "ride", phase: 0, gait: 0 }));
-  }, []);
+  const boxRefs = useRef<(Group | null)[]>([]);
+  const sackRef = useRef<Group>(null);
 
   // Keyboard handlers inside useEffect (not module level)
   useEffect(() => {
@@ -285,13 +289,26 @@ export function PlayerController() {
         groupRef.current.rotation.y = curRot + angleDelta(angle, curRot) * Math.min(1, 12 * dt);
       }
       groupRef.current.rotation.z = 0;
+
+      // Semasa serah terima kurier menghadap penerima (rumah di −z dari pintu).
+      const session = useDeliveryStore.getState().session;
+      if (session.handover) {
+        const cur = groupRef.current.rotation.y;
+        groupRef.current.rotation.y = cur + angleDelta(Math.PI, cur) * Math.min(1, 8 * dt);
+      }
+
+      // Barang di tangan: 1–3 kotak bertindan, ≥ 4 dalam guni.
+      const held = inHand(session).length;
+      const kind = carryKind(held);
+      boxRefs.current.forEach((b, i) => {
+        if (b) b.visible = (kind === "box" || kind === "stack") && i < held;
+      });
+      if (sackRef.current) sackRef.current.visible = kind === "sack";
       groupRef.current.visible = true;
       if (riderRef.current) riderRef.current.visible = false;
 
-      // Animasi langkah: fasa maju ikut jarak sebenar yang dilalui.
-      const groundSpeed = grounded ? Math.hypot(vel.x, vel.z) : 0;
-      stepPhase = advancePhase(stepPhase, groundSpeed * dt);
-      applyPose(walkRig.current, courierPose({ mode: "foot", phase: stepPhase, gait: groundSpeed / GAIT_FULL }));
+      // Laju untuk animasi (klip dipilih oleh courierClip dalam CharacterGLB).
+      footSpeed = grounded ? Math.hypot(vel.x, vel.z) : 0;
 
       // ── ON MOTOR ──────────────────────────────────────────────
     } else {
@@ -347,7 +364,41 @@ export function PlayerController() {
       <group ref={groupRef}>
         {/* ── Kurier berjalan kaki ── */}
         <group name="player">
-          <CourierModel rig={walkRig} />
+          <Suspense fallback={null}>
+            <CharacterGLB model="courier" pickClip={pickCourierClip} />
+          </Suspense>
+          {/* Kotak paket di tangan (dipegang di hadapan dada) */}
+          {[0, 1, 2].map((i) => (
+            <group
+              key={i}
+              position={[0, 0.62 + i * 0.27, 0.62]}
+              rotation={[0, i * 0.18, 0]}
+              visible={false}
+              ref={(g) => {
+                boxRefs.current[i] = g;
+              }}
+            >
+              <mesh>
+                <boxGeometry args={[0.42, 0.26, 0.32]} />
+                <meshStandardMaterial color="#c49a5e" roughness={0.9} />
+              </mesh>
+              <mesh position={[0, 0.131, 0]}>
+                <boxGeometry args={[0.43, 0.005, 0.07]} />
+                <meshStandardMaterial color="#d8c8a0" roughness={0.6} />
+              </mesh>
+            </group>
+          ))}
+          {/* Guni paket di bahu */}
+          <group ref={sackRef} position={[0.45, 1.25, -0.35]} rotation={[0.25, 0, 0.25]} visible={false}>
+            <mesh scale={[1, 1.25, 0.85]}>
+              <sphereGeometry args={[0.34, 10, 8]} />
+              <meshStandardMaterial color="#c9b98a" roughness={1} />
+            </mesh>
+            <mesh position={[0, 0.42, 0]}>
+              <cylinderGeometry args={[0.06, 0.12, 0.14, 8]} />
+              <meshStandardMaterial color="#b3a272" roughness={1} />
+            </mesh>
+          </group>
         </group>
       </group>
 
@@ -430,7 +481,9 @@ export function PlayerController() {
           </mesh>
           {/* Penunggang (postur duduk), disorok bila berjalan kaki */}
           <group ref={riderRef} position={RIDER_OFFSET} visible={false}>
-            <CourierModel rig={rideRig} />
+            <Suspense fallback={null}>
+              <CharacterGLB model="courier" clip="drive" />
+            </Suspense>
           </group>
         </group>
       </group>

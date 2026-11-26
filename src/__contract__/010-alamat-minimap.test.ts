@@ -62,8 +62,10 @@ describe("kos render alamat", () => {
     expect(inst.lines).toHaveLength(36);
   });
 
-  it("penerima: 2 instancedMesh untuk semua", () => {
-    expect(receiverSrc.match(/<instancedMesh\b/g) ?? []).toHaveLength(2);
+  // Pelan 012a: penerima kini watak GLB beranimasi; hanya yang berdekatan dilukis.
+  it("penerima: watak GLB, dihadkan kepada yang berdekatan dengan pemain", () => {
+    expect(receiverSrc).toMatch(/<CharacterGLB /);
+    expect(receiverSrc).toMatch(/visibleReceivers\(/);
   });
 
   it("tiada pointLight per zon; penanda alamat hanya bila ada paket", () => {

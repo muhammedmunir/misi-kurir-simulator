@@ -178,6 +178,20 @@ select {
   box-shadow: var(--shadow-lg);
 }
 
+/* Skrin lebar (desktop/tablet landskap): panel di kanan supaya adegan
+   (kurier, penerima, gudang) kelihatan di kiri. Telefon kekal helaian bawah. */
+@media (min-width: 960px) and (min-height: 421px) {
+  .wh-panel {
+    left: auto;
+    right: 24px;
+    bottom: 24px;
+    transform: none;
+    width: min(440px, 40vw);
+    border-bottom: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+}
+
 .wh-panel__head {
   display: flex;
   align-items: flex-start;

@@ -6,7 +6,7 @@ Misi Kurir Simulator menggunakan perisian sumber terbuka di bawah. Versi dan les
 
 | Pakej | Versi | Lesen | Repositori | Kegunaan |
 |-------|-------|-------|------------|----------|
-| `@react-three/drei` | 10.7.9 | MIT | https://github.com/pmndrs/drei | Pembantu R3F (belum digunakan dalam kod; disenaraikan oleh knip) |
+| `@react-three/drei` | 10.7.9 | MIT | https://github.com/pmndrs/drei | `useGLTF`, `useAnimations` untuk watak GLB (Pelan 012a) |
 | `@react-three/fiber` | 9.8.2 | MIT | https://github.com/pmndrs/react-three-fiber | Pemapar React untuk Three.js |
 | `@react-three/rapier` | 2.2.0 | Tidak dinyatakan dalam pakej npm (perlu disahkan dengan upstream sebelum rilis) | https://github.com/pmndrs/react-three-rapier | `<Physics>` sahaja; tiada `RigidBody` (TPD-017) |
 | `@supabase/supabase-js` | 2.119.2 | MIT | https://github.com/supabase/supabase-js | Belum digunakan (disenaraikan oleh knip) |
@@ -48,4 +48,10 @@ Misi Kurir Simulator menggunakan perisian sumber terbuka di bawah. Versi dan les
 
 ## Aset media
 
-Tiada model 3D, tekstur, audio atau imej pihak ketiga digunakan. Semua geometri dijana dalam kod sebagai placeholder (TPD-013). Ikon PWA belum wujud (B17).
+| Aset | Pencipta | Lesen | Sumber | Fail dalam repo | Kegunaan |
+|------|----------|-------|--------|-----------------|----------|
+| Mini Characters | Kenney (www.kenney.nl) | CC0 1.0 (domain awam) | https://kenney.nl/assets/mini-characters | `public/models/characters/` (5 GLB + `Textures/colormap.png`; salinan lesen `LICENSE-kenney-mini-characters.txt`) | Kurier dan penerima, dengan animasi (idle, walk, sprint, drive, holding-both, interact-right) |
+
+CC0 tidak mewajibkan atribusi; ia dicatat di sini untuk ketelusan. Arkib asal pek lain (City Kit Roads/Commercial/Suburban, Car Kit) disimpan di luar repo dalam `assets-src/` (diabaikan git) sehingga digunakan.
+
+Audio enjin dijana dalam kod (Web Audio), tanpa fail. Geometri lain (bangunan, jalan, motor) masih dijana dalam kod (TPD-013). Ikon PWA belum wujud (B17).
