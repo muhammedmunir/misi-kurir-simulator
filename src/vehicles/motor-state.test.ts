@@ -1,4 +1,4 @@
-import { PARKING_BOXES } from "@/lib/delivery-system";
+import { DELIVERY_ZONES, PARKING_BOXES } from "@/lib/delivery-system";
 import { describe, expect, it } from "vitest";
 import {
   DISMOUNT_MAX_SPEED,
@@ -73,7 +73,7 @@ describe("checkParking — kotak alamat sebenar", () => {
   const { zoneId, box } = PARKING_BOXES[0];
 
   it("setiap alamat penghantaran ada kotak parkir", () => {
-    expect(PARKING_BOXES).toHaveLength(3);
+    expect(PARKING_BOXES).toHaveLength(DELIVERY_ZONES.filter((z) => z.type === "delivery").length);
   });
 
   it("dalam kotak → betul", () => {

@@ -1,4 +1,5 @@
 import { rollDeliveryReward } from "@/data/economy";
+import { codChange } from "@/delivery/cod";
 import { completeHandover } from "@/delivery/handover";
 import {
   INBOUND_BATCH,
@@ -282,6 +283,9 @@ describe("useDeliveryStore — gelung penuh dengan wang pemain", () => {
       expect(store().session.handover).not.toBeNull();
       store().takeProof();
       expect(store().session.handover?.proofTaken).toBe(true);
+      // Pelan 006: paket COD mesti dikutip (baki betul) sebelum diserahkan.
+      const pkt = store().session.cargo.find((p) => p.id === store().session.handover?.packetId);
+      if (pkt?.paymentMethod === "cod") store().collectCod(codChange(pkt.codAmount), t);
       store().confirmHandover(t);
       // INDUSTRI zones (receiverHome=false) block handover; fail the packet
       // directly so the manifest can close after all packets are resolved.

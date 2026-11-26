@@ -14,7 +14,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Ciri | Status | Catatan |
 |------|--------|---------|
 | Vite + React 19 + TypeScript strict | Tested | typecheck + build lulus |
-| Vitest | Tested | 479 ujian (Pelan 008a) |
+| Vitest | Tested | 488 ujian (Pelan 010) |
 | Biome | Tested | 0 ralat |
 | Playwright | Tested | E2E vertical slice, `desktop-chrome` + `pixel-7` (emulasi), `bacccb5` |
 | PWA manifest | Implemented | Service worker belum ada |
@@ -42,7 +42,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 |------|--------|---------|
 | Grid jalan bandar kecil | Tested | Satu kawasan; jalan utara–selatan kini rata (B29, Pelan 009) |
 | Kawasan bersambung (perumahan, kampung, dll.) | Not started | |
-| Navigasi / minimap | In progress | Anak panah: Tested, minimap: Belum ditulis |
+| Navigasi / minimap | Tested | Anak panah dan minimap (Pelan 010); E2E minimap tidak menutup butang |
 | Chunk streaming, LOD | Not started | |
 
 ## Phase 3 — Warehouse
@@ -58,7 +58,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Ciri | Status | Catatan |
 |------|--------|---------|
 | Gelung gudang → hantar berbilang paket → ganjaran → ulang | Tested | Ujian unit stor (3 manifest); Chrome: 4 paket ke 2 alamat, RM500 → RM518 |
-| Zon gudang/penghantaran | Tested | 1 meja gudang, 3 alamat |
+| Zon gudang/penghantaran | Tested | 1 meja gudang, 9 alamat (Pelan 010) |
 | Pelanggan NPC, serah terima, bukti | Tested | Langkah 5 (`2c33f7a`); NPC penerima ialah placeholder kotak; E2E melalui UI sebenar |
 | Penghantaran gagal / retur | Tested | Penerima tiada → failed → PULANGKAN PAKET → returned (Langkah 5–6); E2E |
 | COD | Tested | Pelan 006 (`75883b4`): ~40% paket COD, baki wang kertas (3 pilihan), Serahkan dikunci sehingga dikutip, "COD disetor" dalam ringkasan; kontrak 006 dan E2E `payCod`. B23 dibaiki (Pelan 006b) |

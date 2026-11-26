@@ -51,12 +51,14 @@ describe("S1 — atas motor tidak boleh membuka serah terima", () => {
 });
 
 describe("S2 — zon kekal seperti pelan (tiada zon rekaan)", () => {
-  it("DELIVERY_ZONES = meja + 3 alamat asal", () => {
+  // Pelan 010 (pemilik meminta lebih banyak kandungan): 6 alamat ditambah selepas 3 alamat asal.
+  it("DELIVERY_ZONES = meja + 3 alamat asal + 6 alamat Pelan 010", () => {
     expect(DELIVERY_ZONES.map((z) => z.id)).toEqual([
       "zone-pickup-1",
       "zone-delivery-1",
       "zone-delivery-2",
       "zone-delivery-3",
+      ...[4, 5, 6, 7, 8, 9].map((n) => `zone-delivery-${n}`),
     ]);
   });
 

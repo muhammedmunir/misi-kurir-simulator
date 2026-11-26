@@ -2,6 +2,7 @@ import { EngineAudio } from "@/audio/EngineAudio";
 import { Receiver } from "@/delivery/Receiver";
 import { FpsOverlay, shouldShowFps } from "@/dev/fps";
 import { RenderInfoProbe } from "@/dev/render-info";
+import { Minimap } from "@/navigation/Minimap";
 import { NavArrow } from "@/navigation/NavArrow";
 import { startAutosave } from "@/save/autosave";
 import { saveBackends } from "@/save/backend";
@@ -127,6 +128,7 @@ export function GameScene3D() {
       <TouchJoystick />
       <WarehousePanel />
       <NavArrow />
+      <Minimap />
       {shouldShowFps(import.meta.env.DEV, window.location.search) && <FpsOverlay />}
     </div>
   );

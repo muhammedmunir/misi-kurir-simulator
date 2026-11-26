@@ -59,6 +59,13 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   destination("zone-delivery-1", "Kedai Runcit Mak Minah", "perumahan", 60, 20, "Penghantaran ke kedai runcit"),
   destination("zone-delivery-2", "Kafe Kampung Digital", "pasar", -20, -20, "Penghantaran ke kafe tempatan"),
   destination("zone-delivery-3", "Pusat Industri Timur", "industri", 100, -60, "Penghantaran kargo industri", false),
+  // Pelan 010: alamat tambahan, semuanya di lot yang sedia kosong supaya susun atur bangunan tidak berubah.
+  destination("zone-delivery-4", "Rumah Pak Abu", "perumahan", -60, 20, "Penghantaran ke rumah teres"),
+  destination("zone-delivery-5", "Klinik Desa Sejahtera", "bandar", -20, 60, "Penghantaran bekalan klinik"),
+  destination("zone-delivery-6", "Kedai Kopi Ah Seng", "pasar", 20, 60, "Penghantaran ke kedai kopi"),
+  destination("zone-delivery-7", "Bengkel Motor Raju", "industri", 60, -20, "Penghantaran alat ganti"),
+  destination("zone-delivery-8", "Pasar Mini Pak Din", "pasar", -60, -20, "Penghantaran ke pasar mini"),
+  destination("zone-delivery-9", "Flat Sri Mawar", "perumahan", 60, 60, "Penghantaran ke flat"),
 ];
 
 const DESTINATIONS = DELIVERY_ZONES.filter((z) => z.type === "delivery");
