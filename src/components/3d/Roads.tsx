@@ -73,7 +73,7 @@ export function Roads() {
     <group>
       <instancedMesh ref={roadRef} args={[undefined, undefined, roads.length]} receiveShadow>
         <planeGeometry args={[1, 1]} />
-        <meshStandardMaterial color="#2a2a2a" roughness={0.95} />
+        <meshStandardMaterial color="#55575c" roughness={0.92} />
       </instancedMesh>
 
       <instancedMesh ref={markingRef} args={[undefined, undefined, markings.length]}>

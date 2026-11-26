@@ -11,6 +11,7 @@ import { WarehousePanel } from "@/warehouse/WarehousePanel";
 import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { useCallback, useEffect, useState } from "react";
+import { Atmosphere } from "./3d/Atmosphere";
 import { CameraFollow } from "./3d/CameraFollow";
 import { DeliverySystemController } from "./3d/DeliverySystemController";
 import { DeliveryZones } from "./3d/DeliveryZones";
@@ -80,10 +81,12 @@ export function GameScene3D() {
       <Canvas
         shadows={false}
         dpr={[1, 1.5]}
-        camera={{ position: [0, 5, 10], fov: 60 }}
-        style={{ background: "#0a0a0f" }}
+        camera={{ position: [0, 5, 10], fov: 60, far: 900 }}
+        style={{ background: "#cfe0ee" }}
       >
-        <color attach="background" args={["#0a0a0f"]} />
+        {/* Langit, kabus, matahari dan bayang-bayang (Pelan 011). Canvas shadows={false}:
+            Atmosphere menghidupkan shadowMap terus pada renderer ikut tetapan grafik. */}
+        <Atmosphere />
 
         <Physics gravity={[0, -20, 0]}>
           {/* Camera follow player */}
@@ -112,10 +115,6 @@ export function GameScene3D() {
 
           {/* Delivery system controller */}
           <DeliverySystemController />
-
-          {/* Lights */}
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[10, 20, 5]} intensity={1.2} castShadow={false} />
 
           {/* 3D overlay HUD */}
           <HUD3D />

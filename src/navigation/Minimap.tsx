@@ -47,11 +47,11 @@ export function Minimap() {
       ctx.beginPath();
       ctx.arc(r, r, r, 0, Math.PI * 2);
       ctx.clip();
-      ctx.fillStyle = "#1f3a1f";
+      ctx.fillStyle = "#4d7438";
       ctx.fillRect(0, 0, size, size);
 
       // Jalan: setiap jalan sebagai garis tebal.
-      ctx.strokeStyle = "#3a3d44";
+      ctx.strokeStyle = "#5c5e63";
       ctx.lineWidth = ROAD_W * k;
       ctx.lineCap = "butt";
       ctx.beginPath();

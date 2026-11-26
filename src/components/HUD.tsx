@@ -64,13 +64,13 @@ export function HUD() {
           justifyContent: "space-between",
           alignItems: "center",
           padding: "12px 16px",
-          background: "linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%)",
+          background: "linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 100%)",
         }}
       >
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <div
             style={{
-              background: "rgba(255,255,255,0.1)",
+              background: "rgba(12, 14, 20, 0.84)",
               backdropFilter: "blur(10px)",
               borderRadius: "8px",
               padding: "6px 12px",
@@ -101,7 +101,7 @@ export function HUD() {
           </div>
           <div
             style={{
-              background: "rgba(34, 197, 94, 0.2)",
+              background: "rgba(12, 14, 20, 0.84)",
               border: "1px solid rgba(34, 197, 94, 0.3)",
               borderRadius: "8px",
               padding: "6px 12px",
@@ -120,7 +120,7 @@ export function HUD() {
             onClick={handleSave}
             style={{
               padding: "8px 12px",
-              background: "rgba(245, 158, 11, 0.3)",
+              background: "rgba(12, 14, 20, 0.84)",
               border: "1px solid rgba(245, 158, 11, 0.5)",
               borderRadius: "8px",
               color: "#f59e0b",
@@ -136,7 +136,7 @@ export function HUD() {
             onClick={() => navigate(Scene.MENU)}
             style={{
               padding: "8px 12px",
-              background: "rgba(255,255,255,0.1)",
+              background: "rgba(12, 14, 20, 0.84)",
               border: "1px solid rgba(255,255,255,0.2)",
               borderRadius: "8px",
               color: "#e8e8f0",
@@ -158,7 +158,7 @@ export function HUD() {
             left: 0,
             right: 0,
             padding: "16px",
-            background: "linear-gradient(0deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%)",
+            background: "linear-gradient(0deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 100%)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-end",
@@ -166,7 +166,7 @@ export function HUD() {
         >
           <div
             style={{
-              background: isOnFoot ? "rgba(59, 130, 246, 0.2)" : "rgba(220, 38, 38, 0.2)",
+              background: "rgba(12, 14, 20, 0.84)",
               border: isOnFoot ? "1px solid rgba(59, 130, 246, 0.4)" : "1px solid rgba(220, 38, 38, 0.4)",
               borderRadius: "12px",
               padding: "10px 16px",
@@ -177,7 +177,7 @@ export function HUD() {
               {isOnFoot ? "Berjalan" : "Memandu Motor"}
             </p>
             {!isOnFoot && <p style={{ fontSize: "20px", fontWeight: 700, color: "#fff", margin: 0 }}>{speed} km/j</p>}
-            <p style={{ fontSize: "11px", color: "#8888a0", margin: "4px 0 0" }}>
+            <p style={{ fontSize: "11px", color: "#a9aec0", margin: "4px 0 0" }}>
               {touch ? "Ketik butang tindakan" : "Tekan E"} untuk {isOnFoot ? "naik motor" : "turun motor / interaksi"}
             </p>
           </div>
@@ -185,7 +185,7 @@ export function HUD() {
           {/* Delivery / Mission info */}
           <div
             style={{
-              background: hasPacket ? "rgba(245, 158, 11, 0.25)" : "rgba(34, 197, 94, 0.2)",
+              background: "rgba(12, 14, 20, 0.84)",
               border: hasPacket ? "1px solid rgba(245, 158, 11, 0.5)" : "1px solid rgba(34, 197, 94, 0.4)",
               borderRadius: "12px",
               padding: "10px 16px",

@@ -51,7 +51,12 @@ function NPCMesh({ npc, groupRef }: { npc: NPCTrafficVehicle; groupRef: (g: Grou
   ] as const;
 
   return (
-    <group ref={groupRef} position={[npc.position.x, 0, npc.position.z]} rotation={[0, npc.heading, 0]}>
+    <group
+      ref={groupRef}
+      position={[npc.position.x, 0, npc.position.z]}
+      rotation={[0, npc.heading, 0]}
+      userData={{ noCastShadow: true }}
+    >
       {/* Vehicle body */}
       <mesh position={[0, 0.6, 0]}>
         <boxGeometry args={[1.6, 0.8, 3]} />

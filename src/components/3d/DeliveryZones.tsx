@@ -15,7 +15,7 @@ export function DeliveryZones() {
   const activeIds = useDeliveryStore(useShallow((s) => pendingTargetIds(s.session)));
 
   return (
-    <group>
+    <group userData={{ noCastShadow: true }}>
       {zones.map((zone) => {
         const isActive = activeIds.includes(zone.id);
         // Penanda hanya untuk gudang dan alamat yang masih ada paket (seperti aplikasi kurir sebenar).
