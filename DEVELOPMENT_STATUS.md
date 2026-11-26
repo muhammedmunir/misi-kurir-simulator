@@ -30,8 +30,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Kamera orang ketiga | Tested | B12 dibaiki: kamera kini benar-benar mengikut pemain; disahkan di Chrome |
 | Kawalan papan kekunci (WASD, E) | Tested | A/D ikut skrin (B25), disahkan di Chrome oleh E2E Pelan 007; stereng motor juga |
 | Kawalan sentuh (joystick, tindakan, BREK) | Tested | `1b88949`; telefon sebenar Redmi 9 (9b): joystick memandu, butang tindakan berfungsi; potret + landskap lulus selepas B18 (`97da0f4`) |
-| Motor: naik, pandu, brek, turun | Tested | Pelan 009: fizik `stepMotor` (pecutan beransur, condong, belok ikut laju), bunyi enjin, km/j sebenar. |
-| Motor (lama) | Tested | Motor kekal di tempat ditinggalkan; turun hanya bila < 1 unit/s; disahkan di Chrome |
+| Motor: naik, pandu, brek, turun | Tested | Motor kekal di tempat ditinggalkan; turun hanya bila < 1 m/s. Pelan 009: fizik `stepMotor` (pecutan beransur, condong, belok ikut laju), bunyi enjin, km/j sebenar. Disahkan di Chrome |
 | Kotak parkir di setiap alamat | Tested | Direkod betul/tidak (tiada penalti lagi); ujian unit sahaja, belum dipandu ke kotak di pelayar |
 | Collision watak & motor | Tested | `world-collision.ts`: bulatan vs kotak XZ untuk bangunan, rumah, dinding gudang, meja dan rak (Pelan 007). Bukan Rapier; tiada collision dengan trafik NPC atau tiang lampu |
 | HUD asas | Tested | Wang, level, kad misi dan status pandu reaktif (B19); petunjuk ikut mod input (B20). Disahkan di telefon sebenar |
