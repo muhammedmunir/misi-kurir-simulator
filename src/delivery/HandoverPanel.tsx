@@ -1,3 +1,5 @@
+import { codChangeOptions, codNote } from "@/delivery/cod";
+import { formatRinggit } from "@/lib/utils";
 import { useDeliveryStore } from "@/store/delivery";
 import type { DeliverySession } from "@/types/delivery";
 
@@ -12,6 +14,7 @@ export function HandoverPanel() {
   const session = useDeliveryStore((s) => s.session);
   const takeProof = useDeliveryStore((s) => s.takeProof);
   const confirmHandover = useDeliveryStore((s) => s.confirmHandover);
+  const collectCod = useDeliveryStore((s) => s.collectCod);
   const reportAbsent = useDeliveryStore((s) => s.reportAbsent);
   const cancelHandover = useDeliveryStore((s) => s.cancelHandover);
 
@@ -26,6 +29,8 @@ export function HandoverPanel() {
   const zone = session.nearbyZone;
   const noReceiver = zone?.type === "delivery" && zone.receiverHome === false;
   const hasProof = session.handover.proofTaken;
+  const isCod = packet.paymentMethod === "cod";
+  const codDone = !isCod || session.handover.codCollected === true;
 
   return (
     <dialog className="wh-panel" open aria-label="Panel Serah Terima" style={{ pointerEvents: "auto" }}>
@@ -48,7 +53,7 @@ export function HandoverPanel() {
 
       <div className="wh-panel__row">
         <span className="wh-panel__label">Status:</span>
-        <span>Prabayar</span>
+        <span>{isCod ? `COD ${formatRinggit(packet.codAmount)}` : "Prabayar"}</span>
       </div>
 
       {noReceiver ? (
@@ -57,6 +62,27 @@ export function HandoverPanel() {
         </p>
       ) : (
         <>
+          {isCod && !codDone && (
+            <>
+              <p className="wh-panel__note">Pelanggan bayar {formatRinggit(codNote(packet.codAmount))}. Berapa baki?</p>
+              <div className="wh-cod__options">
+                {codChangeOptions(packet.codAmount).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    className="wh-btn"
+                    style={{ minHeight: 48 }}
+                    aria-label={`Baki ${v.toFixed(2)}`}
+                    onClick={() => collectCod(v, now)}
+                  >
+                    {formatRinggit(v)}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          {isCod && codDone && <p className="wh-panel__note">COD diterima: {formatRinggit(packet.codAmount)}</p>}
+
           <button
             type="button"
             className="wh-btn wh-btn--primary"
@@ -76,7 +102,7 @@ export function HandoverPanel() {
             onClick={() => {
               confirmHandover(now);
             }}
-            disabled={!hasProof}
+            disabled={!hasProof || !codDone}
           >
             Serahkan paket
           </button>

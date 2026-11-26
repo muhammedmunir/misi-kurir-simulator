@@ -1,3 +1,4 @@
+import { collectCod as collectCodPure } from "@/delivery/cod";
 import { completeHandover, failHandover, takeProof as takeProofPure } from "@/delivery/handover";
 import { acknowledgeSummary as acknowledgeSummaryPure } from "@/lib/delivery-system";
 import {
@@ -55,6 +56,8 @@ interface DeliveryStore {
 
   // Handover workflow
   takeProof: () => void;
+  /** Collect COD cash for the active handover. Does NOT add money to the player. */
+  collectCod: (change: number, now: number) => void;
   confirmHandover: (now: number) => void;
   reportAbsent: (now: number) => void;
   cancelHandover: () => void;
@@ -146,6 +149,9 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => {
     // Handover workflow
     takeProof: () => {
       set({ session: takeProofPure(get().session, Date.now()) });
+    },
+    collectCod: (change, now) => {
+      set({ session: collectCodPure(get().session, change, now) });
     },
     confirmHandover: (now) => {
       const { result, session } = completeHandover(get().session, now, get().deps);

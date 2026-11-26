@@ -63,6 +63,9 @@ export interface NewPacket {
   areaCode: string;
   weight: number;
   volume: number;
+  /** Tiada pembayaran → prabayar, jumlah 0. */
+  paymentMethod?: Packet["paymentMethod"];
+  codAmount?: number;
   now: number;
 }
 
@@ -79,8 +82,8 @@ export function createPacket(p: NewPacket): Packet {
     weight: p.weight,
     dimensions: { length: 20, width: 15, height: 10 },
     volume: p.volume,
-    paymentMethod: "prepaid",
-    codAmount: 0,
+    paymentMethod: p.paymentMethod ?? "prepaid",
+    codAmount: p.codAmount ?? 0,
     priority: "normal",
     specialInstructions: "",
     status: "received",

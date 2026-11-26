@@ -1,4 +1,5 @@
 import { STARTER_CARGO } from "@/lib/delivery-system";
+import { formatRinggit } from "@/lib/utils";
 import { useDeliveryStore } from "@/store/delivery";
 import type { Packet } from "@/types/game";
 import { cargoUsage } from "./warehouse-logic";
@@ -19,6 +20,7 @@ function PacketRow({ packet, zoneName, action }: { packet: Packet; zoneName: str
         </span>
         <span className="wh-row__meta">
           {packet.trackingNumber} · {packet.weight} kg · {packet.volume} unit
+          {packet.paymentMethod === "cod" ? ` · COD ${formatRinggit(packet.codAmount)}` : ""}
         </span>
         <span className="wh-row__status" data-status={packet.status}>
           {STATUS_LABEL[packet.status] ?? packet.status}

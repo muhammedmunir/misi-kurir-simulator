@@ -1,4 +1,5 @@
 import { rollDeliveryReward } from "@/data/economy";
+import { codCollectedTotal } from "@/delivery/cod";
 import { closeManifest, isCarrying } from "@/delivery/manifest";
 import { transition } from "@/delivery/packet";
 import { DELIVERY_ZONES } from "@/lib/delivery-system";
@@ -109,6 +110,10 @@ export function completeHandover(
     return { result: { action: "nothing", message: "Paket tidak ditemui" }, session };
   }
 
+  if (packet.paymentMethod === "cod" && !h.codCollected) {
+    return { result: { action: "nothing", message: "Kutip bayaran COD dahulu" }, session };
+  }
+
   const { session: delivered, result } = deliverPacket(session, packet, now, deps);
   return {
     result: { ...result, action: "deliver" as DeliveryAction },
@@ -179,6 +184,7 @@ export function returnFailedPackets(session: DeliverySession, now: number): Deli
     returned: cargo.filter((p) => p.status === "returned").length,
     earned: session.tally.earned,
     xp: session.tally.xp,
+    codCollected: codCollectedTotal(cargo),
     durationMs: manifest ? now - manifest.createdAt : 0,
   };
 

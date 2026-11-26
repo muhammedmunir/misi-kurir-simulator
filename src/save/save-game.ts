@@ -58,10 +58,15 @@ export async function loadSaved(backend: SaveBackend): Promise<{ ok: true } | { 
 
   // 2. Restore delivery session
   const baseSession = createSession();
+  // Simpanan lama (Pelan 006 ke atas) mungkin tiada summary.codCollected → normalkan kepada 0.
+  const savedSummary = save.session.summary
+    ? { ...save.session.summary, codCollected: save.session.summary.codCollected ?? 0 }
+    : save.session.summary;
   useDeliveryStore.setState({
     session: {
       ...baseSession,
       ...save.session,
+      summary: savedSummary,
     },
   });
 

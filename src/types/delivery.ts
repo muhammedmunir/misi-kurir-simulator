@@ -38,6 +38,8 @@ export interface DeliveryHandover {
   zoneId: string;
   /** Proof photo taken by the rider. */
   proofTaken: boolean;
+  /** COD collected from the receiver (COD packets only). */
+  codCollected?: boolean;
 }
 
 export interface DeliverySession {
@@ -93,5 +95,7 @@ export interface ManifestSummary {
   returned: number;
   earned: number;
   xp: number;
+  /** Total COD cash deposited to the warehouse when the manifest closed. */
+  codCollected: number;
   durationMs: number;
 }

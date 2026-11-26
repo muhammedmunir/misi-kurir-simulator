@@ -26,6 +26,10 @@ export function ManifestSummaryPanel() {
           <dd className="wh-summary__value--earned">{formatRinggit(earned)}</dd>
         </div>
         <div className="wh-summary__row">
+          <dt>COD disetor</dt>
+          <dd>{formatRinggit(summary.codCollected ?? 0)}</dd>
+        </div>
+        <div className="wh-summary__row">
           <dt>XP</dt>
           <dd>+{xp} XP</dd>
         </div>

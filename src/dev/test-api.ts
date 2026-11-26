@@ -16,7 +16,7 @@ export interface MksState {
   onFoot: boolean;
   nearbyZoneId: string | null;
   actionLabel: string;
-  cargo: { id: string; status: string; target: string }[];
+  cargo: { id: string; status: string; target: string; cod: number }[];
   summary: ManifestSummary | null;
 }
 
@@ -60,6 +60,7 @@ export function createTestApi(): MksTestApi {
           id: p.id,
           status: p.status,
           target: session.targets[p.id] ?? "",
+          cod: p.paymentMethod === "cod" ? p.codAmount : 0,
         })),
         summary: session.summary ?? null,
       };

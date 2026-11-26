@@ -210,6 +210,23 @@ select {
   color: var(--color-text-muted);
 }
 
+.wh-panel__row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.wh-panel__label {
+  font-weight: 600;
+}
+
+.wh-cod__options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 /* ── Manifest Summary Panel ───────────────────────────────────── */
 
 .wh-summary {

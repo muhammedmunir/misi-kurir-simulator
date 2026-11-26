@@ -31,15 +31,24 @@ export function generateInbound(
   const targets: Record<string, string> = {};
   for (let i = 0; i < count; i++) {
     const dest = destinations[Math.floor(deps.rng() * destinations.length)];
+    const receiverName = RECEIVER_NAMES[Math.floor(deps.rng() * RECEIVER_NAMES.length)];
+    const weight = Math.round((0.5 + deps.rng() * 4.5) * 10) / 10;
+    const volume = 2 + Math.floor(deps.rng() * 5);
+    // ~40% paket adalah COD; jumlah RM10.00–RM95.50 dalam gandaan 50 sen.
+    // Turutan gulungan rng adalah kontrak: destinasi, penerima, berat, isi padu, COD?, jumlah.
+    const isCod = deps.rng() < 0.4;
+    const codAmount = isCod ? 10 + Math.floor(deps.rng() * 172) * 0.5 : 0;
     const p = createPacket({
       id: deps.createId(),
       trackingNumber: deps.createTrackingNumber("MSK"),
       senderAddress,
-      receiverName: RECEIVER_NAMES[Math.floor(deps.rng() * RECEIVER_NAMES.length)],
+      receiverName,
       receiverAddress: dest.name,
       areaCode: dest.areaCode,
-      weight: Math.round((0.5 + deps.rng() * 4.5) * 10) / 10,
-      volume: 2 + Math.floor(deps.rng() * 5),
+      weight,
+      volume,
+      paymentMethod: isCod ? "cod" : "prepaid",
+      codAmount,
       now,
     });
     packets.push(p);
