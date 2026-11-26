@@ -1,0 +1,8 @@
+# Semua fail teks sentiasa LF (biome menolak CRLF). Mengatasi core.autocrlf pada Windows,
+# supaya checkout baharu dan git worktree (C9) tidak gagal gate biome.
+* text=auto eol=lf
+*.glb binary
+*.png binary
+*.jpg binary
+*.fbx binary
+*.zip binary
