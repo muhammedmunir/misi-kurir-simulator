@@ -19,6 +19,7 @@ Vertical slice mudah alih (Pelan 004 & 005).
   - autosave selepas berangkat, selepas setiap serah terima, dan selepas manifest ditutup
   - butang **▶ Teruskan** di menu utama
   - simpanan rosak ditolak dengan mesej yang jelas
+- **COD:** kira-kira 40% paket dibayar tunai semasa serahan. Pelanggan membayar dengan wang kertas RM20/50/100 dan pemain memilih baki yang betul daripada 3 pilihan sebelum boleh menyerahkan paket. Tunai disetor ke gudang dan ditunjukkan sebagai "COD disetor" dalam ringkasan; ia bukan pendapatan kurir (`75883b4`).
 - **E2E:** Playwright (`npm run test:e2e`) untuk vertical slice penuh pada `desktop-chrome` dan `pixel-7` (emulasi). API ujian `window.__mks` hanya wujud dalam mod dev.
 - **Dev:** `npm run dev:host` untuk ujian telefon di rangkaian tempatan; paparan FPS `?fps` (dev sahaja).
 - **Dokumen:** `THIRD_PARTY_NOTICES.md`, `QA_REPORT.md` dan `CHANGELOG.md`.
@@ -30,6 +31,7 @@ Vertical slice mudah alih (Pelan 004 & 005).
 - **Prestasi:** bangunan dan jalan dilukis dengan instancing (`2ad40f8`). Draw call di kedudukan mula turun daripada 265 ke 51–78 (desktop) dan daripada 127–145 ke 25–40 (emulasi Pixel 7); susun atur bandar tidak berubah.
 
 ### Dibaiki
+- **Panel (B22):** label dan nilai dalam panel kini berjarak ("Penerima: Aminah") (`75883b4`).
 - **Kamera (B14):** kamera berhenti di luar dinding bangunan dan rumah alamat, tidak lagi masuk ke dalam rumah di pintu (`8022722`).
 - **Landskap (B21):** penunjuk arah disembunyikan semasa panel Serah Terima terbuka; menu utama boleh ditatal dan teks versi tidak lagi menutup butang Tetapan (`8022722`).
 - **B1–B13:** kestabilan gelung penghantaran, butang sentuh, kamera tidak mengikut pemain (B12) dan lain-lain (Pelan 004).

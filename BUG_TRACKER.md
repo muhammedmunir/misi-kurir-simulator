@@ -165,4 +165,11 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Masalah:** `<span>` label dan nilai dalam `.wh-panel__row` tiada jarak.
 - **Kesan:** kosmetik; teks sukar dibaca.
 - **Ditemui:** tangkapan skrin semasa menulis Pelan 006.
-- **Status:** DIRANCANG — Pelan 006 (`.wh-panel__row { display: flex; gap }`)
+- **Status:** SELESAI (`75883b4`) — `.wh-panel__row { display: flex; gap: 6px }`. Disahkan oleh kontrak 006 (CSS) dan tangkapan skrin 412×839.
+
+### B23 — COD: baki salah tiada maklum balas
+- **Fail:** `src/delivery/HandoverPanel.tsx`, `src/delivery/cod.ts`
+- **Masalah:** mesej "Baki salah — kira semula" hanya dipaparkan dalam kotak info HUD, yang tidak kelihatan semasa Panel Serah Terima terbuka.
+- **Kesan:** pemain mengetik baki salah dan tiada apa-apa berubah pada skrin.
+- **Ditemui:** semakan visual Pelan 006 (412×839).
+- **Status:** DIRANCANG — Pelan 006b (`<output className="wh-panel__msg">` dalam panel)
