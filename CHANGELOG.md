@@ -7,6 +7,7 @@ Semua perubahan penting dicatat di sini. Format: [Keep a Changelog 1.1.0](https:
 Vertical slice mudah alih (Pelan 004 & 005).
 
 ### Ditambah
+- **Model kurier dan kapcai (Pelan 008a):** kurier bersendi dengan topi keledar, jaket bergaris dan beg kurier, beranimasi berjalan dan berlari, dan duduk di atas motor. Motor kini kapcai underbone dengan perisai kaki, lampu, ekzos dan kotak penghantaran di belakang. Semuanya dibina dengan kod, tanpa fail aset.
 - **Rasa memandu (Pelan 009):** pecutan beransur hingga 90 km/j, luncur dan brek, belok bergantung laju, motor dan penunggang condong semasa membelok, roda berputar, FOV kamera melebar ikut laju, bunyi enjin (Web Audio, ikut tetapan Bunyi), dan HUD dalam km/j sebenar.
 - **Trafik:** kenderaan memandu di lorong kiri; motor tidak lagi tembus kereta.
 - **Gudang 3D:** bangunan gudang, meja sortir dan panel gudang (imbas, muat, berangkat) dengan had kargo berat/isi padu. Status paket ikut mesin keadaan dengan sejarah.

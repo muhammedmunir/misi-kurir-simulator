@@ -8,6 +8,8 @@ import { type MotorState, canDismount, canMount, checkParking, dismountPosition 
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { type Group, Vector3 } from "three";
+import { CourierModel, type CourierRig, HIP_HEIGHT, applyPose, emptyRig } from "./CourierModel";
+import { advancePhase, courierPose } from "./courier-pose";
 import { MOTOR_RADIUS, PLAYER_RADIUS, angleDelta, moveHeading, resolveCircle, worldColliders } from "./world-collision";
 
 // ── Keyboard state ────────────────────────────────────────────────
@@ -24,8 +26,12 @@ const MOTOR_START = { x: 2, z: 2 };
 const MOTOR_Y = 0.05;
 /** Kaki watak bermula pada y = 0 dalam kumpulannya, jadi tanah = 0. */
 const GROUND_Y = 0;
-/** Ketinggian kumpulan watak semasa duduk di atas tempat duduk motor. */
-const RIDER_Y = MOTOR_Y + 0.55;
+/** Bahagian atas tempat duduk kapcai, dalam koordinat setempat motor. */
+const SEAT_TOP = 1.02;
+/** Kedudukan pinggul penunggang di atas tempat duduk (setempat motor). */
+const RIDER_OFFSET: [number, number, number] = [0, SEAT_TOP + 0.04 - HIP_HEIGHT, -0.12];
+/** Laju lari penuh berjalan kaki (m/s), untuk gaya langkah. */
+const GAIT_FULL = 9;
 /** Kadar kamera berjalan kaki menyusul arah hadapan watak (rad/s). */
 const VIEW_FOLLOW = 2.5;
 
@@ -55,6 +61,8 @@ let motorLean = 0;
 let lastCrashNotice = 0;
 /** Input pendikit terakhir (-1..1), untuk bunyi enjin. */
 let lastThrottle = 0;
+/** Fasa langkah kurier (rad). */
+let stepPhase = 0;
 /** The motor stays wherever it was left. */
 const motor: MotorState = { x: MOTOR_START.x, z: MOTOR_START.z, heading: 0, speed: 0 };
 
@@ -135,6 +143,14 @@ export function PlayerController() {
   const groupRef = useRef<Group>(null);
   const motorRef = useRef<Group>(null);
   const wheelRefs = useRef<(Group | null)[]>([]);
+  const riderRef = useRef<Group>(null);
+  const walkRig = useRef<CourierRig>(emptyRig());
+  const rideRig = useRef<CourierRig>(emptyRig());
+
+  // Postur duduk penunggang tidak berubah: tetapkan sekali selepas dipasang.
+  useEffect(() => {
+    applyPose(rideRig.current, courierPose({ mode: "ride", phase: 0, gait: 0 }));
+  }, []);
 
   // Keyboard handlers inside useEffect (not module level)
   useEffect(() => {
@@ -242,6 +258,13 @@ export function PlayerController() {
         groupRef.current.rotation.y = curRot + angleDelta(angle, curRot) * Math.min(1, 12 * dt);
       }
       groupRef.current.rotation.z = 0;
+      groupRef.current.visible = true;
+      if (riderRef.current) riderRef.current.visible = false;
+
+      // Animasi langkah: fasa maju ikut jarak sebenar yang dilalui.
+      const groundSpeed = grounded ? Math.hypot(vel.x, vel.z) : 0;
+      stepPhase = advancePhase(stepPhase, groundSpeed * dt);
+      applyPose(walkRig.current, courierPose({ mode: "foot", phase: stepPhase, gait: groundSpeed / GAIT_FULL }));
 
       // ── ON MOTOR ──────────────────────────────────────────────
     } else {
@@ -278,14 +301,9 @@ export function PlayerController() {
       }
       pos.set(motor.x, MOTOR_Y, motor.z);
 
-      // Penunggang duduk di atas motor dan condong bersamanya (paksi condong = tanah).
-      const h = RIDER_Y - MOTOR_Y;
-      groupRef.current.position.set(
-        motor.x - h * Math.sin(motorLean) * Math.cos(motor.heading),
-        MOTOR_Y + h * Math.cos(motorLean),
-        motor.z + h * Math.sin(motorLean) * Math.sin(motor.heading),
-      );
-      groupRef.current.rotation.set(0, motor.heading, motorLean);
+      // Penunggang ialah anak kumpulan motor (condong bersama); kurier berjalan disorok.
+      groupRef.current.visible = false;
+      if (riderRef.current) riderRef.current.visible = true;
     }
 
     // ── Motor mesh: sibling of the player group, placed in world space ──
@@ -300,29 +318,9 @@ export function PlayerController() {
   return (
     <>
       <group ref={groupRef}>
-        {/* ── Player ── */}
+        {/* ── Kurier berjalan kaki ── */}
         <group name="player">
-          <mesh position={[0, 1.5, 0]}>
-            <boxGeometry args={[0.4, 0.4, 0.4]} />
-            <meshStandardMaterial color="#f59e0b" />
-          </mesh>
-          <mesh position={[0, 0.8, 0]}>
-            <boxGeometry args={[0.5, 0.7, 0.3]} />
-            <meshStandardMaterial color="#3b82f6" />
-          </mesh>
-          <mesh position={[-0.12, 0.25, 0]}>
-            <boxGeometry args={[0.18, 0.5, 0.2]} />
-            <meshStandardMaterial color="#1e293b" />
-          </mesh>
-          <mesh position={[0.12, 0.25, 0]}>
-            <boxGeometry args={[0.18, 0.5, 0.2]} />
-            <meshStandardMaterial color="#1e293b" />
-          </mesh>
-          {/* Courier bag */}
-          <mesh position={[0, 0.9, -0.25]}>
-            <boxGeometry args={[0.35, 0.35, 0.15]} />
-            <meshStandardMaterial color="#f59e0b" />
-          </mesh>
+          <CourierModel rig={walkRig} />
         </group>
       </group>
 
@@ -349,31 +347,64 @@ export function PlayerController() {
               </mesh>
             </group>
           ))}
-          {/* Body/frame */}
-          <mesh position={[0, 0.6, 0]}>
-            <boxGeometry args={[0.5, 0.6, 1.6]} />
-            <meshStandardMaterial color="#dc2626" />
+          {/* Fork depan */}
+          <mesh position={[0, 0.66, 0.74]} rotation={[-0.3, 0, 0]}>
+            <boxGeometry args={[0.16, 0.72, 0.07]} />
+            <meshStandardMaterial color="#9ca3af" metalness={0.6} roughness={0.35} />
           </mesh>
-          {/* Handlebars */}
-          <mesh position={[0, 1.0, 0.85]}>
-            <boxGeometry args={[0.6, 0.05, 0.05]} />
-            <meshStandardMaterial color="#888888" />
+          {/* Perisai kaki / fairing depan */}
+          <mesh position={[0, 0.74, 0.52]} rotation={[-0.25, 0, 0]}>
+            <boxGeometry args={[0.44, 0.56, 0.12]} />
+            <meshStandardMaterial color="#c81e1e" roughness={0.45} metalness={0.2} />
           </mesh>
-          {/* Seat */}
-          <mesh position={[0, 0.95, -0.1]}>
-            <boxGeometry args={[0.4, 0.1, 0.7]} />
-            <meshStandardMaterial color="#2d2d2d" />
+          {/* Lampu depan */}
+          <mesh position={[0, 1.0, 0.7]}>
+            <sphereGeometry args={[0.1, 10, 8]} />
+            <meshStandardMaterial color="#fff7cc" emissive="#fff7cc" emissiveIntensity={0.8} />
           </mesh>
-          {/* Headlight */}
-          <mesh position={[0, 0.8, 0.82]}>
-            <sphereGeometry args={[0.1, 8, 8]} />
-            <meshStandardMaterial color="#ffffaa" emissive="#ffffaa" emissiveIntensity={0.5} />
+          {/* Hendal */}
+          <mesh position={[0, 1.08, 0.6]}>
+            <boxGeometry args={[0.7, 0.05, 0.05]} />
+            <meshStandardMaterial color="#1f2937" metalness={0.5} />
           </mesh>
-          {/* Exhaust */}
-          <mesh position={[0.2, 0.2, -0.9]}>
-            <cylinderGeometry args={[0.04, 0.04, 0.5, 8]} />
-            <meshStandardMaterial color="#555555" />
+          {/* Lantai underbone */}
+          <mesh position={[0, 0.44, 0.12]}>
+            <boxGeometry args={[0.32, 0.08, 0.62]} />
+            <meshStandardMaterial color="#1f2937" roughness={0.8} />
           </mesh>
+          {/* Badan belakang */}
+          <mesh position={[0, 0.72, -0.42]}>
+            <boxGeometry args={[0.36, 0.42, 0.78]} />
+            <meshStandardMaterial color="#c81e1e" roughness={0.45} metalness={0.2} />
+          </mesh>
+          {/* Tempat duduk */}
+          <mesh position={[0, SEAT_TOP - 0.05, -0.28]}>
+            <boxGeometry args={[0.32, 0.1, 0.72]} />
+            <meshStandardMaterial color="#111318" roughness={0.7} />
+          </mesh>
+          {/* Kotak penghantaran */}
+          <mesh position={[0, 1.27, -0.78]}>
+            <boxGeometry args={[0.54, 0.48, 0.48]} />
+            <meshStandardMaterial color="#f59e0b" roughness={0.55} />
+          </mesh>
+          <mesh position={[0, 1.27, -1.025]}>
+            <boxGeometry args={[0.4, 0.14, 0.01]} />
+            <meshStandardMaterial color="#1d3a8a" />
+          </mesh>
+          {/* Lampu belakang */}
+          <mesh position={[0, 0.86, -0.82]}>
+            <boxGeometry args={[0.18, 0.06, 0.03]} />
+            <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={0.8} />
+          </mesh>
+          {/* Ekzos */}
+          <mesh position={[0.2, 0.26, -0.7]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.05, 0.06, 0.55, 8]} />
+            <meshStandardMaterial color="#6b7280" metalness={0.7} roughness={0.3} />
+          </mesh>
+          {/* Penunggang (postur duduk), disorok bila berjalan kaki */}
+          <group ref={riderRef} position={RIDER_OFFSET} visible={false}>
+            <CourierModel rig={rideRig} />
+          </group>
         </group>
       </group>
     </>
