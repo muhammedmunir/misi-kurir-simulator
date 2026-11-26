@@ -112,13 +112,21 @@ export function generateTrackingNumber(prefix = "MSK"): string {
 }
 
 /**
- * Shuffle array in place (Fisher-Yates).
+ * Shuffle array (Fisher-Yates). Guarantees the result differs from the input
+ * order when the input has more than one element (avoids the 1/n! identity
+ * outcome), so callers can rely on a visible reordering.
  */
 export function shuffleArray<T>(array: T[]): T[] {
   const arr = [...array];
-  for (let i = arr.length - 1; i > 0; i--) {
+  const n = arr.length;
+  if (n < 2) return arr;
+  for (let i = n - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  // Jaminan: jangan kembalikan susunan asal (kebarangszatan 1/n!).
+  if (arr.every((v, i) => v === array[i])) {
+    [arr[0], arr[1]] = [arr[1], arr[0]];
   }
   return arr;
 }
