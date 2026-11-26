@@ -8,6 +8,19 @@ for (let i = -3; i <= 3; i++) {
 /** Jarak lorong dari garis tengah jalan (jalan 12 lebar). */
 export const LANE_OFFSET = 3;
 
+/** Jarak garis berhenti dari pusat simpang (m). */
+export const STOP_LINE = 8;
+/** Masa menunggu di garis berhenti (s). */
+export const STOP_SECONDS = 1.5;
+/** Jarak minimum ke kereta atau pemain di hadapan (m). */
+export const FOLLOW_GAP = 5;
+/** Had pecutan (m/s²). */
+const ACCEL = 4;
+/** Had brek (m/s²). */
+const BRAKE = 9;
+/** Pusingan dunia: kenderaan melimpah di ±200. */
+const BOUND = 200;
+
 export interface NPCTrafficVehicle {
   id: string;
   position: { x: number; z: number };
@@ -17,6 +30,12 @@ export interface NPCTrafficVehicle {
   roadAxis: "x" | "z";
   roadValue: number;
   direction: 1 | -1;
+  /** Laju jelajah asal; diisi pada kemas kini pertama daripada speed. */
+  cruise?: number;
+  /** Baki masa menunggu di garis berhenti (s). */
+  waitLeft?: number;
+  /** Pusat simpang terakhir kereta berhenti; elak berhenti dua kali di simpang sama. */
+  lastStop?: number | null;
 }
 
 export function generateNPCTraffic(count: number, rng: () => number = Math.random): NPCTrafficVehicle[] {
@@ -48,20 +67,100 @@ export function generateNPCTraffic(count: number, rng: () => number = Math.rando
   return vehicles;
 }
 
-export function updateNPCTraffic(vehicles: NPCTrafficVehicle[], delta: number): NPCTrafficVehicle[] {
-  return vehicles.map((v) => {
-    const moveAmount = v.speed * v.direction * delta;
+/** Simpan kedudukan mengikut paksi jalan (z untuk roadAxis "z", x sebaliknya). */
+function axisPos(v: NPCTrafficVehicle): number {
+  return v.roadAxis === "z" ? v.position.z : v.position.x;
+}
 
-    if (v.roadAxis === "z") {
-      let newPos = v.position.z + moveAmount;
-      if (newPos > 200) newPos = -200;
-      if (newPos < -200) newPos = 200;
-      return { ...v, position: { ...v.position, z: newPos } };
+/** Set kedudukan mengikut paksi jalan. */
+function setAxisPos(v: NPCTrafficVehicle, value: number): void {
+  if (v.roadAxis === "z") v.position.z = value;
+  else v.position.x = value;
+}
+
+/**
+ * Majukan trafik NPC: berhenti di garis simpang, mengekori kereta di hadapan,
+ * berhenti untuk pemain dalam lorong, dan laju berubah beransur.
+ * `ctx?.player` (opsi) ialah kedudukan pemain dunia untuk berhenti.
+ */
+export function updateNPCTraffic(
+  vehicles: NPCTrafficVehicle[],
+  delta: number,
+  ctx?: { player?: { x: number; z: number } },
+): NPCTrafficVehicle[] {
+  return vehicles.map((src) => {
+    const v: NPCTrafficVehicle = { ...src, position: { ...src.position } };
+    const cruise = v.cruise ?? v.speed;
+    v.cruise = cruise;
+    v.waitLeft = Math.max(0, (v.waitLeft ?? 0) - delta);
+    const dir = v.direction;
+    const s = axisPos(v);
+
+    // Jarak bebas (m) ke halangan terdekat: kereta di hadapan, pemain, atau garis berhenti.
+    let free = Number.POSITIVE_INFINITY;
+    let stopCenter: number | null = null;
+
+    for (const o of vehicles) {
+      if (o.id === v.id || o.roadAxis !== v.roadAxis || o.roadValue !== v.roadValue || o.direction !== dir) continue;
+      const ahead = dir * (axisPos(o) - s);
+      if (ahead > 0) free = Math.min(free, ahead - FOLLOW_GAP);
     }
-    let newPos = v.position.x + moveAmount;
-    if (newPos > 200) newPos = -200;
-    if (newPos < -200) newPos = 200;
-    return { ...v, position: { ...v.position, x: newPos } };
+
+    const player = ctx?.player;
+    if (player) {
+      const lateral = v.roadAxis === "z" ? Math.abs(player.x - v.position.x) : Math.abs(player.z - v.position.z);
+      const ahead = v.roadAxis === "z" ? dir * (player.z - s) : dir * (player.x - s);
+      if (lateral < 2 && ahead >= 0 && ahead <= 25) free = Math.min(free, ahead - FOLLOW_GAP);
+    }
+
+    // Garis simpang hadapan (pusat = gandaan 40 dalam julat -120…120).
+    // Skip simpang yang kereta sudah berhenti di situ (lastStop) supaya
+    // ia tidak berhenti dua kali di simpang yang sama.
+    let center = dir * Math.ceil((dir * s + 1e-9) / 40) * 40;
+    if (center - STOP_LINE * dir < s) center += 40 * dir;
+    if (center === v.lastStop) center += 40 * dir;
+    if (center >= -120 && center <= 120) {
+      const line = center - STOP_LINE * dir;
+      const dist = dir * (line - s);
+      if (dist <= 0) {
+        stopCenter = center;
+        free = 0;
+      } else {
+        free = Math.min(free, dist);
+      }
+    }
+
+    // Laju sasaran: 0 semasa menunggu; selain itu cruise dihadkan model brek.
+    let target: number;
+    if (v.waitLeft > 0) target = 0;
+    else if (free <= 0) target = 0;
+    else target = Math.min(cruise, Math.sqrt(2 * BRAKE * free));
+
+    // Pecutan <= 4 m/s², brek <= 9 m/s² (tiada lompatan laju).
+    let speed = v.speed;
+    if (target < speed) speed = Math.max(target, speed - BRAKE * delta);
+    else speed = Math.min(target, speed + ACCEL * delta);
+
+    // Langkah kedudukan: displacement dihadkan kepada jarak bebas
+    // supaya kereta tidak merempuh halangan; laju terus turun mengikut brek.
+    // Semasa menunggu di garis berhenti, kereta pegang brek (tidak bergerak).
+    let displacement = speed * delta;
+    if (v.waitLeft > 0) displacement = 0;
+    else if (free < Number.POSITIVE_INFINITY) displacement = Math.min(displacement, free);
+    let s2 = s + displacement * dir;
+    if (stopCenter !== null) s2 = stopCenter - STOP_LINE * dir;
+
+    // Pusingan dunia -200…200.
+    if (s2 > BOUND) s2 = -BOUND;
+    else if (s2 < -BOUND) s2 = BOUND;
+
+    setAxisPos(v, s2);
+    v.speed = speed;
+    if (stopCenter !== null) {
+      v.waitLeft = STOP_SECONDS;
+      v.lastStop = stopCenter;
+    }
+    return v;
   });
 }
 
