@@ -122,12 +122,14 @@ describe("package.json & manifest", () => {
     }
   });
 
-  it("THIRD_PARTY_NOTICES: enjin fizik transitif, font Inter (OFL, dimuat dari Google Fonts), tiada aset media", () => {
+  // Pelan 012: aset media pihak ketiga kini digunakan; setiap pek mesti disenaraikan dengan lesennya.
+  it("THIRD_PARTY_NOTICES: enjin fizik transitif, font Inter (OFL, dimuat dari Google Fonts), aset media berlesen", () => {
     expect(notices).toMatch(/`@dimforge\/rapier3d-compat`.*Apache-2\.0/);
     expect(notices).toMatch(/Inter/);
     expect(notices).toMatch(/OFL/);
     expect(notices).toMatch(/fonts\.googleapis\.com/);
-    expect(notices).toMatch(/tiada (model 3D|aset)/i);
+    expect(notices).toMatch(/Kenney[\s\S]*CC0/);
+    for (const pack of ["Mini Characters", "City Kit (Roads)"]) expect(notices).toContain(pack);
   });
 });
 

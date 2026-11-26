@@ -50,8 +50,10 @@ Misi Kurir Simulator menggunakan perisian sumber terbuka di bawah. Versi dan les
 
 | Aset | Pencipta | Lesen | Sumber | Fail dalam repo | Kegunaan |
 |------|----------|-------|--------|-----------------|----------|
+| City Kit (Roads) | Kenney (www.kenney.nl) | CC0 1.0 (domain awam) | https://kenney.nl/assets/city-kit-roads | `public/models/city-kit-roads/` (jubin lurus, simpang, lampu jalan, lampu isyarat, papan tanda; `LICENSE.txt`) | Jalan, kaki lima dan lampu jalan |
+| City Kit (Commercial), City Kit (Suburban), Car Kit | Kenney (www.kenney.nl) | CC0 1.0 (domain awam) | https://kenney.nl/assets/city-kit-commercial, …/city-kit-suburban, …/car-kit | `public/models/city-kit-commercial/`, `city-kit-suburban/`, `car-kit/` (`LICENSE.txt` setiap pek) | Bangunan, rumah, pokok dan kereta (Pelan 012b, sedang dipasang) |
 | Mini Characters | Kenney (www.kenney.nl) | CC0 1.0 (domain awam) | https://kenney.nl/assets/mini-characters | `public/models/characters/` (5 GLB + `Textures/colormap.png`; salinan lesen `LICENSE-kenney-mini-characters.txt`) | Kurier dan penerima, dengan animasi (idle, walk, sprint, drive, holding-both, interact-right) |
 
-CC0 tidak mewajibkan atribusi; ia dicatat di sini untuk ketelusan. Arkib asal pek lain (City Kit Roads/Commercial/Suburban, Car Kit) disimpan di luar repo dalam `assets-src/` (diabaikan git) sehingga digunakan.
+CC0 tidak mewajibkan atribusi; ia dicatat di sini untuk ketelusan. Arkib zip asal disimpan di luar repo dalam `assets-src/` (diabaikan git); hanya model yang digunakan disalin ke `public/models/`.
 
-Audio enjin dijana dalam kod (Web Audio), tanpa fail. Geometri lain (bangunan, jalan, motor) masih dijana dalam kod (TPD-013). Ikon PWA belum wujud (B17).
+Audio enjin dijana dalam kod (Web Audio), tanpa fail. Bangunan dan motor masih dijana dalam kod sehingga Pelan 012b/012c siap (TPD-013). Ikon PWA belum wujud (B17).

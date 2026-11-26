@@ -1,5 +1,6 @@
+import { Suspense } from "react";
 import { Buildings } from "./Buildings";
-import { Roads } from "./Roads";
+import { CityRoads } from "./CityRoads";
 
 export function WorldEnvironment() {
   return (
@@ -10,7 +11,10 @@ export function WorldEnvironment() {
         <meshStandardMaterial color="#5f8a45" roughness={0.95} />
       </mesh>
 
-      <Roads />
+      {/* Jalan, simpang dan lampu jalan Kenney (Pelan 012b) */}
+      <Suspense fallback={null}>
+        <CityRoads />
+      </Suspense>
       <Buildings />
     </group>
   );

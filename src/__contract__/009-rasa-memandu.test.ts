@@ -4,12 +4,13 @@
  * laju, condong, FOV laju, bunyi enjin, trafik di lorong kiri dan collision trafik.
  */
 import { engineGain, enginePitch } from "@/audio/engine-sound";
-import roadsSrc from "@/components/3d/Roads.tsx?raw";
+import roadsSrc from "@/components/3d/CityRoads.tsx?raw";
 import worldSrc from "@/components/3d/WorldEnvironment.tsx?raw";
-import { roadLayout, roadTransform } from "@/components/3d/city-layout";
+import { fitMatrix } from "@/components/3d/merged-model";
+import { roadTiles } from "@/components/3d/road-tiles";
 import { LANE_OFFSET, generateNPCTraffic, liveTrafficRects, setLiveTraffic } from "@/lib/npc-traffic";
 import { MOTOR_PHYS, type MotorPhysState, speedFov, speedKmh, stepMotor } from "@/vehicles/motor-physics";
-import { Object3D, Vector3 } from "three";
+import { Box3, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
 
 const DT = 1 / 60;
@@ -149,31 +150,34 @@ describe("B28 — dinding hitam gergasi (Terrain)", () => {
   });
 });
 
+// Pelan 012b: jubin jalan Kenney diletakkan dengan fitMatrix (tiada putaran x),
+// jadi tapaknya sentiasa rata pada y = 0. Ujian memakai kotak jubin unit.
 describe("B29 — jalan utara-selatan berdiri tegak sebagai dinding", () => {
-  it("setiap jalan rata di y = 0.05 dan meliputi w × d pada satah XZ", () => {
-    const o = new Object3D();
-    for (const r of roadLayout()) {
-      const t = roadTransform(r);
-      o.position.set(...t.position);
-      o.rotation.set(...t.rotation);
-      o.scale.set(...t.scale);
-      o.updateMatrix();
+  it("setiap jubin rata (y 0…0.2) dan meliputi tapaknya pada satah XZ", () => {
+    const unit = new Box3(new Vector3(-0.5, 0, -0.5), new Vector3(0.5, 0.02, 0.5));
+    for (const t of roadTiles()) {
+      const rot = t.axis === "z" ? Math.PI / 2 : 0;
+      const m = fitMatrix(unit, { x: t.x, z: t.z, w: t.len, h: 0.12, d: t.w, rotY: rot });
       const corners = [
-        [-0.5, -0.5],
-        [0.5, -0.5],
-        [-0.5, 0.5],
-        [0.5, 0.5],
-      ].map(([x, y]) => new Vector3(x, y, 0).applyMatrix4(o.matrix));
-      for (const c of corners) expect(c.y).toBeCloseTo(0.05);
+        [-0.5, 0, -0.5],
+        [0.5, 0.02, -0.5],
+        [-0.5, 0, 0.5],
+        [0.5, 0.02, 0.5],
+      ].map(([x, y, z]) => new Vector3(x, y, z).applyMatrix4(m));
+      for (const c of corners) {
+        expect(c.y).toBeGreaterThanOrEqual(-1e-9);
+        expect(c.y).toBeLessThanOrEqual(0.2);
+      }
       const xs = corners.map((c) => c.x);
       const zs = corners.map((c) => c.z);
-      expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(r.w);
-      expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(r.d);
+      const [ex, ez] = t.axis === "z" ? [t.w, t.len] : [t.len, t.w];
+      expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(ex);
+      expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(ez);
     }
   });
 
-  it("Roads.tsx memakai roadTransform, bukan rotY secara terus", () => {
-    expect(roadsSrc).toMatch(/roadTransform\(/);
-    expect(roadsSrc).not.toMatch(/r\.rotY/);
+  it("CityRoads memakai roadTiles dan fitMatrix", () => {
+    expect(roadsSrc).toMatch(/roadTiles\(\)/);
+    expect(roadsSrc).toMatch(/fitMatrix\(/);
   });
 });

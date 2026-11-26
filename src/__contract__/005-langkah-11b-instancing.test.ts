@@ -10,15 +10,9 @@
  * `Buildings.tsx` sebelum langkah ini (seed 42). Hanya cara melukis berubah.
  */
 import buildingsSrc from "@/components/3d/Buildings.tsx?raw";
-import roadsSrc from "@/components/3d/Roads.tsx?raw";
-import {
-  buildingLayout,
-  doorPosition,
-  roadLayout,
-  roadMarkingPositions,
-  streetLightPositions,
-  windowPositions,
-} from "@/components/3d/city-layout";
+import roadsSrc from "@/components/3d/CityRoads.tsx?raw";
+import { buildingLayout, doorPosition, windowPositions } from "@/components/3d/city-layout";
+import { ROAD_LINES, roadTiles, streetLamps } from "@/components/3d/road-tiles";
 import { describe, expect, it } from "vitest";
 
 type V3 = [number, number, number];
@@ -87,26 +81,30 @@ describe("tingkap & pintu dalam koordinat dunia", () => {
   });
 });
 
-describe("jalan, garisan dan lampu jalan", () => {
-  it("14 jalan grid: mendatar (w 400 × d 12) dan menegak (w 12 × d 400) setiap 40 unit", () => {
-    const roads = roadLayout();
-    expect(roads).toHaveLength(14);
-    for (let i = -3; i <= 3; i++) {
-      expect(roads).toContainEqual({ x: 0, z: i * 40, rotY: 0, w: 400, d: 12 });
-      expect(roads).toContainEqual({ x: i * 40, z: 0, rotY: Math.PI / 2, w: 12, d: 400 });
+// Pelan 012b: jalan rata lama (14 satah + garisan + lampu kotak) diganti dengan jubin
+// jalan Kenney (CC0): jubin simpang empat di setiap persilangan dan jubin lurus di antaranya.
+describe("jubin jalan, simpang dan lampu jalan", () => {
+  it("49 jubin simpang 12×12 di setiap persilangan grid 40 m", () => {
+    const cross = roadTiles().filter((t) => t.kind === "cross");
+    expect(cross).toHaveLength(49);
+    for (const x of ROAD_LINES)
+      for (const z of ROAD_LINES) expect(cross).toContainEqual(expect.objectContaining({ x, z, w: 12, len: 12 }));
+  });
+
+  it("jubin lurus menutup setiap jalan dari −200 hingga 200 tanpa jurang atau tindihan", () => {
+    const straight = roadTiles().filter((t) => t.kind === "straight" && t.axis === "z" && t.x === 0);
+    const covered = straight.reduce((sum, t) => sum + t.len, 0) + ROAD_LINES.length * 12;
+    expect(covered).toBeCloseTo(400);
+    for (const t of straight) expect(t.len).toBeGreaterThan(8);
+  });
+
+  it("lampu jalan di kaki lima (dalam jalan, ≤ 0.6 m dari tepi) dan tidak di tengah blok (kotak parkir)", () => {
+    for (const l of streetLamps()) {
+      const off = Math.min(...ROAD_LINES.map((c) => Math.min(Math.abs(l.x - c), Math.abs(l.z - c))));
+      expect(off).toBeCloseTo(5.4);
+      const along = Math.abs(l.x - Math.round(l.x / 40) * 40) < 6 ? l.z : l.x;
+      expect(Math.abs(((along - 20) % 40) + 0)).not.toBe(0);
     }
-  });
-
-  it("40 garisan jalan di x 0, y 0.08, z (i − 20) × 10", () => {
-    const m = roadMarkingPositions();
-    expect(m).toHaveLength(40);
-    for (let i = 0; i < 40; i++) expectV3(m[i], [0, 0.08, (i - 20) * 10]);
-  });
-
-  it("12 lampu jalan di x 8, z (i − 6) × 30", () => {
-    const l = streetLightPositions();
-    expect(l).toHaveLength(12);
-    for (let i = 0; i < 12; i++) expect(l[i]).toEqual({ x: 8, z: (i - 6) * 30 });
   });
 });
 
@@ -120,9 +118,9 @@ describe("komponen melukis dengan instancedMesh", () => {
     expect(buildingsSrc).toMatch(/computeBoundingSphere\(\)/);
   });
 
-  it("Roads.tsx: 4 instancedMesh (jalan, garisan, tiang, lampu), guna city-layout", () => {
-    expect(roadsSrc.match(/<instancedMesh\b/g) ?? []).toHaveLength(4);
-    expect(roadsSrc).toMatch(/from "\.\/city-layout"/);
+  it("CityRoads.tsx: 3 instancedMesh (jubin lurus, simpang, lampu), guna road-tiles", () => {
+    expect(roadsSrc.match(/<instancedMesh\b/g) ?? []).toHaveLength(3);
+    expect(roadsSrc).toMatch(/from "\.\/road-tiles"/);
     expect(roadsSrc).not.toMatch(/Array\.from/);
     expect(roadsSrc).toMatch(/computeBoundingSphere\(\)/);
   });
