@@ -2,8 +2,10 @@ import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import { Vector3 } from "three";
 import { playerState } from "./PlayerController";
+import { cameraObstacles, clampCamera } from "./camera-collision";
 
 const CAMERA_HEIGHT_FOOT = 3;
+const OBSTACLES = cameraObstacles();
 const CAMERA_HEIGHT_MOTOR = 5;
 const CAMERA_DISTANCE = 8;
 const CAMERA_LERP = 6;
@@ -29,8 +31,11 @@ export function CameraFollow() {
     camPos.current.y += (targetHeight - camPos.current.y) * lerpFactor * 0.5;
     camPos.current.z += (camTargetZ - camPos.current.z) * lerpFactor;
 
-    state.camera.position.copy(camPos.current);
-    state.camera.lookAt(target.x, target.y + (isOnFoot ? 1 : 0.5), target.z);
+    // Klamp kamera supaya tidak masuk ke dalam bangunan atau rumah alamat.
+    const eye = { x: target.x, y: target.y + (isOnFoot ? 1 : 0.5), z: target.z };
+    const cam = clampCamera(eye, camPos.current, OBSTACLES);
+    state.camera.position.set(cam.x, cam.y, cam.z);
+    state.camera.lookAt(eye.x, eye.y, eye.z);
   });
 
   return null;

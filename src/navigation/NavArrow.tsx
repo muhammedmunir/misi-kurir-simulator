@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 function read(): { name: string; dist: number; turn: number } | null {
   const session = useDeliveryStore.getState().session;
-  if (session.panelOpen) return null;
+  if (session.panelOpen || session.handover) return null;
 
   const target = currentNavTarget(session);
   if (!target) return null;

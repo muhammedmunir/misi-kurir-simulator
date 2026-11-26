@@ -126,7 +126,8 @@ const containerStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  justifyContent: "center",
+  justifyContent: "safe center",
+  overflowY: "auto",
   background: "linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%)",
   gap: "24px",
   padding: "32px 20px",
@@ -172,8 +173,7 @@ const buttonContainerStyle: React.CSSProperties = {
 };
 
 const footerStyle: React.CSSProperties = {
-  position: "absolute",
-  bottom: "24px",
+  marginTop: "24px",
   textAlign: "center",
   color: "#555570",
   fontSize: "12px",
