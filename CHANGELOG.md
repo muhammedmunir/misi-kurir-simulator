@@ -7,6 +7,7 @@ Semua perubahan penting dicatat di sini. Format: [Keep a Changelog 1.1.0](https:
 Vertical slice mudah alih (Pelan 004 & 005).
 
 ### Ditambah
+- **Bangunan Kenney (Pelan 016):** model GLB menggantikan kotak bangunan dan rumah alamat; lot kosong ditumbuhi pokok.
 - **Kereta trafik (Pelan 015):** enam jenis kereta menggunakan model 3D Kenney Car Kit (CC0).
 - **Trafik pintar (Pelan 014):** kereta berhenti di garis berhenti setiap simpang, tidak merempuh kereta di hadapan, dan berhenti bila pemain berada di hadapannya dalam lorong.
 - **Watak realistik dan skuter sebenar (Pelan 012c):** kurier dan penerima kini manusia realistik (Mixamo) dengan animasi berjalan, berlari, memegang dan membawa kotak, mengambil barang dan menunggang. Motor ialah skuter elektrik penghantaran (Sketchfab, CC BY 4.0) dengan kotak penghantaran di rak. Kredit dalam Tetapan.

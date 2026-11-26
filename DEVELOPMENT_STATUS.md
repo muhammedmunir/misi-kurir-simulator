@@ -41,6 +41,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Ciri | Status | Catatan |
 |------|--------|---------|
 | Grid jalan bandar kecil | Tested | Satu kawasan; jalan utara–selatan kini rata (B29, Pelan 009) |
+| Bangunan, rumah dan pokok Kenney | Tested | GLB berkelompok mengikut model (Pelan 016); collision dan parkir kekal |
 | Kawasan bersambung (perumahan, kampung, dll.) | Not started | |
 | Navigasi / minimap | Tested | Anak panah dan minimap (Pelan 010); E2E minimap tidak menutup butang |
 | Chunk streaming, LOD | Not started | |
