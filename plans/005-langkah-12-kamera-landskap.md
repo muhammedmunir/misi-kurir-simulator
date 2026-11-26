@@ -65,3 +65,10 @@ Kamera yang diklamp rapat dengan pemain: di pintu menghadap jalan, pemain mengis
   - sebelum: siling dan dinding rumah dari dalam;
   - selepas: kamera di luar dinding, petak parkir dan jalan kelihatan.
 - Menu 823×309: tajuk pada y = 32; menu boleh ditatal ke Tetapan dan footer.
+
+## Semakan C9 (`8022722`) — DITERIMA
+
+- Skop: 4 fail mengikut spesifikasi (`camera-collision.ts` baharu, `CameraFollow.tsx`, `NavArrow.tsx`, `MainMenu.tsx`). `git status` bersih.
+- Gate dijalankan semula oleh penyemak: tsc 0, biome bersih, Vitest 411/411, knip tiada item baharu (Unused exports 12 → 8), Playwright 9 passed + 3 skipped.
+- Visual: tangkapan skrin di `zone-delivery-1` sama dengan rujukan (kamera di luar dinding); menu 823×309 tajuk y = 32, boleh ditatal.
+- Belum: pengesahan di telefon sebenar (bersama 11c).

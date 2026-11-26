@@ -5,7 +5,7 @@
 ## Ringkasan
 
 Pelan 004 selesai: B1–B11 dan B13 dibaiki. B12 dibaiki dalam Pelan 005 Langkah 2.
-Pelan 005: B15–B16 dibaiki. Ujian telefon sebenar (Redmi 9, Langkah 9b) menemui B18–B21; B18–B20 dibaiki dalam Langkah 10 (`97da0f4`) dan disahkan di telefon. B21 belum.
+Pelan 005: B15–B16 dibaiki. Ujian telefon sebenar (Redmi 9, Langkah 9b) menemui B18–B21; B18–B20 dibaiki dalam Langkah 10 (`97da0f4`) dan disahkan di telefon. B14 dan B21 dibaiki dalam Langkah 12 (`8022722`); disahkan oleh E2E dan Chrome desktop, belum di telefon.
 Belum diuji: skrin 360px, iPhone/Safari.
 
 ## Pepijat
@@ -103,7 +103,7 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Fail:** `src/components/3d/CameraFollow.tsx`
 - **Masalah:** Kamera diletak 8 unit di belakang pemain tanpa semakan halangan. Bila pemain berdiri di pintu rumah alamat dan menghadap jalan, kamera berada di dalam kotak rumah.
 - **Kesan:** Bumbung/dinding rumah menutup separuh skrin (dilihat di Chrome semasa semakan Langkah 4).
-- **Status:** DIRANCANG — Pelan 005 Langkah 12 (`plans/005-langkah-12-kamera-landskap.md`)
+- **Status:** SELESAI (`8022722`) — `camera-collision.ts` mengklamp kamera di luar 23 bangunan + 3 rumah alamat; disahkan dengan tangkapan skrin di `zone-delivery-1`. Belum disahkan di telefon.
 - **Pengesahan:** berdiri di pintu Kafe Kampung Digital menghadap jalan; skrin tidak patut dilindungi dinding.
 
 ### B15 — Panel serah terima & ringkasan manifest tidak boleh diklik
@@ -158,4 +158,4 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Masalah:** dalam viewport 823×309, penunjuk arah ("Kafe Kampung Digital 0 m") menutup tajuk panel Serah Terima; di menu utama, "Versi 0.0.0-alpha" dan "© 2026" bertindih dengan butang Tetapan.
 - **Kesan:** kosmetik; tidak menyekat.
 - **Ditemui:** ujian telefon sebenar, Pelan 005 Langkah 9b.
-- **Status:** DIRANCANG — Pelan 005 Langkah 12 (punca: NavArrow abaikan `handover`; footer menu `position: absolute`)
+- **Status:** SELESAI (`8022722`) — punca: NavArrow abaikan `handover`; footer menu `position: absolute`. Disahkan oleh E2E `landscape-overlap.spec.ts` (823×309). Belum disahkan di telefon.

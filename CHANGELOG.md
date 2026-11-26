@@ -30,6 +30,8 @@ Vertical slice mudah alih (Pelan 004 & 005).
 - **Prestasi:** bangunan dan jalan dilukis dengan instancing (`2ad40f8`). Draw call di kedudukan mula turun daripada 265 ke 51–78 (desktop) dan daripada 127–145 ke 25–40 (emulasi Pixel 7); susun atur bandar tidak berubah.
 
 ### Dibaiki
+- **Kamera (B14):** kamera berhenti di luar dinding bangunan dan rumah alamat, tidak lagi masuk ke dalam rumah di pintu (`8022722`).
+- **Landskap (B21):** penunjuk arah disembunyikan semasa panel Serah Terima terbuka; menu utama boleh ditatal dan teks versi tidak lagi menutup butang Tetapan (`8022722`).
 - **B1–B13:** kestabilan gelung penghantaran, butang sentuh, kamera tidak mengikut pemain (B12) dan lain-lain (Pelan 004).
 - **B15:** panel serah terima dan ringkasan tidak boleh diklik kerana HUD `pointerEvents: none`.
 - **B16:** autosave selepas serahan menyimpan wang lama; ganjaran hilang selepas Teruskan.
