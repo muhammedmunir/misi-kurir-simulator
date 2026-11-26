@@ -40,7 +40,9 @@ describe("createTestApi().state()", () => {
     expect(st.onFoot).toBe(false);
     expect(st.nearbyZoneId).toBe(SHOP.id);
     expect(st.summary).toBeNull();
-    expect(st.cargo).toEqual(s.cargo.map((p) => ({ id: p.id, status: "out_for_delivery", target: s.targets[p.id] })));
+    expect(st.cargo).toEqual(
+      s.cargo.map((p) => ({ id: p.id, status: "out_for_delivery", target: s.targets[p.id], cod: 0 })),
+    );
   });
 
   it("actionLabel = label butang tindakan sebenar (getActionButton + konteks motor)", () => {
@@ -130,7 +132,7 @@ describe("B15 — panel serah terima & ringkasan mesti boleh diklik", () => {
     useDeliveryStore.setState({
       session: {
         ...useDeliveryStore.getState().session,
-        summary: { manifestId: "m", delivered: 1, returned: 0, earned: 5, xp: 30, durationMs: 1000 },
+        summary: { manifestId: "m", delivered: 1, returned: 0, earned: 5, xp: 30, durationMs: 1000, codCollected: 0 },
       },
     });
     expect(dialogPointerEvents(<ManifestSummaryPanel />)).toBe("auto");

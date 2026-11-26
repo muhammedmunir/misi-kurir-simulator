@@ -159,3 +159,10 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Kesan:** kosmetik; tidak menyekat.
 - **Ditemui:** ujian telefon sebenar, Pelan 005 Langkah 9b.
 - **Status:** SELESAI (`8022722`) — punca: NavArrow abaikan `handover`; footer menu `position: absolute`. Disahkan oleh E2E `landscape-overlap.spec.ts` (823×309). Belum disahkan di telefon.
+
+### B22 — Panel: label dan nilai bercantum ("Penerima:Aminah")
+- **Fail:** `src/index.css` (tiada peraturan `.wh-panel__row`), `src/delivery/HandoverPanel.tsx`
+- **Masalah:** `<span>` label dan nilai dalam `.wh-panel__row` tiada jarak.
+- **Kesan:** kosmetik; teks sukar dibaca.
+- **Ditemui:** tangkapan skrin semasa menulis Pelan 006.
+- **Status:** DIRANCANG — Pelan 006 (`.wh-panel__row { display: flex; gap }`)

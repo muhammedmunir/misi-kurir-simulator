@@ -3,7 +3,7 @@
  * Ditulis oleh perancang. C9 TIDAK boleh menyunting fail ini.
  *
  * Aliran: permainan baharu → meja gudang → imbas & muat 2 paket → berangkat →
- * paket 1 diselesaikan → MUAT SEMULA HALAMAN → Teruskan → paket 2 "Penerima tiada" →
+ * paket 1 diselesaikan (dengan baki COD jika paket COD) → MUAT SEMULA HALAMAN → Teruskan → paket 2 "Penerima tiada" →
  * kembali ke gudang → pulangkan → ringkasan → Manifest baharu.
  *
  * Teleport (`__mks.goTo`) hanya menggantikan pemanduan masa nyata. Setiap tindakan
@@ -18,13 +18,24 @@ type MksState = {
   onFoot: boolean;
   nearbyZoneId: string | null;
   actionLabel: string;
-  cargo: { id: string; status: string; target: string }[];
+  cargo: { id: string; status: string; target: string; cod: number }[];
   summary: { delivered: number; returned: number; earned: number } | null;
 };
 
 const DESK = "zone-pickup-1";
 
-const state = (page: Page) => page.evaluate(() => (window as unknown as { __mks: { state(): MksState } }).__mks.state());
+/** COD (Pelan 006): pilih baki yang betul jika paket COD. Wang kertas = RM20/50/100 terkecil ≥ jumlah. */
+async function payCod(page: Page, cod: number) {
+  if (cod <= 0) return;
+  const note = [20, 50, 100].find((n) => n >= cod) ?? 100;
+  const btn = page.getByRole("button", { name: `Baki ${(note - cod).toFixed(2)}`, exact: true });
+  await btn.scrollIntoViewIfNeeded();
+  await btn.click();
+  await expect(btn).toHaveCount(0);
+}
+
+const state = (page: Page) =>
+  page.evaluate(() => (window as unknown as { __mks: { state(): MksState } }).__mks.state());
 
 async function goTo(page: Page, zoneId: string) {
   await page.evaluate((id) => (window as unknown as { __mks: { goTo(z: string): void } }).__mks.goTo(id), zoneId);
@@ -86,6 +97,7 @@ test("vertical slice: gudang → hantar → muat semula → gagal → pulang →
   const proof = page.getByRole("button", { name: "Ambil bukti" });
   let firstDelivered = false;
   if ((await proof.count()) > 0) {
+    await payCod(page, first.cod);
     await proof.click();
     await page.getByRole("button", { name: "Serahkan paket" }).click();
     firstDelivered = true;

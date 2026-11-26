@@ -77,6 +77,7 @@ describe("tutup manifest di meja gudang → ringkasan", () => {
       earned: d.reward,
       xp: d.xp,
       durationMs: 8000, // manifest.createdAt 1000 → ditutup 9000
+      codCollected: 0, // paket prabayar (Pelan 006)
     });
   });
 

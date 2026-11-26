@@ -12,10 +12,20 @@ type MksState = {
   phase: string;
   nearbyZoneId: string | null;
   actionLabel: string;
-  cargo: { id: string; status: string; target: string }[];
+  cargo: { id: string; status: string; target: string; cod: number }[];
 };
 
 const DESK = "zone-pickup-1";
+
+/** COD (Pelan 006): pilih baki yang betul jika paket COD. Wang kertas = RM20/50/100 terkecil ≥ jumlah. */
+async function payCod(page: Page, cod: number) {
+  if (cod <= 0) return;
+  const note = [20, 50, 100].find((n) => n >= cod) ?? 100;
+  const btn = page.getByRole("button", { name: `Baki ${(note - cod).toFixed(2)}`, exact: true });
+  await btn.scrollIntoViewIfNeeded();
+  await btn.click();
+  await expect(btn).toHaveCount(0);
+}
 
 test.use({ viewport: { width: 823, height: 309 } });
 
@@ -80,6 +90,7 @@ test("B18: landskap 823×309 — serah terima, penerima tiada dan ringkasan bole
   await action(page, "SERAH PAKET");
   const proof = page.getByRole("button", { name: "Ambil bukti", exact: true });
   if ((await proof.count()) > 0) {
+    await payCod(page, first.cod);
     await (await reachable(page, "Ambil bukti")).click();
     await (await reachable(page, "Serahkan paket")).click();
     await expect.poll(async () => (await state(page)).cargo.find((p) => p.id === first.id)?.status).toBe("delivered");
