@@ -1,7 +1,8 @@
 import { CharacterGLB, type CharacterKey } from "@/components/3d/CharacterGLB";
 import { playerState } from "@/components/3d/PlayerController";
-import { DELIVERY_ZONES } from "@/lib/delivery-system";
+import { DELIVERY_ZONES, pendingCargo } from "@/lib/delivery-system";
 import { useDeliveryStore } from "@/store/delivery";
+import type { DeliverySession } from "@/types/delivery";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
 /** Penerima keluar ke pintu bila pemain berada dalam jarak ini (m). */
@@ -15,11 +16,21 @@ export function visibleReceivers(spots: readonly Spot[], p: { x: number; z: numb
   return spots.filter((s) => Math.hypot(s.x - p.x, s.z - p.z) <= RECEIVER_SHOW_RADIUS).map((s) => s.id);
 }
 
-/**
- * Penerima di alamat yang ada orang di rumah (receiverHome !== false): watak
- * beranimasi berdiri 1.5 m di hadapan pintu, menghadap jalan. Hanya penerima
- * berdekatan dilukis. Semasa serah terima penerima menghulur tangan.
- */
+/** Tapis alamat paket aktif dahulu, kemudian guna jejari paparan asal. */
+export function visiblePendingReceivers(
+  spots: readonly Spot[],
+  position: { x: number; z: number },
+  session: DeliverySession,
+): string[] {
+  if (session.phase !== "delivering") return [];
+  const pendingZones = new Set(pendingCargo(session).map((packet) => session.targets[packet.id]));
+  return visibleReceivers(
+    spots.filter((spot) => pendingZones.has(spot.id)),
+    position,
+  );
+}
+
+/** Penerima menunggu di hadapan pintu dan menghulur tangan semasa serah terima. */
 export function Receiver() {
   const spots = useMemo<Spot[]>(
     () =>
@@ -42,7 +53,7 @@ export function Receiver() {
 
   useEffect(() => {
     const tick = () => {
-      const next = visibleReceivers(spots, playerState.getPosition());
+      const next = visiblePendingReceivers(spots, playerState.getPosition(), useDeliveryStore.getState().session);
       setShown((prev) => (prev.join() === next.join() ? prev : next));
     };
     tick();

@@ -97,8 +97,8 @@ export function CharacterGLB({
     const a = actions[next];
     if (!a) return;
     a.timeScale = speed;
-    if (current.current === next) return;
-    const prev = current.current ? actions[current.current] : null;
+    if (current.current === next && a.isScheduled()) return;
+    const prev = current.current && current.current !== next ? actions[current.current] : null;
     a.reset().fadeIn(FADE).play();
     prev?.fadeOut(FADE);
     current.current = next;
