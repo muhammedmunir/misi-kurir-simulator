@@ -7,6 +7,9 @@ Semua perubahan penting dicatat di sini. Format: [Keep a Changelog 1.1.0](https:
 Vertical slice mudah alih (Pelan 004 & 005).
 
 ### Ditambah
+- **Trafik pintar (Pelan 014):** kereta berhenti di garis berhenti setiap simpang, tidak merempuh kereta di hadapan, dan berhenti bila pemain berada di hadapannya dalam lorong.
+- **Watak realistik dan skuter sebenar (Pelan 012c):** kurier dan penerima kini manusia realistik (Mixamo) dengan animasi berjalan, berlari, memegang dan membawa kotak, mengambil barang dan menunggang. Motor ialah skuter elektrik penghantaran (Sketchfab, CC BY 4.0) dengan kotak penghantaran di rak. Kredit dalam Tetapan.
+- **Jalan bandar (Pelan 012b):** jalan, simpang, kaki lima dan lampu jalan Kenney.
 - **Watak sebenar dan interaksi fizikal (Pelan 012a + 013b):** kurier dan penerima kini watak 3D beranimasi (Kenney Mini Characters, CC0): berjalan, berlari, menunggang, memegang kotak dengan dua tangan, dan menghulur tangan semasa serahan. Kotak (1–3) atau guni (≥ 4) kelihatan di tangan; penerima COD menghulur wang kertas. Kamera serah terima sinematik membingkai kurier dan penerima; pada skrin lebar panel berada di kanan.
 - **Siang hari (Pelan 011):** langit bergradien, kabus jarak jauh, cahaya matahari petang dengan bayang-bayang lembut (desktop; ditutup di telefon pada tetapan Sederhana), jalan asfalt kelabu, bangunan berwarna pastel, dan HUD legap supaya mudah dibaca.
 - **Angkat dan bawa paket (Pelan 013a):** selepas Berangkat kurier memegang paket dan mesti meletakkannya dalam motor sebelum menunggang. Di alamat, paket diambil dari motor dan dibawa ke penerima. Tangan kosong di pintu = "AMBIL DI MOTOR". Paket di tangan disimpan bersama simpanan permainan.

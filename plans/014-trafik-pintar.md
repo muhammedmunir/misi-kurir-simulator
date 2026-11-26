@@ -61,3 +61,12 @@ Lampu isyarat, kereta membelok, pejalan kaki, NPC mengelak pemain secara sisi.
 
 - Gagal dahulu: 6/11 gagal (pemalar undefined; tiada berhenti, merempuh, tidak berhenti untuk pemain; NPCTraffic tidak menghantar pemain).
 - Dengan rujukan (~70 baris dalam `npc-traffic.ts`): tsc 0, biome 0, Vitest 511/511, knip tiada baris baharu, Playwright 13 passed + 5 skipped.
+
+## Semakan (`2fcf3aa`, merge `a302f86`) — DITERIMA
+
+- C9 melaksanakan dalam worktree `C:\Project\mks-c9` tetapi sesinya terhenti sebelum commit (~3.5 jam tanpa perubahan). Penyemak menjalankan semua gate pada kerja C9, kemudian commit dan merge.
+- Skop: `npc-traffic.ts` (+111 baris) dan satu baris dalam `NPCTraffic.tsx`, mengikut pelan.
+- Satu suntingan luar skop pada `THIRD_PARTY_NOTICES.md` (ayat untuk kontrak 9a lama) dibuang. Notis dalam master sudah dikemas kini oleh Pelan 012c.
+- Gate:
+  - worktree: tsc 0, biome 0, Vitest 510/510, knip tiada baris baharu, Playwright 13 passed;
+  - master selepas merge: tsc 0, biome 0, Vitest 513/513, Playwright 13 passed.
