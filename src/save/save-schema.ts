@@ -11,7 +11,7 @@ export const SAVE_VERSION = 1;
 /** Subset of DeliverySession that is persisted. */
 export type PersistedSession = Pick<
   DeliverySession,
-  "phase" | "inbound" | "cargo" | "targets" | "manifest" | "tally" | "summary" | "completedAt"
+  "phase" | "inbound" | "cargo" | "targets" | "manifest" | "tally" | "summary" | "completedAt" | "carry"
 >;
 
 export interface SaveV1 {
@@ -38,6 +38,8 @@ export function buildSave(now: number): SaveV1 {
     tally: deliveryState.session.tally,
     summary: deliveryState.session.summary,
     completedAt: deliveryState.session.completedAt,
+    // Pelan 013: paket di tangan kurier (medan tambahan; simpanan lama tanpanya = tangan kosong).
+    carry: [...(deliveryState.session.carry ?? [])],
   };
 
   if (!gameState.player) {
@@ -177,6 +179,13 @@ export function validateSave(raw: unknown): { ok: true; save: SaveV1 } | { ok: f
     session.tally.xp < 0
   ) {
     return { ok: false, error: "Tally tidak sah" };
+  }
+
+  if (session.carry !== undefined) {
+    const ids = new Set((session.cargo as Packet[]).map((p) => p.id));
+    if (!Array.isArray(session.carry) || !session.carry.every((id) => typeof id === "string" && ids.has(id))) {
+      return { ok: false, error: "Paket di tangan tidak sah" };
+    }
   }
 
   if (!isArray(raw.vehicles)) return { ok: false, error: "Kenderaan tidak sah" };

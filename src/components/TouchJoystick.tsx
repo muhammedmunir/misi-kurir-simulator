@@ -2,7 +2,7 @@ import { type ButtonInfo, getActionButton, getInteractButtonInfo } from "@/lib/i
 import { requestAction, touchInput } from "@/lib/touch";
 import { useDeliveryStore } from "@/store/delivery";
 import { useEffect, useRef, useState } from "react";
-import { playerState } from "./3d/PlayerController";
+import { motorContext, playerState } from "./3d/PlayerController";
 
 const JOYSTICK_RADIUS = 60;
 const KNOB_RADIUS = 25;
@@ -16,11 +16,7 @@ export function shouldShowTouchControls(): boolean {
 
 function readActionButton(): ButtonInfo {
   const delivery = getInteractButtonInfo(useDeliveryStore.getState().session, Date.now());
-  return getActionButton(delivery, {
-    onFoot: playerState.isOnFoot(),
-    nearMotor: playerState.isNearMotor(),
-    speed: playerState.getSpeed(),
-  });
+  return getActionButton(delivery, motorContext());
 }
 
 export function TouchJoystick() {

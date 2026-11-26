@@ -1,5 +1,5 @@
 /** API ujian dev untuk E2E Playwright. Hanya wujud dalam `vite dev`. */
-import { getWorldState, playerState, restoreWorld } from "@/components/3d/PlayerController";
+import { getWorldState, motorContext, playerState, restoreWorld } from "@/components/3d/PlayerController";
 import { getActionButton, getInteractButtonInfo } from "@/lib/interact-button";
 import { useDeliveryStore } from "@/store/delivery";
 import { useSceneStore } from "@/store/game";
@@ -22,11 +22,17 @@ export interface MksState {
   pos: { x: number; y: number; z: number };
   /** Arah pandangan kamera (heading; hadapan = (sin h, cos h)). */
   heading: number;
+  /** Id paket di tangan kurier. */
+  carry: string[];
 }
 
 export interface MksTestApi {
   state(): MksState;
   goTo(zoneId: string): void;
+  /** Berdiri di sebelah motor (motor tidak bergerak). */
+  goToMotor(): void;
+  /** Motor diparkir di kotak parkir alamat; pemain berdiri di sebelahnya (ganti pemanduan). */
+  parkAt(zoneId: string): void;
   renderInfo(): { calls: number; triangles: number } | null;
   /** Sampel kamera per frame (dev): untuk mengukur gegaran kamera. */
   cameraSamples(): CameraSample[];
@@ -49,11 +55,7 @@ export function createTestApi(): MksTestApi {
       // Hitung actionLabel
       const buttonInfo = getInteractButtonInfo(session, Date.now());
       const onFoot = world.onFoot;
-      const actionLabel = getActionButton(buttonInfo, {
-        onFoot,
-        nearMotor: playerState.isNearMotor(),
-        speed: playerState.getSpeed(),
-      }).label;
+      const actionLabel = getActionButton(buttonInfo, motorContext()).label;
 
       return {
         scene,
@@ -71,6 +73,7 @@ export function createTestApi(): MksTestApi {
         summary: session.summary ?? null,
         pos: (({ x, y, z }) => ({ x, y, z }))(playerState.getPosition()),
         heading: playerState.getHeading(),
+        carry: [...(session.carry ?? [])],
       };
     },
 
@@ -82,6 +85,18 @@ export function createTestApi(): MksTestApi {
       }
       const motor = getWorldState().motor;
       restoreWorld({ pos: zone.position, onFoot: true, motor });
+    },
+
+    goToMotor(): void {
+      const { motor } = getWorldState();
+      restoreWorld({ pos: { x: motor.x + 1, z: motor.z }, onFoot: true, motor });
+    },
+
+    parkAt(zoneId: string): void {
+      const zone = useDeliveryStore.getState().zones.find((z) => z.id === zoneId);
+      if (!zone?.parking) throw new Error(`Zon tiada kotak parkir: ${zoneId}`);
+      const motor = { x: zone.parking.x, z: zone.parking.z, heading: Math.PI / 2 };
+      restoreWorld({ pos: { x: motor.x, z: motor.z - 1 }, onFoot: true, motor });
     },
 
     cameraSamples() {

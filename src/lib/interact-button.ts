@@ -30,7 +30,11 @@ export function getInteractButtonInfo(session: DeliverySession, now: number): Bu
     return { label: "BUKA GUDANG", enabled: true };
   }
 
-  if (deliverableAt(session, zone)) return { label: "SERAH PAKET", enabled: true, needsOnFoot: true };
+  const deliverable = deliverableAt(session, zone);
+  if (deliverable) {
+    if (!(session.carry ?? []).includes(deliverable.id)) return { label: "AMBIL DI MOTOR", enabled: false };
+    return { label: "SERAH PAKET", enabled: true, needsOnFoot: true };
+  }
   if (session.phase === "delivering") return { label: "Bukan sini", enabled: false };
   return { label: "Tiada paket", enabled: false };
 }
@@ -40,6 +44,10 @@ export interface MotorContext {
   nearMotor: boolean;
   /** Motor speed (units/s); dismounting needs canDismount(speed). */
   speed: number;
+  /** Kurier memegang barang (mesti diletak dalam motor sebelum menunggang). */
+  carrying?: boolean;
+  /** Ada paket dalam motor untuk alamat berdekatan. */
+  canTake?: boolean;
 }
 
 /**
@@ -61,6 +69,10 @@ export function getActionButton(delivery: ButtonInfo, motor: MotorContext): Butt
       ? { label: "TURUN MOTOR", enabled: true }
       : { label: "BERHENTI DULU", enabled: false };
   }
-  if (motor.nearMotor) return { label: "NAIK MOTOR", enabled: true };
+  if (motor.nearMotor) {
+    if (motor.carrying) return { label: "LETAK DALAM MOTOR", enabled: true };
+    if (motor.canTake) return { label: "AMBIL PAKET", enabled: true };
+    return { label: "NAIK MOTOR", enabled: true };
+  }
   return delivery;
 }

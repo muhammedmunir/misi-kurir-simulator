@@ -1,3 +1,4 @@
+import { stowCarry as stowCarryPure, takeFromMotor as takeFromMotorPure } from "@/delivery/carry";
 import { collectCod as collectCodPure } from "@/delivery/cod";
 import { completeHandover, failHandover, takeProof as takeProofPure } from "@/delivery/handover";
 import { acknowledgeSummary as acknowledgeSummaryPure } from "@/lib/delivery-system";
@@ -56,6 +57,10 @@ interface DeliveryStore {
 
   // Handover workflow
   takeProof: () => void;
+  /** Letak barang di tangan ke dalam motor. */
+  stowCarry: (now: number) => void;
+  /** Ambil paket untuk alamat berdekatan dari motor di `motor`. */
+  takeFromMotor: (motor: { x: number; z: number }, now: number) => void;
   /** Collect COD cash for the active handover. Does NOT add money to the player. */
   collectCod: (change: number, now: number) => void;
   confirmHandover: (now: number) => void;
@@ -150,6 +155,8 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => {
     takeProof: () => {
       set({ session: takeProofPure(get().session, Date.now()) });
     },
+    stowCarry: (now) => set({ session: stowCarryPure(get().session, now) }),
+    takeFromMotor: (motor, now) => set({ session: takeFromMotorPure(get().session, motor, now) }),
     collectCod: (change, now) => {
       set({ session: collectCodPure(get().session, change, now) });
     },

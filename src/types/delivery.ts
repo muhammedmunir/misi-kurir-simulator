@@ -69,6 +69,8 @@ export interface DeliverySession {
   tally: { earned: number; xp: number };
   /** Manifest performance snapshot, shown after closing. */
   summary: ManifestSummary | null;
+  /** Paket di tangan kurier (id kargo). Tiada/kosong = tangan kosong. Lihat delivery/carry.ts. */
+  carry?: string[];
 }
 
 export type DeliveryAction =

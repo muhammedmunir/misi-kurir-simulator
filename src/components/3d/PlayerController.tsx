@@ -1,5 +1,7 @@
+import { inHand, takeableFromMotor } from "@/delivery/carry";
 import { interactBlocksMotorSwap } from "@/lib/delivery-system";
 import { PARKING_BOXES } from "@/lib/delivery-system";
+import type { MotorContext } from "@/lib/interact-button";
 import { liveTrafficRects } from "@/lib/npc-traffic";
 import { consumeAction, touchInput } from "@/lib/touch";
 import { useDeliveryStore } from "@/store/delivery";
@@ -133,9 +135,34 @@ function toggleMotor(): void {
  * delivery result does not consume the press, mount/dismount the motor.
  */
 export function performInteract(): void {
-  const { result } = useDeliveryStore.getState().interact(Date.now(), { onFoot });
+  const now = Date.now();
+  const { result } = useDeliveryStore.getState().interact(now, { onFoot });
   if (interactBlocksMotorSwap(result?.action ?? null)) return;
+  const store = useDeliveryStore.getState();
+  if (onFoot && canMount(pos, motor)) {
+    // Di sebelah motor: letak barang dahulu, kemudian ambil paket, barulah naik.
+    if (inHand(store.session).length > 0) {
+      store.stowCarry(now);
+      return;
+    }
+    if (takeableFromMotor(store.session, motor)) {
+      store.takeFromMotor({ x: motor.x, z: motor.z }, now);
+      return;
+    }
+  }
   toggleMotor();
+}
+
+/** Konteks motor untuk butang tindakan (sama keutamaan dengan performInteract). */
+export function motorContext(): MotorContext {
+  const session = useDeliveryStore.getState().session;
+  return {
+    onFoot,
+    nearMotor: onFoot && canMount(pos, motor),
+    speed: motor.speed,
+    carrying: inHand(session).length > 0,
+    canTake: takeableFromMotor(session, motor) !== null,
+  };
 }
 
 // ── Component ─────────────────────────────────────────────────────

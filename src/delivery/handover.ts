@@ -115,9 +115,11 @@ export function completeHandover(
   }
 
   const { session: delivered, result } = deliverPacket(session, packet, now, deps);
+  // Paket berpindah dari tangan kurier kepada penerima.
+  const carry = (delivered.carry ?? []).filter((id) => id !== packet.id);
   return {
     result: { ...result, action: "deliver" as DeliveryAction },
-    session: { ...delivered, handover: null },
+    session: { ...delivered, handover: null, carry },
   };
 }
 

@@ -108,7 +108,8 @@ export function loadOntoVehicle(
 export function dispatch(s: DeliverySession, now: number): Outcome {
   if (s.phase !== "loading" || s.cargo.length === 0) return { ok: false, error: "Muat sekurang-kurangnya satu paket" };
   const cargo = s.cargo.map((p) => advance(p, ["in_transit", "out_for_delivery"], "Keluar untuk penghantaran", now));
-  return { ok: true, session: { ...s, phase: "delivering", cargo, panelOpen: false } };
+  // Kurier mengangkat semua paket yang dimuat; mesti diletak dalam motor sebelum menunggang.
+  return { ok: true, session: { ...s, phase: "delivering", cargo, panelOpen: false, carry: cargo.map((p) => p.id) } };
 }
 
 /** Cargo load against limits, for the "2/3 paket, 4.1/15 kg" indicator. */

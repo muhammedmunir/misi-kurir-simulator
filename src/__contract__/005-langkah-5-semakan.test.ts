@@ -32,7 +32,12 @@ describe("S1 — atas motor tidak boleh membuka serah terima", () => {
 
   it("performInteract (E / butang) menghantar keadaan onFoot sebenar pemain", () => {
     useDeliveryStore.setState({ deps: testDeps(), session: { ...deliveringTo([SHOP]), nearbyZone: null } });
-    // Pemain bermula berjalan kaki di sebelah motor: tekan pertama = naik motor.
+    // Pelan 013: selepas "Berangkat" kurier memegang paket. Di sebelah motor:
+    // tekan pertama = letak paket dalam motor, tekan kedua = naik motor.
+    expect(playerState.isOnFoot()).toBe(true);
+    expect(store().session.carry).toEqual([store().session.cargo[0].id]);
+    performInteract();
+    expect(store().session.carry).toEqual([]);
     expect(playerState.isOnFoot()).toBe(true);
     performInteract();
     expect(playerState.isOnFoot()).toBe(false);
@@ -43,8 +48,9 @@ describe("S1 — atas motor tidak boleh membuka serah terima", () => {
     expect(store().session.handover).toBeNull();
     expect(playerState.isOnFoot()).toBe(true);
 
-    // Kini berjalan kaki: tekan = buka serah terima.
-    useDeliveryStore.setState({ session: { ...store().session, cooldownUntil: 0 } });
+    // Kini berjalan kaki dengan paket di tangan (diambil dari motor): tekan = buka serah terima.
+    const id = store().session.cargo[0].id;
+    useDeliveryStore.setState({ session: { ...store().session, cooldownUntil: 0, carry: [id] } });
     performInteract();
     expect(store().session.handover?.zoneId).toBe(SHOP.id);
   });

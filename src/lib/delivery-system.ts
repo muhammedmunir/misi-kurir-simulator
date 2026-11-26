@@ -206,6 +206,11 @@ export function interact(
     return say(session, "nothing", msg, now);
   }
 
+  // Paket mesti di tangan: ambil dari motor dahulu.
+  if (!(session.carry ?? []).includes(packet.id)) {
+    return say(session, "nothing", "Ambil paket dari motor dahulu", now);
+  }
+
   // Open handover workflow
   const handover: DeliveryHandover = { packetId: packet.id, zoneId: zone.id, proofTaken: false };
   return {
