@@ -1,3 +1,4 @@
+import { EngineAudio } from "@/audio/EngineAudio";
 import { Receiver } from "@/delivery/Receiver";
 import { FpsOverlay, shouldShowFps } from "@/dev/fps";
 import { RenderInfoProbe } from "@/dev/render-info";
@@ -89,6 +90,7 @@ export function GameScene3D() {
 
           {/* Player + Motor */}
           <PlayerController />
+          <EngineAudio />
 
           {/* World */}
           <WorldEnvironment />

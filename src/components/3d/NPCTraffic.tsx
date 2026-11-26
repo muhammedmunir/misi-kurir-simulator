@@ -1,4 +1,4 @@
-import { type NPCTrafficVehicle, generateNPCTraffic, updateNPCTraffic } from "@/lib/npc-traffic";
+import { type NPCTrafficVehicle, generateNPCTraffic, setLiveTraffic, updateNPCTraffic } from "@/lib/npc-traffic";
 import { useFrame } from "@react-three/fiber";
 import { useRef, useState } from "react";
 import type { Group } from "three";
@@ -17,6 +17,7 @@ export function NPCTraffic() {
   useFrame((_state, delta) => {
     const updated = updateNPCTraffic(dataRef.current, Math.min(delta, 0.05));
     dataRef.current = updated;
+    setLiveTraffic(updated);
     for (let i = 0; i < updated.length; i++) {
       const group = groupRefs.current[i];
       if (!group) continue;

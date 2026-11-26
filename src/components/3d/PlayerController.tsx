@@ -1,7 +1,9 @@
 import { interactBlocksMotorSwap } from "@/lib/delivery-system";
 import { PARKING_BOXES } from "@/lib/delivery-system";
+import { liveTrafficRects } from "@/lib/npc-traffic";
 import { consumeAction, touchInput } from "@/lib/touch";
 import { useDeliveryStore } from "@/store/delivery";
+import { stepMotor } from "@/vehicles/motor-physics";
 import { type MotorState, canDismount, canMount, checkParking, dismountPosition } from "@/vehicles/motor-state";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
@@ -36,10 +38,8 @@ const COLLIDERS = worldColliders();
  */
 export const PLAYER_FRAME_PRIORITY = -1;
 
-const MOTOR_ACCEL = 15;
-const MOTOR_MAX_SPEED = 25;
-const MOTOR_TURN_SPEED = 2.5;
-const MOTOR_BREAKING = -20;
+/** Jejari roda motor (untuk putaran roda). */
+const WHEEL_R = 0.35;
 
 // ── Player / motor mutable state ──────────────────────────────────
 const pos = new Vector3(0, GROUND_Y, 0);
@@ -48,6 +48,13 @@ let grounded = true;
 let onFoot = true;
 /** Arah pandangan kamera semasa berjalan kaki (heading). */
 let viewYaw = 0;
+/** Stereng ditapis dan condongan motor (rad); lihat `stepMotor`. */
+let motorSteer = 0;
+let motorLean = 0;
+/** Masa notis langgar terakhir (ms) supaya mesej tidak berulang setiap frame. */
+let lastCrashNotice = 0;
+/** Input pendikit terakhir (-1..1), untuk bunyi enjin. */
+let lastThrottle = 0;
 /** The motor stays wherever it was left. */
 const motor: MotorState = { x: MOTOR_START.x, z: MOTOR_START.z, heading: 0, speed: 0 };
 
@@ -72,6 +79,8 @@ export function restoreWorld(w: WorldState): void {
   motor.z = w.motor.z;
   motor.heading = w.motor.heading;
   motor.speed = 0;
+  motorSteer = 0;
+  motorLean = 0;
   viewYaw = w.motor.heading;
   vel.set(0, 0, 0);
   pos.set(w.pos.x, onFoot ? GROUND_Y : MOTOR_Y, w.pos.z);
@@ -83,6 +92,7 @@ export const playerState = {
   /** Arah pandangan kamera: viewYaw semasa berjalan, arah motor semasa memandu. */
   getHeading: () => (onFoot ? viewYaw : motor.heading),
   getSpeed: () => motor.speed,
+  getThrottle: () => lastThrottle,
   isOnFoot: () => onFoot,
   isNearMotor: () => onFoot && canMount(pos, motor),
 };
@@ -124,6 +134,7 @@ export function performInteract(): void {
 export function PlayerController() {
   const groupRef = useRef<Group>(null);
   const motorRef = useRef<Group>(null);
+  const wheelRefs = useRef<(Group | null)[]>([]);
 
   // Keyboard handlers inside useEffect (not module level)
   useEffect(() => {
@@ -230,47 +241,20 @@ export function PlayerController() {
         const curRot = groupRef.current.rotation.y;
         groupRef.current.rotation.y = curRot + angleDelta(angle, curRot) * Math.min(1, 12 * dt);
       }
+      groupRef.current.rotation.z = 0;
 
       // ── ON MOTOR ──────────────────────────────────────────────
     } else {
-      // Throttle / brake
-      if (inputForward > 0.15) {
-        motor.speed += MOTOR_ACCEL * dt;
-      } else if (inputForward < -0.15) {
-        motor.speed += MOTOR_BREAKING * dt;
-      } else {
-        // Natural friction
-        if (motor.speed > 0.5) {
-          motor.speed -= 5 * dt;
-        } else if (motor.speed < -0.5) {
-          motor.speed += 5 * dt;
-        } else {
-          motor.speed = 0;
-        }
-      }
-
-      // Brake button
-      if (ti.brake) {
-        if (motor.speed > 0.5) motor.speed -= 25 * dt;
-        else if (motor.speed < -0.5) motor.speed += 25 * dt;
-        else motor.speed = 0;
-      }
-
-      // Clamp
-      motor.speed = Math.max(-MOTOR_MAX_SPEED * 0.3, Math.min(MOTOR_MAX_SPEED, motor.speed));
-
-      // Steering (only when moving)
-      if (Math.abs(inputRight) > 0.15 && Math.abs(motor.speed) > 0.5) {
-        const turnFactor = Math.min(Math.abs(motor.speed) / 10, 1);
-        // Kanan = heading berkurang (kanan skrin). Undur membalikkan arah pusingan, seperti kenderaan sebenar.
-        motor.heading -=
-          Math.sign(inputRight) *
-          Math.sign(motor.speed) *
-          MOTOR_TURN_SPEED *
-          turnFactor *
-          dt *
-          (Math.abs(motor.speed) / MOTOR_MAX_SPEED);
-      }
+      lastThrottle = inputForward;
+      const next = stepMotor(
+        { speed: motor.speed, heading: motor.heading, steer: motorSteer, lean: motorLean },
+        { throttle: inputForward, steer: inputRight, handBrake: ti.brake },
+        dt,
+      );
+      motor.speed = next.speed;
+      motor.heading = next.heading;
+      motorSteer = next.steer;
+      motorLean = next.lean;
 
       // Move motor; the rider (and camera target) moves with it
       motor.x += Math.sin(motor.heading) * motor.speed * dt;
@@ -281,17 +265,35 @@ export function PlayerController() {
         motor.z = solved.z;
         motor.speed *= 0.5; // hentaman: hilang separuh laju
       }
+      const hitCar = resolveCircle(motor, MOTOR_RADIUS, liveTrafficRects());
+      if (hitCar.hit) {
+        motor.x = hitCar.x;
+        motor.z = hitCar.z;
+        const now = Date.now();
+        if (Math.abs(motor.speed) > 4 && now - lastCrashNotice > 2500) {
+          lastCrashNotice = now;
+          useDeliveryStore.getState().notify("Hati-hati! Anda melanggar kenderaan", now);
+        }
+        motor.speed *= 0.2;
+      }
       pos.set(motor.x, MOTOR_Y, motor.z);
 
-      // Penunggang kelihatan, duduk di atas motor.
-      groupRef.current.position.set(motor.x, RIDER_Y, motor.z);
-      groupRef.current.rotation.y = motor.heading;
+      // Penunggang duduk di atas motor dan condong bersamanya (paksi condong = tanah).
+      const h = RIDER_Y - MOTOR_Y;
+      groupRef.current.position.set(
+        motor.x - h * Math.sin(motorLean) * Math.cos(motor.heading),
+        MOTOR_Y + h * Math.cos(motorLean),
+        motor.z + h * Math.sin(motorLean) * Math.sin(motor.heading),
+      );
+      groupRef.current.rotation.set(0, motor.heading, motorLean);
     }
 
     // ── Motor mesh: sibling of the player group, placed in world space ──
     if (motorRef.current) {
       motorRef.current.position.set(motor.x, MOTOR_Y, motor.z);
-      motorRef.current.rotation.y = motor.heading;
+      motorRef.current.rotation.set(0, motor.heading, onFoot ? 0 : motorLean);
+      const spin = (motor.speed * dt) / WHEEL_R;
+      for (const w of wheelRefs.current) if (w) w.rotation.x += spin;
     }
   }, PLAYER_FRAME_PRIORITY);
 
@@ -327,16 +329,26 @@ export function PlayerController() {
       {/* ── Motor ── */}
       <group ref={motorRef} position={[MOTOR_START.x, MOTOR_Y, MOTOR_START.z]}>
         <group name="motor">
-          {/* Front wheel */}
-          <mesh position={[0, 0.3, 0.8]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.35, 0.35, 0.1, 16]} />
-            <meshStandardMaterial color="#1a1a1a" />
-          </mesh>
-          {/* Rear wheel */}
-          <mesh position={[0, 0.3, -0.8]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.35, 0.35, 0.1, 16]} />
-            <meshStandardMaterial color="#1a1a1a" />
-          </mesh>
+          {/* Roda depan dan belakang: kumpulan berputar pada paksi x mengikut laju */}
+          {[0.8, -0.8].map((z, i) => (
+            <group
+              key={z}
+              position={[0, 0.3, z]}
+              ref={(g) => {
+                wheelRefs.current[i] = g;
+              }}
+            >
+              <mesh rotation={[0, 0, Math.PI / 2]}>
+                <cylinderGeometry args={[WHEEL_R, WHEEL_R, 0.1, 16]} />
+                <meshStandardMaterial color="#1a1a1a" />
+              </mesh>
+              {/* Jejari: menunjukkan putaran roda */}
+              <mesh>
+                <boxGeometry args={[0.12, 0.5, 0.06]} />
+                <meshStandardMaterial color="#9ca3af" />
+              </mesh>
+            </group>
+          ))}
           {/* Body/frame */}
           <mesh position={[0, 0.6, 0]}>
             <boxGeometry args={[0.5, 0.6, 1.6]} />

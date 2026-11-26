@@ -8,6 +8,7 @@ import { useDeliveryStore } from "@/store/delivery";
 import { useSceneStore } from "@/store/game";
 import { useGameStateStore } from "@/store/gamestate";
 import { Scene } from "@/types/scene";
+import { speedKmh } from "@/vehicles/motor-physics";
 import { useEffect, useState } from "react";
 import { playerState } from "./3d/PlayerController";
 import { shouldShowTouchControls } from "./TouchJoystick";
@@ -27,14 +28,14 @@ export function HUD() {
 
   const [touch] = useState(shouldShowTouchControls);
   const [isOnFoot, setIsOnFoot] = useState(() => playerState.isOnFoot());
-  const [speed, setSpeed] = useState(() => Math.abs(Math.round(playerState.getSpeed())));
+  const [speed, setSpeed] = useState(() => speedKmh(playerState.getSpeed()));
 
   // Poll game state at 10 Hz so the status card tracks mounting/dismounting and
   // live speed without subscribing to the render loop.
   useEffect(() => {
     const id = window.setInterval(() => {
       setIsOnFoot(playerState.isOnFoot());
-      setSpeed(Math.abs(Math.round(playerState.getSpeed())));
+      setSpeed(speedKmh(playerState.getSpeed()));
     }, 100);
     return () => window.clearInterval(id);
   }, []);

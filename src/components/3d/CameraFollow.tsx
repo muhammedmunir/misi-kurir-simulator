@@ -1,6 +1,7 @@
+import { MOTOR_PHYS, speedFov } from "@/vehicles/motor-physics";
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
-import { Vector3 } from "three";
+import { PerspectiveCamera, Vector3 } from "three";
 import { playerState } from "./PlayerController";
 import { cameraObstacles, clampCamera } from "./camera-collision";
 
@@ -9,6 +10,8 @@ const OBSTACLES = cameraObstacles();
 const CAMERA_HEIGHT_MOTOR = 5;
 const CAMERA_DISTANCE = 8;
 const CAMERA_LERP = 6;
+/** Jarak tambahan kamera di belakang motor pada laju maksimum. */
+const CAMERA_SPEED_PULLBACK = 2;
 
 /** Third-person follow. Moves R3F's default (rendering) camera. */
 export function CameraFollow() {
@@ -22,8 +25,10 @@ export function CameraFollow() {
     const isOnFoot = playerState.isOnFoot();
 
     // Behind the player/motor
-    const camTargetX = target.x - Math.sin(heading) * CAMERA_DISTANCE;
-    const camTargetZ = target.z - Math.cos(heading) * CAMERA_DISTANCE;
+    const speed = isOnFoot ? 0 : Math.abs(playerState.getSpeed());
+    const dist = CAMERA_DISTANCE + CAMERA_SPEED_PULLBACK * Math.min(speed / MOTOR_PHYS.maxSpeed, 1);
+    const camTargetX = target.x - Math.sin(heading) * dist;
+    const camTargetZ = target.z - Math.cos(heading) * dist;
     const targetHeight = isOnFoot ? CAMERA_HEIGHT_FOOT : CAMERA_HEIGHT_MOTOR;
 
     // Redaman eksponen: hasil sama tanpa mengira FPS (30 atau 120).
@@ -37,6 +42,15 @@ export function CameraFollow() {
     const cam = clampCamera(eye, camPos.current, OBSTACLES);
     state.camera.position.set(cam.x, cam.y, cam.z);
     state.camera.lookAt(eye.x, eye.y, eye.z);
+
+    // FOV melebar bila laju: rasa kelajuan.
+    if (state.camera instanceof PerspectiveCamera) {
+      const fov = state.camera.fov + (speedFov(speed) - state.camera.fov) * (1 - Math.exp(-3 * dt));
+      if (Math.abs(fov - state.camera.fov) > 0.01) {
+        state.camera.fov = fov;
+        state.camera.updateProjectionMatrix();
+      }
+    }
   });
 
   return null;

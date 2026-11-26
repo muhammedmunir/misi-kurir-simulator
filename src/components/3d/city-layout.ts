@@ -74,6 +74,19 @@ export function doorPosition(b: BuildingLot): [number, number, number] {
 
 export type RoadSpec = { x: number; z: number; rotY: number; w: number; d: number };
 
+/**
+ * Transform instance jalan: satah 1×1 diskala (w, d) lalu dibaringkan (−π/2 pada x).
+ * `w`/`d` sudah mengikut arah jalan, jadi `rotY` TIDAK digunakan: memutar y sebelum
+ * x dalam Euler XYZ menegakkan satah menjadi dinding 6 m (B29).
+ */
+export function roadTransform(r: RoadSpec): {
+  position: [number, number, number];
+  rotation: [number, number, number];
+  scale: [number, number, number];
+} {
+  return { position: [r.x, 0.05, r.z], rotation: [-Math.PI / 2, 0, 0], scale: [r.w, r.d, 1] };
+}
+
 export function roadLayout(): RoadSpec[] {
   const result: RoadSpec[] = [];
   for (let i = -3; i <= 3; i++) {

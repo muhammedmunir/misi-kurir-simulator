@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { roadLayout, roadMarkingPositions, streetLightPositions } from "./city-layout";
+import { roadLayout, roadMarkingPositions, roadTransform, streetLightPositions } from "./city-layout";
 
 const tempObj = new THREE.Object3D();
 
@@ -18,9 +18,10 @@ export function Roads() {
     const road = roadRef.current;
     if (road) {
       roads.forEach((r, i) => {
-        tempObj.position.set(r.x, 0.05, r.z);
-        tempObj.rotation.set(-Math.PI / 2, r.rotY, 0);
-        tempObj.scale.set(r.w, r.d, 1);
+        const t = roadTransform(r);
+        tempObj.position.set(...t.position);
+        tempObj.rotation.set(...t.rotation);
+        tempObj.scale.set(...t.scale);
         tempObj.updateMatrix();
         road.setMatrixAt(i, tempObj.matrix);
       });

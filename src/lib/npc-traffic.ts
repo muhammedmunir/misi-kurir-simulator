@@ -5,6 +5,9 @@ for (let i = -3; i <= 3; i++) {
   ROAD_VALUES.push(i * 40);
 }
 
+/** Jarak lorong dari garis tengah jalan (jalan 12 lebar). */
+export const LANE_OFFSET = 3;
+
 export interface NPCTrafficVehicle {
   id: string;
   position: { x: number; z: number };
@@ -29,8 +32,9 @@ export function generateNPCTraffic(count: number, rng: () => number = Math.rando
     vehicles.push({
       id: `npc-${i}`,
       position: {
-        x: isZAxis ? roadValue : (r() - 0.5) * 400,
-        z: isZAxis ? (r() - 0.5) * 400 : roadValue,
+        // Pandu di sebelah kiri jalan (Malaysia): lorong LANE_OFFSET dari garis tengah.
+        x: isZAxis ? roadValue + LANE_OFFSET * direction : (r() - 0.5) * 400,
+        z: isZAxis ? (r() - 0.5) * 400 : roadValue - LANE_OFFSET * direction,
       },
       heading: isZAxis ? (direction === 1 ? 0 : Math.PI) : direction === 1 ? Math.PI / 2 : -Math.PI / 2,
       speed: 2 + r() * 4,
@@ -58,5 +62,30 @@ export function updateNPCTraffic(vehicles: NPCTrafficVehicle[], delta: number): 
     if (newPos > 200) newPos = -200;
     if (newPos < -200) newPos = 200;
     return { ...v, position: { ...v.position, x: newPos } };
+  });
+}
+
+// -- Kedudukan semasa trafik untuk collision pemain --
+
+type Rect = { minX: number; maxX: number; minZ: number; maxZ: number };
+
+let live: readonly NPCTrafficVehicle[] = [];
+
+/** Dipanggil oleh `NPCTraffic` setiap frame selepas kenderaan bergerak. */
+export function setLiveTraffic(vehicles: readonly NPCTrafficVehicle[]): void {
+  live = vehicles;
+}
+
+/** Kotak badan kenderaan (1.6 x 3) pada satah XZ; trafik sentiasa sejajar paksi. */
+export function liveTrafficRects(): Rect[] {
+  return live.map((v) => {
+    const halfX = v.roadAxis === "z" ? 0.8 : 1.5;
+    const halfZ = v.roadAxis === "z" ? 1.5 : 0.8;
+    return {
+      minX: v.position.x - halfX,
+      maxX: v.position.x + halfX,
+      minZ: v.position.z - halfZ,
+      maxZ: v.position.z + halfZ,
+    };
   });
 }

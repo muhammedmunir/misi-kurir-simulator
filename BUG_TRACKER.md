@@ -6,7 +6,7 @@
 
 Pelan 004 selesai: B1–B11 dan B13 dibaiki. B12 dibaiki dalam Pelan 005 Langkah 2.
 Pelan 005: B15–B16 dibaiki. Ujian telefon sebenar (Redmi 9, Langkah 9b) menemui B18–B21; B18–B20 dibaiki dalam Langkah 10 (`97da0f4`) dan disahkan di telefon. B14 dan B21 dibaiki dalam Langkah 12 (`8022722`); disahkan oleh E2E dan Chrome desktop, belum di telefon.
-Pelan 006/006b: B22–B23 dibaiki. Pelan 007: B24–B26 (laporan pemilik: watak terapung, A/D terbalik, tembus rumah) dibaiki; disahkan oleh E2E Chrome desktop, belum di telefon.
+Pelan 006/006b: B22–B23 dibaiki. Pelan 009: B28–B29 (dunia: dinding Terrain, jalan tegak) dibaiki. Pelan 007: B24–B26 (laporan pemilik: watak terapung, A/D terbalik, tembus rumah) dibaiki; disahkan oleh E2E Chrome desktop, belum di telefon.
 Belum diuji: skrin 360px, iPhone/Safari.
 
 ## Pepijat
@@ -207,3 +207,17 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Status:** SELESAI (Pelan 007b) — useFrame pemain pada keutamaan −1 (sebelum kamera), dan redaman eksponen `1 − e^(−k·dt)`.
   - Diukur dengan probe kamera per frame (`__mks.cameraSamples()`) di bawah CPU ×6: lompatan sudut pandangan p99 turun 0.083 → 0.066–0.070 rad; lompatan yang tinggal sepadan dengan frame panjang (~48 ms).
   - Belum disahkan oleh pemilik di peranti sebenar.
+
+### B28 — Dinding hitam gergasi membelah dunia (Terrain)
+- **Fail:** `src/components/3d/Terrain.tsx` (dibuang)
+- **Masalah:** bucu bukit dijana pada satah XZ (tinggi pada y), kemudian mesh diputar −90° pada x. Hasilnya satah tegak 400 × 400 di z ≈ 0, hitam kerana tiada normal.
+- **Kesan:** dinding hitam besar di tepi jalan dan menutup motor semasa membelok. Juga 12 800 segi tiga sia-sia.
+- **Ditemui:** semakan visual Pelan 009, 2026-11-26.
+- **Status:** SELESAI (Pelan 009) — dibuang; tanah rata 500 × 500 sedia ada kekal.
+
+### B29 — Jalan utara–selatan berdiri tegak sebagai dinding
+- **Fail:** `src/components/3d/Roads.tsx`, `city-layout.ts`
+- **Masalah:** `rotation.set(-π/2, rotY, 0)` dengan rotY = π/2. Dalam Euler XYZ, putaran y berlaku sebelum x, jadi satah jalan menjadi dinding tegak 6 m pada x = −120 … 120. Jalan menegak tidak pernah wujud; pemain memandu di atas rumput.
+- **Kesan:** separuh rangkaian jalan hilang, dan dinding hitam tambahan muncul.
+- **Ditemui:** semakan visual Pelan 009, 2026-11-26.
+- **Status:** SELESAI (Pelan 009) — `roadTransform()` (−π/2, 0, 0); w/d sudah mengikut arah. Kontrak menguji bucu setiap jalan dengan matriks three sebenar.

@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import { Buildings } from "./Buildings";
 import { Roads } from "./Roads";
-import { Terrain } from "./Terrain";
 
 export function WorldEnvironment() {
   return (
@@ -12,7 +11,6 @@ export function WorldEnvironment() {
         <meshStandardMaterial color="#3a5a2a" roughness={0.9} />
       </mesh>
 
-      <Terrain />
       <Roads />
       <Buildings />
 

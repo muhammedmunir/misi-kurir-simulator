@@ -45,6 +45,7 @@ test("bajet draw call: mula, gudang dan alamat", async ({ page }, testInfo) => {
   for (const [where, r] of Object.entries(results)) {
     expect(r?.calls ?? Number.POSITIVE_INFINITY, `${where}: draw call ≤ ${budget}`).toBeLessThanOrEqual(budget);
     // Adegan tidak boleh dikosongkan untuk lulus bajet: geometri bandar mesti masih dilukis.
-    expect(r?.triangles ?? 0, `${where}: segi tiga`).toBeGreaterThan(4000);
+    // Pelan 009: Terrain (dinding tegak 12 800 segi tiga, B28) dibuang; adegan sebenar 3 700–5 900.
+    expect(r?.triangles ?? 0, `${where}: segi tiga`).toBeGreaterThan(2500);
   }
 });

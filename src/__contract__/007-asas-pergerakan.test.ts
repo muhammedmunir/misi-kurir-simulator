@@ -111,6 +111,7 @@ describe("PlayerController", () => {
     expect(playerSrc.match(/resolveCircle\(/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
     expect(playerSrc).toMatch(/PLAYER_RADIUS/);
     expect(playerSrc).toMatch(/MOTOR_RADIUS/);
-    expect(playerSrc).toMatch(/motor\.heading -=/);
+    // Pelan 009: stereng kini dalam stepMotor (motor-physics); kanan = heading berkurang diuji di kontrak 009.
+    expect(playerSrc).toMatch(/stepMotor\(/);
   });
 });

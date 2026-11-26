@@ -7,6 +7,8 @@ Semua perubahan penting dicatat di sini. Format: [Keep a Changelog 1.1.0](https:
 Vertical slice mudah alih (Pelan 004 & 005).
 
 ### Ditambah
+- **Rasa memandu (Pelan 009):** pecutan beransur hingga 90 km/j, luncur dan brek, belok bergantung laju, motor dan penunggang condong semasa membelok, roda berputar, FOV kamera melebar ikut laju, bunyi enjin (Web Audio, ikut tetapan Bunyi), dan HUD dalam km/j sebenar.
+- **Trafik:** kenderaan memandu di lorong kiri; motor tidak lagi tembus kereta.
 - **Gudang 3D:** bangunan gudang, meja sortir dan panel gudang (imbas, muat, berangkat) dengan had kargo berat/isi padu. Status paket ikut mesin keadaan dengan sejarah.
 - **Motor:** naik/turun, motor kekal di tempat ditinggalkan, turun hanya bila hampir berhenti, kotak parkir di setiap alamat.
 - **Kawalan sentuh:** joystick, butang tindakan kontekstual dan BREK.
@@ -31,6 +33,7 @@ Vertical slice mudah alih (Pelan 004 & 005).
 - **Prestasi:** bangunan dan jalan dilukis dengan instancing (`2ad40f8`). Draw call di kedudukan mula turun daripada 265 ke 51–78 (desktop) dan daripada 127–145 ke 25–40 (emulasi Pixel 7); susun atur bandar tidak berubah.
 
 ### Dibaiki
+- **Dunia (B28, B29):** dinding hitam gergasi (Terrain yang tegak) dibuang, dan jalan utara–selatan yang berdiri tegak sebagai dinding kini rata. Separuh rangkaian jalan sebelum ini tidak wujud.
 - **Kamera motor (B27):** kamera kini dikemas kini selepas motor bergerak dalam setiap frame, dengan redaman yang tidak bergantung pada FPS. Ini mengurangkan gegaran semasa memandu (Pelan 007b).
 - **Pergerakan (B24–B26):** watak dan motor kini berdiri di atas jalan (tidak terapung); A/D dan joystick ikut arah skrin, termasuk stereng motor; watak dan motor tidak lagi tembus bangunan, rumah, dinding gudang, meja dan rak. Penunggang kelihatan di atas motor (Pelan 007).
 - **COD (B23):** memilih baki yang salah kini memaparkan "Baki salah — kira semula" di dalam panel Serah Terima (Pelan 006b).
