@@ -52,3 +52,6 @@ pwacompat.mjs
 # Playwright test output
 test-results/
 playwright-report/
+
+# Arkib aset mentah (zip dimuat turun pemilik); hanya model terpilih disalin ke public/models
+assets-src/
