@@ -2,6 +2,7 @@ import { type NPCTrafficVehicle, generateNPCTraffic, setLiveTraffic, updateNPCTr
 import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { playerState } from "./PlayerController";
 
 const NPC_COUNT = 8;
 
@@ -75,7 +76,7 @@ export function NPCTraffic() {
   });
 
   useFrame((_state, delta) => {
-    const updated = updateNPCTraffic(dataRef.current, Math.min(delta, 0.05));
+    const updated = updateNPCTraffic(dataRef.current, Math.min(delta, 0.05), { player: playerState.getPosition() });
     dataRef.current = updated;
     setLiveTraffic(updated);
     for (const [key, parts] of groups) {
