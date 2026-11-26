@@ -14,7 +14,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Ciri | Status | Catatan |
 |------|--------|---------|
 | Vite + React 19 + TypeScript strict | Tested | typecheck + build lulus |
-| Vitest | Tested | 383 ujian (`97da0f4`) |
+| Vitest | Tested | 452 ujian (Pelan 007) |
 | Biome | Tested | 0 ralat |
 | Playwright | Tested | E2E vertical slice, `desktop-chrome` + `pixel-7` (emulasi), `bacccb5` |
 | PWA manifest | Implemented | Service worker belum ada |
@@ -26,13 +26,13 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 |------|--------|---------|
 | Navigasi menu → permainan | Tested | Dibaiki `dc5d761`; disahkan di Chrome |
 | Scene 3D: tanah, jalan, bangunan | Implemented | Geometri placeholder |
-| Karakter berjalan/berlari | Implemented | Kedudukan dikira manual, bukan Rapier |
+| Karakter berjalan/berlari | Tested | Kaki di tanah (y = 0); arah ikut kamera; E2E `pergerakan.spec.ts` (Pelan 007). Masih model kotak, tiada animasi |
 | Kamera orang ketiga | Tested | B12 dibaiki: kamera kini benar-benar mengikut pemain; disahkan di Chrome |
-| Kawalan papan kekunci (WASD, E) | Implemented | Belum diuji di pelayar; logik E dikongsi dengan butang sentuh |
+| Kawalan papan kekunci (WASD, E) | Tested | A/D ikut skrin (B25), disahkan di Chrome oleh E2E Pelan 007; stereng motor juga |
 | Kawalan sentuh (joystick, tindakan, BREK) | Tested | `1b88949`; telefon sebenar Redmi 9 (9b): joystick memandu, butang tindakan berfungsi; potret + landskap lulus selepas B18 (`97da0f4`) |
 | Motor: naik, pandu, brek, turun | Tested | Motor kekal di tempat ditinggalkan; turun hanya bila < 1 unit/s; disahkan di Chrome |
 | Kotak parkir di setiap alamat | Tested | Direkod betul/tidak (tiada penalti lagi); ujian unit sahaja, belum dipandu ke kotak di pelayar |
-| Fizik Rapier / collision | Not started | `<Physics>` tanpa `RigidBody`; motor menembusi bangunan |
+| Collision watak & motor | Tested | `world-collision.ts`: bulatan vs kotak XZ untuk bangunan, rumah, dinding gudang, meja dan rak (Pelan 007). Bukan Rapier; tiada collision dengan trafik NPC atau tiang lampu |
 | HUD asas | Tested | Wang, level, kad misi dan status pandu reaktif (B19); petunjuk ikut mod input (B20). Disahkan di telefon sebenar |
 | Simpan/muat | Tested | Skema v1 + validasi + autosave + Teruskan (Pelan 005 Langkah 7); E2E muat semula halaman |
 
@@ -49,7 +49,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 
 | Ciri | Status | Catatan |
 |------|--------|---------|
-| Gudang 3D (bangunan, rak, meja sortir) | Tested | Placeholder geometri; tiada collision. Disahkan di Chrome |
+| Gudang 3D (bangunan, rak, meja sortir) | Tested | Placeholder geometri; dinding, meja dan rak pejal (Pelan 007). Disahkan di Chrome |
 | Imbas (simulasi), muat, kapasiti berat/isipadu, berangkat | Tested | Ujian unit + Chrome: paket ke-5 ditolak pada 20/20 unit |
 | Manifest | Tested | Dibuka pada muatan pertama, ditutup di meja gudang dengan ringkasan (Langkah 6, `2600f2f`); E2E |
 

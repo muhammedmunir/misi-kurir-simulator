@@ -1,14 +1,15 @@
+import { WAREHOUSE_WALL_T } from "@/components/3d/world-collision";
 import { WAREHOUSE } from "./warehouse-logic";
 
 const WALL_H = 4.5;
-const WALL_T = 0.4;
+const WALL_T = WAREHOUSE_WALL_T;
 const WALL_COLOR = "#8a8f98";
 const ACCENT = "#f59e0b";
 
 /**
  * Placeholder warehouse: open-roof shell so the third-person camera can see
  * inside, door gap facing the z=0 road, sorting desk where the pickup zone is.
- * No collision yet (Rapier is Pelan 007).
+ * Collision: `warehouseColliders()` in `world-collision.ts` (same dimensions).
  */
 export function WarehouseBuilding() {
   const { center, width, depth, doorWidth } = WAREHOUSE;

@@ -1,11 +1,12 @@
 # Bug Tracker — Courier Life Simulator 3D
 
-**Kemas kini terakhir:** 2026-11-25
+**Kemas kini terakhir:** 2026-11-26
 
 ## Ringkasan
 
 Pelan 004 selesai: B1–B11 dan B13 dibaiki. B12 dibaiki dalam Pelan 005 Langkah 2.
 Pelan 005: B15–B16 dibaiki. Ujian telefon sebenar (Redmi 9, Langkah 9b) menemui B18–B21; B18–B20 dibaiki dalam Langkah 10 (`97da0f4`) dan disahkan di telefon. B14 dan B21 dibaiki dalam Langkah 12 (`8022722`); disahkan oleh E2E dan Chrome desktop, belum di telefon.
+Pelan 006/006b: B22–B23 dibaiki. Pelan 007: B24–B26 (laporan pemilik: watak terapung, A/D terbalik, tembus rumah) dibaiki; disahkan oleh E2E Chrome desktop, belum di telefon.
 Belum diuji: skrin 360px, iPhone/Safari.
 
 ## Pepijat
@@ -173,3 +174,24 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Kesan:** pemain mengetik baki salah dan tiada apa-apa berubah pada skrin.
 - **Ditemui:** semakan visual Pelan 006 (412×839).
 - **Status:** SELESAI (Pelan 006b) — `<output className="wh-panel__msg">` dalam panel. Disahkan oleh kontrak `006b-cod-mesej-baki.test.tsx` dan tangkapan skrin 412×839.
+
+### B24 — Watak terapung di udara
+- **Fail:** `src/components/3d/PlayerController.tsx`
+- **Masalah:** tanah watak ditetapkan `pos.y = 1.6`, sedangkan kaki model bermula pada y = 0 dalam kumpulannya. Motor juga terangkat (`MOTOR_Y = 0.6`; roda 0.55 di atas jalan).
+- **Kesan:** watak dan motor kelihatan terbang.
+- **Ditemui:** laporan pemilik (tangkapan skrin desktop), 2026-11-26.
+- **Status:** SELESAI (Pelan 007) — `GROUND_Y = 0` dan `MOTOR_Y = 0.05`. Penunggang kini kelihatan duduk di atas motor.
+
+### B25 — A ke kanan, D ke kiri
+- **Fail:** `src/components/3d/PlayerController.tsx`
+- **Masalah:** D menggerakkan ke +x dunia, tetapi kamera memandang +z, jadi +x ialah kiri skrin. Stereng motor terbalik dengan cara yang sama. Joystick juga terjejas.
+- **Kesan:** kawalan terasa terbalik.
+- **Ditemui:** laporan pemilik, 2026-11-26.
+- **Status:** SELESAI (Pelan 007) — `moveHeading()` relatif kepada kamera; kamera berjalan kaki mempunyai `viewYaw` sendiri yang menyusul hanya bila bergerak ke hadapan; stereng `motor.heading -=`. Disahkan oleh E2E `pergerakan.spec.ts`.
+
+### B26 — Watak dan motor tembus rumah, bangunan dan dinding
+- **Fail:** `src/components/3d/PlayerController.tsx`
+- **Masalah:** tiada collision untuk pemain (Rapier tidak digunakan, TPD-017).
+- **Kesan:** boleh berjalan atau memandu menembusi apa-apa.
+- **Ditemui:** laporan pemilik, 2026-11-26.
+- **Status:** SELESAI (Pelan 007) — `world-collision.ts` (bulatan vs segi empat XZ); motor kehilangan separuh laju bila terlanggar. Disahkan oleh kontrak 007 dan E2E (berhenti di dinding rumah, z = 27.35).

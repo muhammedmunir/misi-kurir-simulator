@@ -18,6 +18,10 @@ export interface MksState {
   actionLabel: string;
   cargo: { id: string; status: string; target: string; cod: number }[];
   summary: ManifestSummary | null;
+  /** Kedudukan watak (atau motor semasa memandu); y = 0 bermaksud di atas tanah. */
+  pos: { x: number; y: number; z: number };
+  /** Arah pandangan kamera (heading; hadapan = (sin h, cos h)). */
+  heading: number;
 }
 
 export interface MksTestApi {
@@ -63,6 +67,8 @@ export function createTestApi(): MksTestApi {
           cod: p.paymentMethod === "cod" ? p.codAmount : 0,
         })),
         summary: session.summary ?? null,
+        pos: (({ x, y, z }) => ({ x, y, z }))(playerState.getPosition()),
+        heading: playerState.getHeading(),
       };
     },
 

@@ -6,6 +6,7 @@ import { type MotorState, canDismount, canMount, checkParking, dismountPosition 
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { type Group, Vector3 } from "three";
+import { MOTOR_RADIUS, PLAYER_RADIUS, angleDelta, moveHeading, resolveCircle, worldColliders } from "./world-collision";
 
 // ── Keyboard state ────────────────────────────────────────────────
 const keysDown = new Set<string>();
@@ -17,7 +18,16 @@ const JUMP_FORCE = 9;
 const GRAVITY = -20;
 
 const MOTOR_START = { x: 2, z: 2 };
-const MOTOR_Y = 0.6;
+/** Asal kumpulan motor: roda (jejari 0.35, pusat +0.3) menyentuh tanah. */
+const MOTOR_Y = 0.05;
+/** Kaki watak bermula pada y = 0 dalam kumpulannya, jadi tanah = 0. */
+const GROUND_Y = 0;
+/** Ketinggian kumpulan watak semasa duduk di atas tempat duduk motor. */
+const RIDER_Y = MOTOR_Y + 0.55;
+/** Kadar kamera berjalan kaki menyusul arah hadapan watak (rad/s). */
+const VIEW_FOLLOW = 2.5;
+
+const COLLIDERS = worldColliders();
 
 const MOTOR_ACCEL = 15;
 const MOTOR_MAX_SPEED = 25;
@@ -25,10 +35,12 @@ const MOTOR_TURN_SPEED = 2.5;
 const MOTOR_BREAKING = -20;
 
 // ── Player / motor mutable state ──────────────────────────────────
-const pos = new Vector3(0, 1.6, 0);
+const pos = new Vector3(0, GROUND_Y, 0);
 const vel = new Vector3(0, 0, 0);
 let grounded = true;
 let onFoot = true;
+/** Arah pandangan kamera semasa berjalan kaki (heading). */
+let viewYaw = 0;
 /** The motor stays wherever it was left. */
 const motor: MotorState = { x: MOTOR_START.x, z: MOTOR_START.z, heading: 0, speed: 0 };
 
@@ -53,19 +65,16 @@ export function restoreWorld(w: WorldState): void {
   motor.z = w.motor.z;
   motor.heading = w.motor.heading;
   motor.speed = 0;
+  viewYaw = w.motor.heading;
   vel.set(0, 0, 0);
-  pos.set(w.pos.x, onFoot ? 1.6 : MOTOR_Y, w.pos.z);
+  pos.set(w.pos.x, onFoot ? GROUND_Y : MOTOR_Y, w.pos.z);
 }
 
 // Exposed for camera, HUD and touch controls
 export const playerState = {
   getPosition: () => pos,
-  getHeading: () =>
-    onFoot
-      ? Math.abs(vel.x) > 0.1 || Math.abs(vel.z) > 0.1
-        ? Math.atan2(vel.x, vel.z)
-        : motor.heading
-      : motor.heading,
+  /** Arah pandangan kamera: viewYaw semasa berjalan, arah motor semasa memandu. */
+  getHeading: () => (onFoot ? viewYaw : motor.heading),
   getSpeed: () => motor.speed,
   isOnFoot: () => onFoot,
   isNearMotor: () => onFoot && canMount(pos, motor),
@@ -87,8 +96,10 @@ function toggleMotor(): void {
   onFoot = true;
   motor.speed = 0;
   const step = dismountPosition(motor);
-  pos.set(step.x, 1.6, step.z);
+  const safe = resolveCircle(step, PLAYER_RADIUS, COLLIDERS);
+  pos.set(safe.x, GROUND_Y, safe.z);
   vel.set(0, 0, 0);
+  viewYaw = motor.heading;
   useDeliveryStore.getState().recordParking(checkParking(motor, PARKING_BOXES), now);
 }
 
@@ -167,10 +178,18 @@ export function PlayerController() {
       const isRunning = keysDown.has("ShiftLeft") || keysDown.has("ShiftRight");
       const speed = isRunning ? RUN_SPEED : WALK_SPEED;
 
-      if (Math.abs(inputRight) > 0.15 || Math.abs(inputForward) > 0.15) {
-        const angle = Math.atan2(inputRight, inputForward);
-        vel.x = Math.sin(angle) * speed;
-        vel.z = Math.cos(angle) * speed;
+      // Arah relatif kepada kamera: D/joystick kanan = kanan skrin.
+      const angle = moveHeading(viewYaw, inputForward, inputRight);
+      if (angle !== null) {
+        const mag = Math.min(1, Math.hypot(inputForward, inputRight));
+        vel.x = Math.sin(angle) * speed * mag;
+        vel.z = Math.cos(angle) * speed * mag;
+        // Kamera menyusul perlahan hanya bila bergerak ke hadapan, supaya
+        // A/D bergerak ke sisi tanpa kamera berpusing.
+        if (inputForward > 0.2) {
+          const d = angleDelta(angle, viewYaw);
+          viewYaw += Math.max(-1, Math.min(1, d)) * VIEW_FOLLOW * inputForward * dt;
+        }
       } else {
         vel.x *= 0.85;
         vel.z *= 0.85;
@@ -187,9 +206,12 @@ export function PlayerController() {
       pos.x += vel.x * dt;
       pos.y += vel.y * dt;
       pos.z += vel.z * dt;
+      const solved = resolveCircle(pos, PLAYER_RADIUS, COLLIDERS);
+      pos.x = solved.x;
+      pos.z = solved.z;
 
-      if (pos.y <= 1.6) {
-        pos.y = 1.6;
+      if (pos.y <= GROUND_Y) {
+        pos.y = GROUND_Y;
         vel.y = 0;
         grounded = true;
       }
@@ -197,21 +219,13 @@ export function PlayerController() {
       groupRef.current.position.copy(pos);
 
       // Face movement
-      if (Math.abs(inputRight) > 0.15 || Math.abs(inputForward) > 0.15) {
-        const targetAngle = Math.atan2(inputRight, inputForward);
+      if (angle !== null) {
         const curRot = groupRef.current.rotation.y;
-        let dA = targetAngle - curRot;
-        if (dA > Math.PI) dA -= Math.PI * 2;
-        if (dA < -Math.PI) dA += Math.PI * 2;
-        groupRef.current.rotation.y += dA * 12 * dt;
+        groupRef.current.rotation.y = curRot + angleDelta(angle, curRot) * Math.min(1, 12 * dt);
       }
-
-      groupRef.current.visible = true;
 
       // ── ON MOTOR ──────────────────────────────────────────────
     } else {
-      groupRef.current.visible = false;
-
       // Throttle / brake
       if (inputForward > 0.15) {
         motor.speed += MOTOR_ACCEL * dt;
@@ -241,14 +255,30 @@ export function PlayerController() {
       // Steering (only when moving)
       if (Math.abs(inputRight) > 0.15 && Math.abs(motor.speed) > 0.5) {
         const turnFactor = Math.min(Math.abs(motor.speed) / 10, 1);
-        motor.heading +=
-          (inputRight > 0 ? 1 : -1) * MOTOR_TURN_SPEED * turnFactor * dt * (Math.abs(motor.speed) / MOTOR_MAX_SPEED);
+        // Kanan = heading berkurang (kanan skrin). Undur membalikkan arah pusingan, seperti kenderaan sebenar.
+        motor.heading -=
+          Math.sign(inputRight) *
+          Math.sign(motor.speed) *
+          MOTOR_TURN_SPEED *
+          turnFactor *
+          dt *
+          (Math.abs(motor.speed) / MOTOR_MAX_SPEED);
       }
 
       // Move motor; the rider (and camera target) moves with it
       motor.x += Math.sin(motor.heading) * motor.speed * dt;
       motor.z += Math.cos(motor.heading) * motor.speed * dt;
+      const solved = resolveCircle(motor, MOTOR_RADIUS, COLLIDERS);
+      if (solved.hit) {
+        motor.x = solved.x;
+        motor.z = solved.z;
+        motor.speed *= 0.5; // hentaman: hilang separuh laju
+      }
       pos.set(motor.x, MOTOR_Y, motor.z);
+
+      // Penunggang kelihatan, duduk di atas motor.
+      groupRef.current.position.set(motor.x, RIDER_Y, motor.z);
+      groupRef.current.rotation.y = motor.heading;
     }
 
     // ── Motor mesh: sibling of the player group, placed in world space ──
