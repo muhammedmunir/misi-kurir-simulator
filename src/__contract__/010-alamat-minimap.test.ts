@@ -54,12 +54,42 @@ describe("alamat", () => {
 });
 
 describe("kos render alamat", () => {
-  it("rumah dan kotak parkir dilukis dengan instancing (5 instancedMesh, bukan mesh per alamat)", () => {
-    expect(destinationsSrc.match(/<instancedMesh\b/g) ?? []).toHaveLength(5);
+  // Pelan 016 (dikemas kini oleh perancang): rumah alamat kini model GLB Kenney City Kit
+  // (Suburban), satu instancedMesh bagi setiap jenis model, diletakkan dengan fitMatrix pada
+  // kotak rumah yang sama (collision dan kamera bergantung padanya). Garisan dan pad parkir
+  // kekal sebagai dua instancedMesh satah. Seperti kontrak 11b untuk Buildings.tsx.
+  it("rumah: GLB Kenney melalui useMergedModels + fitMatrix, instancing ikut model, dalam Suspense", () => {
+    expect(destinationsSrc).toMatch(/useMergedModels\(/);
+    expect(destinationsSrc).toMatch(/fitMatrix\(/);
+    expect(destinationsSrc).toMatch(/<Suspense\b/);
+    expect(destinationsSrc).toMatch(/\/models\/city-kit-suburban\//);
+    expect(destinationsSrc).toMatch(/\.map\([\s\S]*?<instancedMesh\b/);
     expect(destinationsSrc).not.toMatch(/<mesh\b/);
+    expect(destinationsSrc).not.toMatch(/<boxGeometry\b/);
+    expect(destinationsSrc).not.toMatch(/<coneGeometry\b/);
+  });
+
+  it("setiap rumah mengisi kotak rumah asal dan menghadap +z (pintu ke arah zon)", () => {
+    const houses = destinationInstances().bodies;
+    expect(houses).toHaveLength(9);
+    dest.forEach((z, i) => {
+      const h = houses[i];
+      expect(h.model, z.id).toMatch(/^building-type-[a-l]$/);
+      expect(h.x).toBe(z.lot?.x);
+      expect(h.z).toBe((z.lot?.z ?? Number.NaN) + HOUSE.zOffset);
+      expect([h.w, h.h, h.d]).toEqual([HOUSE.width, HOUSE.height + 1.4, HOUSE.depth]);
+      // Model Kenney menghadap +z; tiada putaran (atau putaran 0) = pintu menghadap zon di z lebih besar.
+      expect((h as { rotY?: number }).rotY ?? 0).toBe(0);
+      expect(z.position.z).toBeGreaterThan(h.z + h.d / 2);
+    });
+  });
+
+  it("garisan dan pad parkir kekal instanced (2 instancedMesh satah, 36 garisan, 9 pad)", () => {
     const inst = destinationInstances();
-    expect(inst.bodies).toHaveLength(9);
     expect(inst.lines).toHaveLength(36);
+    expect(inst.pads).toHaveLength(9);
+    expect(destinationsSrc.match(/<instancedMesh ref=\{(lineRef|padRef)\}/g) ?? []).toHaveLength(2);
+    expect(destinationsSrc.match(/<planeGeometry\b/g) ?? []).toHaveLength(2);
   });
 
   // Pelan 012a: penerima kini watak GLB beranimasi; hanya yang berdekatan dilukis.
