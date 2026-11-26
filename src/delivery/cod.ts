@@ -2,6 +2,9 @@ import { formatRinggit } from "@/lib/utils";
 import type { DeliverySession } from "@/types/delivery";
 import type { Packet } from "@/types/game";
 
+/** Mesej bila pemain memilih baki yang salah. */
+export const COD_WRONG_CHANGE = "Baki salah — kira semula";
+
 /** Bundar ke sen (RM). */
 const sen = (n: number) => Math.round(n * 100) / 100;
 
@@ -42,7 +45,7 @@ export function collectCod(session: DeliverySession, change: number, now: number
   if (sen(change) !== codChange(packet.codAmount)) {
     return {
       ...session,
-      interactionMessage: "Baki salah — kira semula",
+      interactionMessage: COD_WRONG_CHANGE,
       interactionMessageTime: now,
     };
   }

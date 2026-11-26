@@ -172,4 +172,4 @@ Belum diuji: skrin 360px, iPhone/Safari.
 - **Masalah:** mesej "Baki salah — kira semula" hanya dipaparkan dalam kotak info HUD, yang tidak kelihatan semasa Panel Serah Terima terbuka.
 - **Kesan:** pemain mengetik baki salah dan tiada apa-apa berubah pada skrin.
 - **Ditemui:** semakan visual Pelan 006 (412×839).
-- **Status:** DIRANCANG — Pelan 006b (`<output className="wh-panel__msg">` dalam panel)
+- **Status:** SELESAI (Pelan 006b) — `<output className="wh-panel__msg">` dalam panel. Disahkan oleh kontrak `006b-cod-mesej-baki.test.tsx` dan tangkapan skrin 412×839.

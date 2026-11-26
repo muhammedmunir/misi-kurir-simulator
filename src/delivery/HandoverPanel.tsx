@@ -1,4 +1,4 @@
-import { codChangeOptions, codNote } from "@/delivery/cod";
+import { COD_WRONG_CHANGE, codChangeOptions, codNote } from "@/delivery/cod";
 import { formatRinggit } from "@/lib/utils";
 import { useDeliveryStore } from "@/store/delivery";
 import type { DeliverySession } from "@/types/delivery";
@@ -62,6 +62,9 @@ export function HandoverPanel() {
         </p>
       ) : (
         <>
+          {session.interactionMessage === COD_WRONG_CHANGE && (
+            <output className="wh-panel__msg">{COD_WRONG_CHANGE}</output>
+          )}
           {isCod && !codDone && (
             <>
               <p className="wh-panel__note">Pelanggan bayar {formatRinggit(codNote(packet.codAmount))}. Berapa baki?</p>

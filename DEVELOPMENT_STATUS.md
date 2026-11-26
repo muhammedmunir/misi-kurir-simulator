@@ -61,7 +61,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Zon gudang/penghantaran | Tested | 1 meja gudang, 3 alamat |
 | Pelanggan NPC, serah terima, bukti | Tested | Langkah 5 (`2c33f7a`); NPC penerima ialah placeholder kotak; E2E melalui UI sebenar |
 | Penghantaran gagal / retur | Tested | Penerima tiada → failed → PULANGKAN PAKET → returned (Langkah 5–6); E2E |
-| COD | Tested | Pelan 006 (`75883b4`): ~40% paket COD, baki wang kertas (3 pilihan), Serahkan dikunci sehingga dikutip, "COD disetor" dalam ringkasan; kontrak 006 dan E2E `payCod`. B23 (mesej baki salah) → Pelan 006b |
+| COD | Tested | Pelan 006 (`75883b4`): ~40% paket COD, baki wang kertas (3 pilihan), Serahkan dikunci sehingga dikutip, "COD disetor" dalam ringkasan; kontrak 006 dan E2E `payCod`. B23 dibaiki (Pelan 006b) |
 
 ## Phase 5 — Realism
 

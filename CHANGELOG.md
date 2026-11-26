@@ -31,6 +31,7 @@ Vertical slice mudah alih (Pelan 004 & 005).
 - **Prestasi:** bangunan dan jalan dilukis dengan instancing (`2ad40f8`). Draw call di kedudukan mula turun daripada 265 ke 51–78 (desktop) dan daripada 127–145 ke 25–40 (emulasi Pixel 7); susun atur bandar tidak berubah.
 
 ### Dibaiki
+- **COD (B23):** memilih baki yang salah kini memaparkan "Baki salah — kira semula" di dalam panel Serah Terima (Pelan 006b).
 - **Panel (B22):** label dan nilai dalam panel kini berjarak ("Penerima: Aminah") (`75883b4`).
 - **Kamera (B14):** kamera berhenti di luar dinding bangunan dan rumah alamat, tidak lagi masuk ke dalam rumah di pintu (`8022722`).
 - **Landskap (B21):** penunjuk arah disembunyikan semasa panel Serah Terima terbuka; menu utama boleh ditatal dan teks versi tidak lagi menutup butang Tetapan (`8022722`).

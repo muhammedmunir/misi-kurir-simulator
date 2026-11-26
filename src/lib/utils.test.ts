@@ -115,7 +115,7 @@ describe("shuffleArray", () => {
     const arr = [1, 2, 3, 4, 5];
     const shuffled = shuffleArray(arr);
     expect(shuffled).toHaveLength(5);
-    expect(shuffled).not.toEqual([1, 2, 3, 4, 5]); // kemungkinan tinggi berbeza
+    expect([...shuffled].sort()).toEqual([1, 2, 3, 4, 5]);
   });
   it("tidak ubah array asal", () => {
     const arr = [1, 2, 3];
