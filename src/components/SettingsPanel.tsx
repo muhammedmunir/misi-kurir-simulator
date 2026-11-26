@@ -232,6 +232,29 @@ export function SettingsPanel() {
         >
           Reset Data Permainan
         </button>
+
+        <h3
+          style={{
+            fontSize: "14px",
+            fontWeight: 600,
+            color: "#8888a0",
+            marginTop: "24px",
+            marginBottom: "12px",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+          }}
+        >
+          Kredit
+        </h3>
+        {/* Atribusi wajib CC-BY-4.0 (skuter) dan pengakuan aset lain; lihat THIRD_PARTY_NOTICES.md */}
+        <ul style={{ margin: 0, paddingLeft: "18px", color: "#b9bccb", fontSize: "13px", lineHeight: 1.6 }}>
+          <li>
+            Skuter: "Low Poly Delivery Electric Scooter" oleh ramdom_sp (spartanmelon), berdasarkan karya Neakster —
+            Sketchfab, CC BY 4.0
+          </li>
+          <li>Watak dan animasi: Adobe Mixamo</li>
+          <li>Jalan dan bandar: Kenney (kenney.nl), CC0</li>
+        </ul>
       </div>
     </div>
   );

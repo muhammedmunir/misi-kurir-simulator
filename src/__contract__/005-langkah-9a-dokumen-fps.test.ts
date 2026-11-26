@@ -129,7 +129,7 @@ describe("package.json & manifest", () => {
     expect(notices).toMatch(/OFL/);
     expect(notices).toMatch(/fonts\.googleapis\.com/);
     expect(notices).toMatch(/Kenney[\s\S]*CC0/);
-    for (const pack of ["Mini Characters", "City Kit (Roads)"]) expect(notices).toContain(pack);
+    for (const pack of ["Mixamo", "City Kit (Roads)"]) expect(notices).toContain(pack);
   });
 });
 

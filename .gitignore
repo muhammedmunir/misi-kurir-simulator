@@ -55,3 +55,7 @@ playwright-report/
 
 # Arkib aset mentah (zip dimuat turun pemilik); hanya model terpilih disalin ke public/models
 assets-src/
+
+# Model Mixamo: lesen tidak membenarkan pengedaran fail mentah dalam repo awam.
+# Jana semula: npx vite --port 5190 & node tools/convert/run.mjs
+public/models/mixamo/

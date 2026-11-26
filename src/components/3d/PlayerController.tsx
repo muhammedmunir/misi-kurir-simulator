@@ -12,6 +12,7 @@ import { useEffect, useRef } from "react";
 import { Suspense } from "react";
 import { type Group, Vector3 } from "three";
 import { CharacterGLB } from "./CharacterGLB";
+import { ScooterGLB } from "./ScooterGLB";
 import { courierClip } from "./courier-anim";
 import { MOTOR_RADIUS, PLAYER_RADIUS, angleDelta, moveHeading, resolveCircle, worldColliders } from "./world-collision";
 
@@ -30,7 +31,10 @@ const MOTOR_Y = 0.05;
 /** Kaki watak bermula pada y = 0 dalam kumpulannya, jadi tanah = 0. */
 const GROUND_Y = 0;
 /** Bahagian atas tempat duduk kapcai, dalam koordinat setempat motor. */
-const SEAT_TOP = 1.02;
+const SEAT_TOP = 0.86;
+/** Kotak penghantaran di atas rak belakang skuter. */
+const BOX_Y = 1.13;
+const BOX_Z = -0.62;
 /** Kedudukan pinggul penunggang di atas tempat duduk (setempat motor). */
 /** Kedudukan tapak kaki penunggang (klip `drive`) supaya punggung di atas tempat duduk. */
 const RIDER_OFFSET: [number, number, number] = [0, SEAT_TOP - 0.51, -0.12];
@@ -45,9 +49,6 @@ const COLLIDERS = worldColliders();
  * Nilai negatif tidak mengambil alih render R3F.
  */
 export const PLAYER_FRAME_PRIORITY = -1;
-
-/** Jejari roda motor (untuk putaran roda). */
-const WHEEL_R = 0.35;
 
 // ── Player / motor mutable state ──────────────────────────────────
 const pos = new Vector3(0, GROUND_Y, 0);
@@ -153,6 +154,12 @@ export function performInteract(): void {
   toggleMotor();
 }
 
+/** Penunggang sentiasa dalam klip menunggang. */
+const RIDER_CLIP = courierClip({ riding: true, speed: 0, carrying: false });
+function pickRiderClip() {
+  return RIDER_CLIP;
+}
+
 /** Klip animasi kurier berjalan kaki setiap frame. */
 function pickCourierClip() {
   return courierClip({
@@ -178,7 +185,6 @@ export function motorContext(): MotorContext {
 export function PlayerController() {
   const groupRef = useRef<Group>(null);
   const motorRef = useRef<Group>(null);
-  const wheelRefs = useRef<(Group | null)[]>([]);
   const riderRef = useRef<Group>(null);
   const boxRefs = useRef<(Group | null)[]>([]);
   const sackRef = useRef<Group>(null);
@@ -354,8 +360,6 @@ export function PlayerController() {
     if (motorRef.current) {
       motorRef.current.position.set(motor.x, MOTOR_Y, motor.z);
       motorRef.current.rotation.set(0, motor.heading, onFoot ? 0 : motorLean);
-      const spin = (motor.speed * dt) / WHEEL_R;
-      for (const w of wheelRefs.current) if (w) w.rotation.x += spin;
     }
   }, PLAYER_FRAME_PRIORITY);
 
@@ -371,7 +375,7 @@ export function PlayerController() {
           {[0, 1, 2].map((i) => (
             <group
               key={i}
-              position={[0, 0.62 + i * 0.27, 0.62]}
+              position={[0, 1.02 + i * 0.27, 0.42]}
               rotation={[0, i * 0.18, 0]}
               visible={false}
               ref={(g) => {
@@ -389,7 +393,7 @@ export function PlayerController() {
             </group>
           ))}
           {/* Guni paket di bahu */}
-          <group ref={sackRef} position={[0.45, 1.25, -0.35]} rotation={[0.25, 0, 0.25]} visible={false}>
+          <group ref={sackRef} position={[0.22, 1.45, -0.22]} rotation={[0.25, 0, 0.25]} visible={false}>
             <mesh scale={[1, 1.25, 0.85]}>
               <sphereGeometry args={[0.34, 10, 8]} />
               <meshStandardMaterial color="#c9b98a" roughness={1} />
@@ -405,84 +409,23 @@ export function PlayerController() {
       {/* ── Motor ── */}
       <group ref={motorRef} position={[MOTOR_START.x, MOTOR_Y, MOTOR_START.z]}>
         <group name="motor">
-          {/* Roda depan dan belakang: kumpulan berputar pada paksi x mengikut laju */}
-          {[0.8, -0.8].map((z, i) => (
-            <group
-              key={z}
-              position={[0, 0.3, z]}
-              ref={(g) => {
-                wheelRefs.current[i] = g;
-              }}
-            >
-              <mesh rotation={[0, 0, Math.PI / 2]}>
-                <cylinderGeometry args={[WHEEL_R, WHEEL_R, 0.1, 16]} />
-                <meshStandardMaterial color="#1a1a1a" />
-              </mesh>
-              {/* Jejari: menunjukkan putaran roda */}
-              <mesh>
-                <boxGeometry args={[0.12, 0.5, 0.06]} />
-                <meshStandardMaterial color="#9ca3af" />
-              </mesh>
-            </group>
-          ))}
-          {/* Fork depan */}
-          <mesh position={[0, 0.66, 0.74]} rotation={[-0.3, 0, 0]}>
-            <boxGeometry args={[0.16, 0.72, 0.07]} />
-            <meshStandardMaterial color="#9ca3af" metalness={0.6} roughness={0.35} />
-          </mesh>
-          {/* Perisai kaki / fairing depan */}
-          <mesh position={[0, 0.74, 0.52]} rotation={[-0.25, 0, 0]}>
-            <boxGeometry args={[0.44, 0.56, 0.12]} />
-            <meshStandardMaterial color="#c81e1e" roughness={0.45} metalness={0.2} />
-          </mesh>
-          {/* Lampu depan */}
-          <mesh position={[0, 1.0, 0.7]}>
-            <sphereGeometry args={[0.1, 10, 8]} />
-            <meshStandardMaterial color="#fff7cc" emissive="#fff7cc" emissiveIntensity={0.8} />
-          </mesh>
-          {/* Hendal */}
-          <mesh position={[0, 1.08, 0.6]}>
-            <boxGeometry args={[0.7, 0.05, 0.05]} />
-            <meshStandardMaterial color="#1f2937" metalness={0.5} />
-          </mesh>
-          {/* Lantai underbone */}
-          <mesh position={[0, 0.44, 0.12]}>
-            <boxGeometry args={[0.32, 0.08, 0.62]} />
-            <meshStandardMaterial color="#1f2937" roughness={0.8} />
-          </mesh>
-          {/* Badan belakang */}
-          <mesh position={[0, 0.72, -0.42]}>
-            <boxGeometry args={[0.36, 0.42, 0.78]} />
-            <meshStandardMaterial color="#c81e1e" roughness={0.45} metalness={0.2} />
-          </mesh>
-          {/* Tempat duduk */}
-          <mesh position={[0, SEAT_TOP - 0.05, -0.28]}>
-            <boxGeometry args={[0.32, 0.1, 0.72]} />
-            <meshStandardMaterial color="#111318" roughness={0.7} />
-          </mesh>
-          {/* Kotak penghantaran */}
-          <mesh position={[0, 1.27, -0.78]}>
-            <boxGeometry args={[0.54, 0.48, 0.48]} />
+          {/* Skuter penghantaran (Sketchfab, CC-BY-4.0) */}
+          <Suspense fallback={null}>
+            <ScooterGLB />
+          </Suspense>
+          {/* Kotak penghantaran di rak belakang */}
+          <mesh position={[0, BOX_Y, BOX_Z]} castShadow>
+            <boxGeometry args={[0.5, 0.44, 0.46]} />
             <meshStandardMaterial color="#f59e0b" roughness={0.55} />
           </mesh>
-          <mesh position={[0, 1.27, -1.025]}>
-            <boxGeometry args={[0.4, 0.14, 0.01]} />
+          <mesh position={[0, BOX_Y, BOX_Z - 0.235]}>
+            <boxGeometry args={[0.38, 0.13, 0.01]} />
             <meshStandardMaterial color="#1d3a8a" />
-          </mesh>
-          {/* Lampu belakang */}
-          <mesh position={[0, 0.86, -0.82]}>
-            <boxGeometry args={[0.18, 0.06, 0.03]} />
-            <meshStandardMaterial color="#ef4444" emissive="#ef4444" emissiveIntensity={0.8} />
-          </mesh>
-          {/* Ekzos */}
-          <mesh position={[0.2, 0.26, -0.7]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.05, 0.06, 0.55, 8]} />
-            <meshStandardMaterial color="#6b7280" metalness={0.7} roughness={0.3} />
           </mesh>
           {/* Penunggang (postur duduk), disorok bila berjalan kaki */}
           <group ref={riderRef} position={RIDER_OFFSET} visible={false}>
             <Suspense fallback={null}>
-              <CharacterGLB model="courier" clip="drive" />
+              <CharacterGLB model="courier" pickClip={pickRiderClip} />
             </Suspense>
           </group>
         </group>

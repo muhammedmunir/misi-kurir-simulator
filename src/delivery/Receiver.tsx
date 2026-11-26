@@ -6,7 +6,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 
 /** Penerima keluar ke pintu bila pemain berada dalam jarak ini (m). */
 export const RECEIVER_SHOW_RADIUS = 45;
-const MODELS: CharacterKey[] = ["maleA", "femaleB", "maleC", "femaleD"];
+const MODELS: CharacterKey[] = ["receiverF", "receiverM"];
 
 type Spot = { id: string; x: number; z: number; model: CharacterKey };
 
@@ -57,10 +57,10 @@ export function Receiver() {
         .map((s) => (
           <group key={s.id} position={[s.x, 0, s.z]}>
             <Suspense fallback={null}>
-              <CharacterGLB model={s.model} clip={handoverZone === s.id ? "interact-right" : "idle"} />
+              <CharacterGLB model={s.model} clip={handoverZone === s.id ? "take" : "idle"} />
             </Suspense>
             {handoverZone === s.id && showCash && (
-              <mesh position={[-0.35, 0.78, 0.62]} rotation={[-0.4, 0.3, 0]}>
+              <mesh position={[-0.2, 1.05, 0.38]} rotation={[-0.4, 0.3, 0]}>
                 <boxGeometry args={[0.3, 0.015, 0.14]} />
                 <meshStandardMaterial color="#5fae6e" roughness={0.8} />
               </mesh>

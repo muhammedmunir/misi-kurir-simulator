@@ -5,28 +5,58 @@ import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 
 /**
- * Watak Kenney Mini Characters (CC0) dengan rangka dan animasi sebenar.
- * Model asal kecil (~0.82 unit tinggi); diskala supaya tinggi = TARGET_HEIGHT meter.
+ * Watak realistik Mixamo (ditukar ke GLB oleh tools/convert). Semua watak
+ * berkongsi klip yang sama: idle, walk, run, carry, pickup, take, drive.
  */
 export const CHARACTER_URL = {
-  courier: "/models/characters/character-worker.glb",
-  maleA: "/models/characters/character-male-a.glb",
-  maleC: "/models/characters/character-male-c.glb",
-  femaleB: "/models/characters/character-female-b.glb",
-  femaleD: "/models/characters/character-female-d.glb",
+  courier: "/models/mixamo/courier.glb",
+  receiverF: "/models/mixamo/receiver-f.glb",
+  receiverM: "/models/mixamo/receiver-m.glb",
 } as const;
 
 export type CharacterKey = keyof typeof CHARACTER_URL;
 
-/** Nama klip animasi dalam pek Mini Characters yang dipakai permainan. */
-export type Clip = "idle" | "walk" | "sprint" | "drive" | "holding-both" | "pick-up" | "interact-right" | "emote-yes";
+/** Klip animasi. `carryWalk` dijana: kaki dari `walk`, badan/tangan dari `carry`. */
+export type Clip = "idle" | "walk" | "run" | "carry" | "carryWalk" | "pickup" | "take" | "drive";
+
+const TARGET_HEIGHT = 1.75;
+const FADE = 0.25;
+/** Tulang bahagian atas badan (nama Mixamo, tanpa awalan). */
+const UPPER = /(Spine|Neck|Head|Shoulder|Arm|Hand|Thumb|Index|Middle|Ring|Pinky)/;
 
 /**
- * Gaya chibi Kenney: lebar ≈ 0.93 × tinggi (kepala besar). 1.45 m memastikan
- * lebar (~1.35 m) masih berkadar dengan motor, pintu dan kereta.
+ * Gabungkan dua klip: trek bahagian atas badan daripada `upper`, selebihnya
+ * daripada `lower`. Dipakai untuk berjalan sambil memegang kotak.
  */
-const TARGET_HEIGHT = 1.45;
-const FADE = 0.2;
+export function layeredClip(name: string, lower: THREE.AnimationClip, upper: THREE.AnimationClip): THREE.AnimationClip {
+  const isUpper = (track: string) => UPPER.test(track.split(".")[0]);
+  const tracks = [
+    ...lower.tracks.filter((t) => !isUpper(t.name)).map((t) => t.clone()),
+    ...upper.tracks.filter((t) => isUpper(t.name)).map((t) => t.clone()),
+  ];
+  return new THREE.AnimationClip(name, lower.duration, tracks);
+}
+
+/**
+ * Klip dirakam pada Remy. Untuk watak lain (perkadaran berbeza), trek kedudukan
+ * pinggul menyebabkan watak terapung atau tenggelam, jadi hanya putaran dikekalkan.
+ */
+export function retargetClips(animations: THREE.AnimationClip[], keepHipsPosition: boolean): THREE.AnimationClip[] {
+  const clips = keepHipsPosition
+    ? animations
+    : animations.map(
+        (a) =>
+          new THREE.AnimationClip(
+            a.name,
+            a.duration,
+            a.tracks.filter((t) => !/Hips\.position$/.test(t.name)),
+          ),
+      );
+  const walk = clips.find((a) => a.name === "walk");
+  const carry = clips.find((a) => a.name === "carry");
+  if (!walk || !carry) return clips;
+  return [...clips, layeredClip("carryWalk", walk, carry)];
+}
 
 /**
  * Satu watak beranimasi. `clip` boleh berubah setiap render, atau `pickClip`
@@ -44,21 +74,23 @@ export function CharacterGLB({
   timeScale?: number;
 }) {
   const { scene, animations } = useGLTF(CHARACTER_URL[model]);
+  const clips = useMemo(() => retargetClips(animations, model === "courier"), [animations, model]);
   const root = useRef<THREE.Group>(null);
   const instance = useMemo(() => {
     const c = cloneSkinned(scene) as THREE.Group;
-    // Skala ke ketinggian manusia; kaki kekal pada y = 0.
+    // Skala ke ketinggian manusia; kaki pada y = 0.
     const box = new THREE.Box3().setFromObject(c, true);
     const h = Math.max(1e-3, box.max.y - box.min.y);
-    c.scale.setScalar(TARGET_HEIGHT / h);
-    c.position.y = -box.min.y * (TARGET_HEIGHT / h);
+    const k = TARGET_HEIGHT / h;
+    c.scale.multiplyScalar(k);
+    c.position.y = -box.min.y * k;
     c.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.isMesh) m.frustumCulled = false; // rangka bergerak di luar kotak asal
     });
     return c;
   }, [scene]);
-  const { actions } = useAnimations(animations, root);
+  const { actions } = useAnimations(clips, root);
   const current = useRef<Clip | null>(null);
 
   const play = (next: Clip, speed = 1) => {

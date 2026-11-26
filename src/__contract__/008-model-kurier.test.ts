@@ -1,33 +1,82 @@
 /// <reference types="vite/client" />
 /**
- * Kontrak Pelan 008/012a — kurier dan penerima ialah watak GLB beranimasi
- * (Kenney Mini Characters, CC0). Model kotak bersendi Pelan 008a telah diganti.
+ * Kontrak Pelan 008/012a/012c — kurier dan penerima ialah watak realistik
+ * Mixamo beranimasi (GLB dijana tempatan oleh tools/convert); motor ialah skuter
+ * penghantaran Sketchfab (CC-BY-4.0).
  */
 import { handoverShot } from "@/components/3d/CameraFollow";
 import cameraSrc from "@/components/3d/CameraFollow.tsx?raw";
-import { CHARACTER_URL } from "@/components/3d/CharacterGLB";
+import { CHARACTER_URL, layeredClip, retargetClips } from "@/components/3d/CharacterGLB";
 import playerSrc from "@/components/3d/PlayerController.tsx?raw";
+import { SCOOTER_URL } from "@/components/3d/ScooterGLB";
 import { SPRINT_FROM, courierClip } from "@/components/3d/courier-anim";
 import { RECEIVER_SHOW_RADIUS, visibleReceivers } from "@/delivery/Receiver";
+import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 
 const NODE_FS = "node:fs";
-type NodeFs = { existsSync(path: string): boolean };
-const { existsSync } = (await import(/* @vite-ignore */ NODE_FS)) as NodeFs;
+type NodeFs = { existsSync(path: string): boolean; readFileSync(path: string, enc: "utf8"): string };
+const { existsSync, readFileSync } = (await import(/* @vite-ignore */ NODE_FS)) as NodeFs;
 
-describe("aset watak", () => {
-  it("setiap model GLB dan teksturnya wujud dalam public/", () => {
-    for (const url of Object.values(CHARACTER_URL)) expect(existsSync(`public${url}`), url).toBe(true);
-    expect(existsSync("public/models/characters/Textures/colormap.png")).toBe(true);
-    expect(existsSync("public/models/characters/LICENSE-kenney-mini-characters.txt")).toBe(true);
+describe("aset", () => {
+  it("model Mixamo tidak di-commit (repo awam) tetapi dijana oleh alat penukar", () => {
+    expect(readFileSync(".gitignore", "utf8")).toMatch(/^public\/models\/mixamo\/$/m);
+    expect(existsSync("tools/convert/run.mjs")).toBe(true);
+    for (const url of Object.values(CHARACTER_URL)) expect(url).toMatch(/^\/models\/mixamo\/.+\.glb$/);
+  });
+
+  it("skuter dan lesen CC-BY wujud dalam public/, dan dikreditkan dalam THIRD_PARTY_NOTICES", () => {
+    expect(existsSync(`public${SCOOTER_URL}`)).toBe(true);
+    expect(readFileSync("public/models/scooter/LICENSE.txt", "utf8")).toMatch(/CC-BY-4\.0/);
+    const notices = readFileSync("THIRD_PARTY_NOTICES.md", "utf8");
+    expect(notices).toMatch(/Low Poly Delivery Electric Scooter/);
+    expect(notices).toMatch(/spartanmelon/);
+    expect(notices).toMatch(/Mixamo/);
+  });
+});
+
+describe("klip animasi", () => {
+  const track = (name: string) => new THREE.QuaternionKeyframeTrack(name, [0, 1], [0, 0, 0, 1, 0, 0, 0, 1]);
+  const pos = (name: string) => new THREE.VectorKeyframeTrack(name, [0, 1], [0, 0, 0, 0, 1, 0]);
+  const walk = new THREE.AnimationClip("walk", 1, [
+    track("mixamorigLeftLeg.quaternion"),
+    track("mixamorigSpine.quaternion"),
+    pos("mixamorigHips.position"),
+  ]);
+  const carry = new THREE.AnimationClip("carry", 2, [
+    track("mixamorigLeftLeg.quaternion"),
+    track("mixamorigSpine.quaternion"),
+    track("mixamorigRightHand.quaternion"),
+  ]);
+
+  it("carryWalk: kaki dari walk, badan dan tangan dari carry", () => {
+    const c = layeredClip("carryWalk", walk, carry);
+    expect(c.duration).toBe(1);
+    expect(c.tracks.map((t) => t.name).sort()).toEqual(
+      [
+        "mixamorigHips.position",
+        "mixamorigLeftLeg.quaternion",
+        "mixamorigRightHand.quaternion",
+        "mixamorigSpine.quaternion",
+      ].sort(),
+    );
+  });
+
+  it("retargetClips: watak lain kehilangan trek kedudukan pinggul; kurier mengekalkannya; carryWalk ditambah", () => {
+    const keep = retargetClips([walk, carry], true);
+    const drop = retargetClips([walk, carry], false);
+    expect(keep.map((c) => c.name)).toContain("carryWalk");
+    expect(keep.find((c) => c.name === "walk")?.tracks.some((t) => t.name.endsWith("Hips.position"))).toBe(true);
+    expect(drop.find((c) => c.name === "walk")?.tracks.some((t) => t.name.endsWith("Hips.position"))).toBe(false);
   });
 });
 
 describe("courierClip", () => {
-  it("menunggang → drive; memegang paket → holding-both; laju → sprint; bergerak → walk; diam → idle", () => {
+  it("menunggang → drive; memegang paket → carry/carryWalk; laju → run; bergerak → walk; diam → idle", () => {
     expect(courierClip({ riding: true, speed: 0, carrying: true }).clip).toBe("drive");
-    expect(courierClip({ riding: false, speed: 3, carrying: true }).clip).toBe("holding-both");
-    expect(courierClip({ riding: false, speed: SPRINT_FROM + 1, carrying: false }).clip).toBe("sprint");
+    expect(courierClip({ riding: false, speed: 3, carrying: true }).clip).toBe("carryWalk");
+    expect(courierClip({ riding: false, speed: 0, carrying: true }).clip).toBe("carry");
+    expect(courierClip({ riding: false, speed: SPRINT_FROM + 1, carrying: false }).clip).toBe("run");
     expect(courierClip({ riding: false, speed: 3, carrying: false }).clip).toBe("walk");
     expect(courierClip({ riding: false, speed: 0, carrying: false }).clip).toBe("idle");
   });
@@ -44,7 +93,8 @@ describe("courierClip", () => {
 describe("PlayerController", () => {
   it("kurier berjalan dan penunggang memakai CharacterGLB; barang di tangan kelihatan", () => {
     expect(playerSrc.match(/<CharacterGLB model="courier"/g)?.length).toBe(2);
-    expect(playerSrc).toMatch(/clip="drive"/);
+    expect(playerSrc).toMatch(/pickClip=\{pickRiderClip\}/);
+    expect(playerSrc).toMatch(/<ScooterGLB \/>/);
     expect(playerSrc).toMatch(/carryKind\(held\)/);
     expect(playerSrc).not.toMatch(/CourierModel/);
   });
@@ -53,8 +103,8 @@ describe("PlayerController", () => {
 describe("penerima", () => {
   it("hanya penerima dalam RECEIVER_SHOW_RADIUS dipaparkan", () => {
     const spots = [
-      { id: "dekat", x: 10, z: 0, model: "maleA" as const },
-      { id: "jauh", x: 200, z: 0, model: "femaleB" as const },
+      { id: "dekat", x: 10, z: 0, model: "receiverF" as const },
+      { id: "jauh", x: 200, z: 0, model: "receiverM" as const },
     ];
     expect(visibleReceivers(spots, { x: 0, z: 0 })).toEqual(["dekat"]);
     expect(RECEIVER_SHOW_RADIUS).toBeGreaterThanOrEqual(30);
