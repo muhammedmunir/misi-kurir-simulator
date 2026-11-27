@@ -8,11 +8,11 @@ import { useDeliveryStore } from "@/store/delivery";
 import { useGameStateStore } from "@/store/gamestate";
 import { stepMotor } from "@/vehicles/motor-physics";
 import { type MotorState, canDismount, canMount, checkParking, dismountPosition } from "@/vehicles/motor-state";
-import { isRaining } from "@/world/daytime";
+import { isRaining, scooterLightingOn } from "@/world/daytime";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Suspense } from "react";
-import { Euler, type Group, MathUtils, type Object3D, Quaternion, Vector3 } from "three";
+import { AdditiveBlending, Euler, type Group, MathUtils, Object3D, Quaternion, Vector3 } from "three";
 import { CharacterGLB } from "./CharacterGLB";
 import { ScooterGLB } from "./ScooterGLB";
 import { courierClip } from "./courier-anim";
@@ -217,8 +217,38 @@ export function motorContext(): MotorContext {
 }
 
 // ── Component ─────────────────────────────────────────────────────
+function ScooterLights() {
+  const [target] = useState(() => {
+    const aim = new Object3D();
+    aim.position.set(0, -0.25, 6.8);
+    return aim;
+  });
+
+  return (
+    <group name="scooter-lights">
+      <primitive object={target} />
+      <spotLight
+        name="scooter-headlight"
+        position={[0, 0.61, 0.84]}
+        target={target}
+        color="#ffe3b5"
+        intensity={70}
+        distance={24}
+        angle={0.29}
+        penumbra={0.78}
+        castShadow={false}
+      />
+      <mesh position={[0, 0.39, 2.24]} rotation={[-1.42, 0, 0]} userData={{ noShadow: true }}>
+        <coneGeometry args={[0.62, 2.85, 24, 1, true]} />
+        <meshBasicMaterial color="#ffe3b5" transparent opacity={0.055} blending={AdditiveBlending} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
 export function PlayerController() {
   const groupRef = useRef<Group>(null);
+  const scooterLightsOn = useGameStateStore((s) => scooterLightingOn(s.settings.rainMode, s.worldMinutes));
   const motorRef = useRef<Group>(null);
   const riderRef = useRef<Group>(null);
   const boxRefs = useRef<(Group | null)[]>([]);
@@ -489,6 +519,7 @@ export function PlayerController() {
           <Suspense fallback={null}>
             <ScooterGLB />
           </Suspense>
+          {scooterLightsOn && <ScooterLights />}
           {/* Kotak penghantaran di rak belakang */}
           <mesh position={[0, BOX_Y, BOX_Z]} castShadow>
             <boxGeometry args={[0.5, 0.44, 0.46]} />

@@ -1,12 +1,13 @@
 import { playerState } from "@/components/3d/PlayerController";
 import { useGameStateStore } from "@/store/gamestate";
 import { MOTOR_PHYS } from "@/vehicles/motor-physics";
+import { isRaining } from "@/world/daytime";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { type EngineSound, createEngineSound } from "./engine-sound";
 
 /**
- * Bunyi enjin semasa menunggang motor. AudioContext hanya dicipta selepas
+ * Bunyi enjin dan hujan. AudioContext hanya dicipta selepas
  * gerak isyarat pertama pengguna (dasar autoplay pelayar). Mengikut tetapan
  * "Bunyi".
  */
@@ -30,9 +31,15 @@ export function EngineAudio(): null {
   useFrame(() => {
     const e = engine.current;
     if (!e) return;
-    const soundOn = useGameStateStore.getState().settings.soundEnabled;
+    const { settings, worldMinutes } = useGameStateStore.getState();
+    const soundOn = settings.soundEnabled;
     const riding = !playerState.isOnFoot();
-    e.update(soundOn && riding, Math.abs(playerState.getSpeed()) / MOTOR_PHYS.maxSpeed, playerState.getThrottle());
+    e.update(
+      soundOn && riding,
+      Math.abs(playerState.getSpeed()) / MOTOR_PHYS.maxSpeed,
+      playerState.getThrottle(),
+      soundOn && isRaining(settings.rainMode, worldMinutes),
+    );
   });
 
   return null;

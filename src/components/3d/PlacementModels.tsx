@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef } from "react";
 import { type InstancedMesh, Matrix4 } from "three";
 import { useOccludedInstances } from "./camera-occlusion";
 import type { Placement } from "./city-blocks";
-import { fitMatrix, useMergedModels } from "./merged-model";
+import { fitMatrix, useMergedModels, windowMaterial } from "./merged-model";
 
 export function batchPlacements(placements: readonly Placement[], firstObstacle?: number) {
   const byModel = new Map<string, { placements: Placement[]; obstacles: number[] }>();
@@ -56,7 +56,11 @@ export function PlacementModels({ data }: { data: ReturnType<typeof batchPlaceme
         meshes.current[i] = mesh;
         if (obstacles[i].length) occluders.current[i] = mesh;
       }}
-      args={[models[i].geometry, models[i].material, batch.placements.length]}
+      args={[
+        models[i].geometry,
+        model.startsWith("city-kit-suburban/building-type-") ? windowMaterial(models[i].material) : models[i].material,
+        batch.placements.length,
+      ]}
       userData={obstacles[i].length ? undefined : { noShadow: true }}
       castShadow={obstacles[i].length > 0}
       receiveShadow={obstacles[i].length > 0}

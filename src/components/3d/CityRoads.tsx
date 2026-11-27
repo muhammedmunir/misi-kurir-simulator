@@ -1,7 +1,9 @@
 import { useGameStateStore } from "@/store/gamestate";
 import { dayPhase, isRaining } from "@/world/daytime";
+import { useFrame } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { StreetLightPools } from "./StreetLightPools";
 import { fitMatrix, useMergedModels } from "./merged-model";
 import { type RoadTile, roadTiles, streetLamps } from "./road-tiles";
 
@@ -35,7 +37,7 @@ function tileMatrix(box: THREE.Box3, t: RoadTile): THREE.Matrix4 {
   return fitMatrix(box, { x: t.x, z: t.z, w, h, d, rotY: rot });
 }
 
-/** Jalan, simpang dan lampu jalan Kenney (CC0), 3 draw call untuk seluruh bandar. */
+/** Jubin, kepala lampu dan kolam cahaya dikumpulkan mengikut geometri. */
 export function CityRoads() {
   const [straight, cross, lamp] = useMergedModels(URLS);
   const tiles = useMemo(() => roadTiles(), []);
@@ -45,6 +47,8 @@ export function CityRoads() {
   const sRef = useRef<THREE.InstancedMesh>(null);
   const cRef = useRef<THREE.InstancedMesh>(null);
   const lRef = useRef<THREE.InstancedMesh>(null);
+  const wetness = useRef(0);
+  const lampFade = useRef(0);
   const lampsOn = useGameStateStore((s) => dayPhase(s.worldMinutes).lampsOn);
   const wet = useGameStateStore((s) => isRaining(s.settings.rainMode, s.worldMinutes));
   const surfaces = useMemo(
@@ -61,22 +65,28 @@ export function CityRoads() {
   );
 
   useLayoutEffect(() => {
-    for (const [surface, dry] of [
-      [straightSurface, straight.material],
-      [crossSurface, cross.material],
-    ] as const) {
-      const base = dry as THREE.MeshStandardMaterial;
-      surface.color.copy(base.color).multiplyScalar(wet ? 0.58 : 1);
-      surface.roughness = wet ? 0.28 : base.roughness;
-    }
-  }, [straightSurface, straight.material, crossSurface, cross.material, wet]);
-
-  useLayoutEffect(() => {
-    lampSurface.emissive.set("#ffe0a3");
+    lampSurface.emissive.set("#ffd9a0");
     lampSurface.emissiveMap = LAMP_LENS;
-    lampSurface.emissiveIntensity = lampsOn ? 2.2 : 0;
+    lampSurface.emissiveIntensity = 0;
     lampSurface.needsUpdate = true;
-  }, [lampSurface, lampsOn]);
+  }, [lampSurface]);
+
+  useFrame((_, delta) => {
+    const wetTarget = wet ? 1 : 0;
+    const lampTarget = lampsOn ? 1 : 0;
+    wetness.current +=
+      Math.sign(wetTarget - wetness.current) * Math.min(delta / 3, Math.abs(wetTarget - wetness.current));
+    lampFade.current +=
+      Math.sign(lampTarget - lampFade.current) * Math.min(delta, Math.abs(lampTarget - lampFade.current));
+    const blend = wetness.current;
+    const dryStraight = straight.material as THREE.MeshStandardMaterial;
+    const dryCross = cross.material as THREE.MeshStandardMaterial;
+    straightSurface.color.copy(dryStraight.color).multiplyScalar(1 - blend * 0.15);
+    crossSurface.color.copy(dryCross.color).multiplyScalar(1 - blend * 0.15);
+    straightSurface.roughness = THREE.MathUtils.lerp(dryStraight.roughness, 0.25, blend);
+    crossSurface.roughness = THREE.MathUtils.lerp(dryCross.roughness, 0.25, blend);
+    lampSurface.emissiveIntensity = 2.2 * lampFade.current;
+  });
 
   useLayoutEffect(() => {
     const m = new THREE.Matrix4();
@@ -103,6 +113,7 @@ export function CityRoads() {
       <instancedMesh ref={sRef} args={[straight.geometry, straightSurface, straightTiles.length]} receiveShadow />
       <instancedMesh ref={cRef} args={[cross.geometry, crossSurface, crossTiles.length]} receiveShadow />
       <instancedMesh ref={lRef} args={[lamp.geometry, lampSurface, lamps.length]} castShadow />
+      <StreetLightPools lamps={lamps} lampFade={lampFade} wetness={wetness} />
     </group>
   );
 }

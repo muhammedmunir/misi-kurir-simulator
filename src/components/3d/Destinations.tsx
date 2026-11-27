@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { useOccludedInstances } from "./camera-occlusion";
 import { buildingLayout } from "./city-layout";
 import { destinationHouses } from "./kenney-building-model";
-import { fitMatrix, useMergedModels } from "./merged-model";
+import { fitMatrix, useMergedModels, windowMaterial } from "./merged-model";
 
 const LINE = 0.15;
 const LINE_Y = 0.09;
@@ -68,7 +68,7 @@ function AddressHouses() {
       ref={(mesh) => {
         meshes.current[i] = mesh;
       }}
-      args={[models[i].geometry, models[i].material, houses.length]}
+      args={[models[i].geometry, windowMaterial(models[i].material), houses.length]}
     />
   ));
 }

@@ -53,3 +53,7 @@ export function isRaining(mode: GameSettings["rainMode"], minutes: number): bool
   // Hujan petang Auto boleh disambung tepat selepas muat tanpa menyimpan keadaan RNG.
   return mode === "on" || (mode === "auto" && minutes >= 16 * 60 && minutes < 17 * 60);
 }
+
+export function scooterLightingOn(mode: GameSettings["rainMode"], minutes: number): boolean {
+  return dayPhase(minutes).lampsOn || isRaining(mode, minutes);
+}

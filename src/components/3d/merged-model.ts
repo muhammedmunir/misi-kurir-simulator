@@ -77,3 +77,76 @@ export function fitMatrix(
   tmp.updateMatrix();
   return out.multiplyMatrices(tmp.matrix, pre);
 }
+
+const windowMasks = new WeakMap<object, THREE.CanvasTexture>();
+const windowMaterials = new WeakMap<THREE.MeshStandardMaterial, THREE.MeshStandardMaterial>();
+const windowNight = { value: 0 };
+
+export function setWindowNight(lampsOn: boolean) {
+  windowNight.value = lampsOn ? 1 : 0;
+}
+
+function windowMask(map: THREE.Texture): THREE.CanvasTexture | null {
+  const image = map.image as HTMLImageElement | ImageBitmap | undefined;
+  if (!image?.width || !image.height) return null;
+  const hit = windowMasks.get(image);
+  if (hit) return hit;
+  const canvas = document.createElement("canvas");
+  canvas.width = image.width;
+  canvas.height = image.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.drawImage(image, 0, 0);
+  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  // Jalur kaca dalam atlas Kenney. Biru di jalur lain turut digunakan pada dinding.
+  for (let i = 0; i < pixels.data.length; i += 4) {
+    const u = ((i / 4) % canvas.width) / canvas.width;
+    const r = pixels.data[i];
+    const g = pixels.data[i + 1];
+    const b = pixels.data[i + 2];
+    const glass = u >= 0.625 && u < 0.75 && b > g + 8 && b > r + 25;
+    pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = glass ? 255 : 0;
+    pixels.data[i + 3] = 255;
+  }
+  ctx.putImageData(pixels, 0, 0);
+  const mask = new THREE.CanvasTexture(canvas);
+  mask.flipY = map.flipY;
+  mask.magFilter = map.magFilter;
+  mask.minFilter = map.minFilter;
+  windowMasks.set(image, mask);
+  return mask;
+}
+
+function compileWindows(shader: Parameters<THREE.Material["onBeforeCompile"]>[0]) {
+  shader.uniforms.windowNight = windowNight;
+  shader.vertexShader = `varying float vWindowOn;\n${shader.vertexShader}`.replace(
+    "#include <begin_vertex>",
+    `#include <begin_vertex>
+    #ifdef USE_INSTANCING
+      vec2 cell = floor(instanceMatrix[3].xz + 0.5);
+      vWindowOn = step(0.7, fract(dot(cell, vec2(0.754877, 0.569841))));
+    #else
+      vWindowOn = 0.0;
+    #endif`,
+  );
+  shader.fragmentShader = `uniform float windowNight;\nvarying float vWindowOn;\n${shader.fragmentShader}`.replace(
+    "#include <emissivemap_fragment>",
+    `totalEmissiveRadiance *= windowNight * vWindowOn;
+    #include <emissivemap_fragment>`,
+  );
+}
+
+export function windowMaterial(material: THREE.Material): THREE.Material {
+  if (!(material instanceof THREE.MeshStandardMaterial) || !material.map) return material;
+  const hit = windowMaterials.get(material);
+  if (hit) return hit;
+  const mask = windowMask(material.map);
+  if (!mask) return material;
+  const lit = material.clone();
+  lit.emissive.set("#ffcb81");
+  lit.emissiveMap = mask;
+  lit.emissiveIntensity = 0.75;
+  lit.onBeforeCompile = compileWindows;
+  windowMaterials.set(material, lit);
+  return lit;
+}

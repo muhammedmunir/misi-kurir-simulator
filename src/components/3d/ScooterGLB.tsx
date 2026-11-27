@@ -1,5 +1,7 @@
+import { useGameStateStore } from "@/store/gamestate";
+import { scooterLightingOn } from "@/world/daytime";
 import { useGLTF } from "@react-three/drei";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { RIDER_STEER_PIVOT_Z } from "./rider-ik";
 
@@ -14,8 +16,10 @@ const SCOOTER_LENGTH = 1.9;
 const FACING_FIX = Math.PI;
 
 export function ScooterGLB() {
+  const lightsOn = useGameStateStore((s) => scooterLightingOn(s.settings.rainMode, s.worldMinutes));
   const { scene } = useGLTF(SCOOTER_URL);
-  const model = useMemo(() => {
+  const { model, lenses } = useMemo(() => {
+    const lenses: THREE.MeshStandardMaterial[] = [];
     const c = scene.clone(true);
     const box = new THREE.Box3().setFromObject(c);
     const size = box.getSize(new THREE.Vector3());
@@ -38,10 +42,27 @@ export function ScooterGLB() {
     }
     wrap.traverse((o) => {
       const m = o as THREE.Mesh;
-      if (m.isMesh) m.castShadow = true;
+      if (!m.isMesh) return;
+      m.castShadow = true;
+      if (!(m.material instanceof THREE.MeshStandardMaterial)) return;
+      if (m.material.name !== "RedLight" && m.material.name !== "FrontLight") return;
+      const lens = m.material.clone();
+      lens.emissive.set(lens.name === "RedLight" ? "#ff3823" : "#ffe3b5");
+      lens.emissiveIntensity = 0;
+      m.material = lens;
+      lenses.push(lens);
     });
-    return wrap;
+    return { model: wrap, lenses };
   }, [scene]);
+  useEffect(() => {
+    for (const lens of lenses) lens.emissiveIntensity = lightsOn ? 1.6 : 0;
+  }, [lenses, lightsOn]);
+  useEffect(
+    () => () => {
+      for (const lens of lenses) lens.dispose();
+    },
+    [lenses],
+  );
   return <primitive object={model} />;
 }
 

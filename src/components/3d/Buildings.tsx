@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { useOccludedInstances } from "./camera-occlusion";
 import { type BuildingLot, buildingLayout } from "./city-layout";
 import { commercialBuildingModel } from "./kenney-building-model";
-import { fitMatrix, useMergedModels } from "./merged-model";
+import { fitMatrix, useMergedModels, windowMaterial } from "./merged-model";
 
 const lotsByModel = new Map<string, (BuildingLot & { obstacle: number })[]>();
 buildingLayout().forEach((lot, i) => {
@@ -41,7 +41,7 @@ function CommercialBuildings() {
       ref={(mesh) => {
         meshes.current[i] = mesh;
       }}
-      args={[models[i].geometry, models[i].material, lots.length]}
+      args={[models[i].geometry, windowMaterial(models[i].material), lots.length]}
     />
   ));
 }

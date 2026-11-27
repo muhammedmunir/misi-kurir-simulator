@@ -20,7 +20,7 @@ export function useOccludedInstances(
   models: readonly MergedModel[],
 ) {
   useLayoutEffect(() => {
-    const cleanups = models.map(({ geometry, material }, i) => {
+    const cleanups = models.map(({ geometry }, i) => {
       const opaque = meshes.current[i];
       if (!opaque) return;
       const indices = batches[i];
@@ -29,7 +29,9 @@ export function useOccludedInstances(
         opaque.getMatrixAt(j, matrix);
         return matrix;
       });
+      const material = Array.isArray(opaque.material) ? opaque.material[0] : opaque.material;
       const glass = material.clone();
+      glass.onBeforeCompile = material.onBeforeCompile;
       glass.transparent = true;
       glass.opacity = 0.22;
       glass.depthWrite = false;

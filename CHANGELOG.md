@@ -7,6 +7,7 @@ Semua perubahan penting dicatat di sini. Format: [Keep a Changelog 1.1.0](https:
 Vertical slice mudah alih (Pelan 004 & 005).
 
 ### Ditambah
+- **Suasana malam dan hujan (Pelan 024):** lampu jalan menyinari asfalt, tingkap terpilih bercahaya dan lampu motor menyala pada malam atau ketika hujan. Langit bertukar warna pada senja dan subuh. Hujan menambah garisan titis, kabus yang lebih dekat, asfalt lebih gelap dan bunyi yang mengikut tetapan Bunyi. Pilihan Kurangkan Gerakan menyembunyikan garisan tanpa mengubah cuaca.
 - **Isi dunia (Pelan 023):** deretan rumah dengan jiran, pagar dan kereta diparkir; kedai berkanopi, tiang berwayar, lampu isyarat serta papan tanda jalan dalam Bahasa Melayu. Gudang pos mendapat dinding zink, pintu gulung dan van penghantaran tanpa mengubah ruang laluan.- **Kamera berjalan kaki (Pelan 019):** kamera mengekalkan jarak asal berhampiran dinding. Hanya bangunan atau rumah yang menghalang pandangan antara kamera dan kurier menjadi separa lutsinar. Kamera motor dan serah terima tidak berubah.
 - **Pilihan pelanggan (Pelan 018):** pelanggan boleh berada di rumah, tiada, diwakili jiran atau menolak paket. Titipan apabila penerima tiada mengurangkan ganjaran, dan ringkasan manifest memaparkan jumlah penolakan.
 - **Bangunan Kenney (Pelan 016):** model GLB menggantikan kotak bangunan dan rumah alamat; lot kosong ditumbuhi pokok.

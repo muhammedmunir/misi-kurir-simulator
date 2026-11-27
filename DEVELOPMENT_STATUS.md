@@ -71,7 +71,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Ciri | Status | Catatan |
 |------|--------|---------|
 | Trafik NPC | Tested | 8 kenderaan di lorong kiri (Pelan 009); motor berlanggar dengan kenderaan; NPC belum mengelak pemain |
-| Kitaran siang/malam dan hujan | Tested | Pelan 020: jam HUD dan save v1, pencahayaan dan lampu jalan mengikut waktu, hujan boleh ditetapkan dan mengurangkan cengkaman motor; ujian unit dan semakan Chrome |
+| Kitaran siang/malam dan hujan | Tested | Pelan 020: jam HUD, simpanan dan cengkaman ketika hujan. Pelan 024: senja dan subuh, lampu jalan dan tingkap, lampu motor, hujan bergaris, kabus, jalan basah dan bunyi hujan. Ujian unit dan Playwright lulus pada desktop dan emulasi Pixel 7. |
 | BBM, kerosakan, audio | Not started | |
 
 ## Phase 6 — Economy / career
@@ -91,5 +91,5 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 
 ---
 
-**Kemas kini terakhir:** 2026-11-27 (Pelan 023: isi dunia dan gudang pos)
+**Kemas kini terakhir:** 2026-11-27 (Pelan 024: suasana malam dan hujan)
 **Versi:** 0.0.0-alpha

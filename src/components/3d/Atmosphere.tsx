@@ -1,14 +1,15 @@
 import { useGameStateStore } from "@/store/gamestate";
-import { dayPhase, isRaining } from "@/world/daytime";
+import { mixAtmosphere } from "@/world/atmosphere-mix";
+import { isRaining } from "@/world/daytime";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { playerState } from "./PlayerController";
+import { setWindowNight } from "./merged-model";
 
 /** Warna ufuk: latar, kabus dan bahagian bawah langit mesti sama supaya tiada jahitan. */
 export const HORIZON = "#cfe0ee";
 const SKY_RADIUS = 380;
-const OVERCAST = new THREE.Color("#748397");
 const SUN_COLOR = "#fff1d8";
 /** Arah matahari (dari sasaran ke matahari): petang tropika, condong dari barat daya. */
 const SUN_OFFSET = new THREE.Vector3(-45, 75, -30);
@@ -114,24 +115,24 @@ export function Atmosphere() {
     if (clock.elapsedTime - lastTint.current < 0.5) return;
     lastTint.current = clock.elapsedTime;
     const { worldMinutes, settings } = useGameStateStore.getState();
-    const phase = dayPhase(worldMinutes);
-    const wet = isRaining(settings.rainMode, worldMinutes);
+    const phase = mixAtmosphere(worldMinutes, isRaining(settings.rainMode, worldMinutes));
+    setWindowNight(phase.lampsOn);
     const horizon = new THREE.Color(phase.horizon);
     const zenith = new THREE.Color(phase.sky);
-    if (wet) {
-      horizon.lerp(OVERCAST, phase.sun * 0.62);
-      zenith.lerp(OVERCAST, phase.sun * 0.7);
-    }
     tintSky(skyGeometry, horizon, zenith);
     if (scene.background instanceof THREE.Color) scene.background.copy(horizon);
     if (scene.fog instanceof THREE.Fog) {
       scene.fog.color.copy(horizon);
-      scene.fog.near = wet ? 45 : 90;
-      scene.fog.far = wet ? 200 : 320;
+      scene.fog.near = phase.fogNear;
+      scene.fog.far = phase.fogFar;
     }
-    light.intensity = 2.4 * phase.sun * (wet ? 0.62 : 1);
+    light.color.set(phase.sunColor);
+    light.intensity = phase.sunIntensity;
     light.castShadow = shadows && phase.sun > 0;
-    if (hemisphere.current) hemisphere.current.intensity = 0.4 + phase.sun * (wet ? 0.6 : 0.75);
+    if (hemisphere.current) {
+      hemisphere.current.color.set(phase.hemisphereColor);
+      hemisphere.current.intensity = phase.hemisphereIntensity;
+    }
   });
 
   return (
