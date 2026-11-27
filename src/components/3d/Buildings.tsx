@@ -1,17 +1,20 @@
 import { Suspense, useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
+import { useOccludedInstances } from "./camera-occlusion";
 import { type BuildingLot, buildingLayout } from "./city-layout";
 import { commercialBuildingModel } from "./kenney-building-model";
 import { fitMatrix, useMergedModels } from "./merged-model";
 
-const lotsByModel = new Map<string, BuildingLot[]>();
+const lotsByModel = new Map<string, (BuildingLot & { obstacle: number })[]>();
 buildingLayout().forEach((lot, i) => {
   const name = commercialBuildingModel(lot.height, i);
   const lots = lotsByModel.get(name);
-  if (lots) lots.push(lot);
-  else lotsByModel.set(name, [lot]);
+  const instance = { ...lot, obstacle: i };
+  if (lots) lots.push(instance);
+  else lotsByModel.set(name, [instance]);
 });
 const batches = Array.from(lotsByModel);
+const obstacles = batches.map(([, lots]) => lots.map(({ obstacle }) => obstacle));
 const urls = batches.map(([name]) => `/models/city-kit-commercial/${name}.glb`);
 
 function CommercialBuildings() {
@@ -30,6 +33,7 @@ function CommercialBuildings() {
       mesh.computeBoundingSphere();
     });
   }, [models]);
+  useOccludedInstances(meshes, obstacles, models);
 
   return batches.map(([name, lots], i) => (
     <instancedMesh

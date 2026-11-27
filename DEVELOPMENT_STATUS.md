@@ -28,7 +28,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Scene 3D: tanah, jalan, bangunan | Implemented | Geometri placeholder |
 | Karakter berjalan/berlari | Tested | Kaki di tanah (y = 0); arah ikut kamera; E2E `pergerakan.spec.ts` (Pelan 007). Model kurier bersendi dengan animasi langkah (Pelan 008a, dibina dengan kod) |
 | Optimasi watak Mixamo | Tested | Pelan 017: geometri berkulit dikurangkan, tekstur penerima dikecilkan dan penerima ditapis ikut paket aktif. Pose berjalan, menunggang dan penerima di pintu disemak dalam Chrome. |
-| Kamera orang ketiga | Tested | B12 dibaiki: kamera kini benar-benar mengikut pemain; disahkan di Chrome |
+| Kamera orang ketiga | Tested | Pelan 019: jarak penuh semasa berjalan kaki; hanya bangunan atau rumah yang menghalang pandangan menjadi separa lutsinar. Disahkan di pintu Mak Minah dalam Chrome. Kamera motor dan serah terima kekal. |
 | Kawalan papan kekunci (WASD, E) | Tested | A/D ikut skrin (B25), disahkan di Chrome oleh E2E Pelan 007; stereng motor juga |
 | Kawalan sentuh (joystick, tindakan, BREK) | Tested | `1b88949`; telefon sebenar Redmi 9 (9b): joystick memandu, butang tindakan berfungsi; potret + landskap lulus selepas B18 (`97da0f4`) |
 | Motor: naik, pandu, brek, turun | Tested | Motor kekal di tempat ditinggalkan; turun hanya bila < 1 m/s. Pelan 009: fizik `stepMotor` (pecutan beransur, condong, belok ikut laju), bunyi enjin, km/j sebenar. Disahkan di Chrome |

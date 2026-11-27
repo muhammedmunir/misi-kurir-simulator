@@ -7,6 +7,7 @@ Semua perubahan penting dicatat di sini. Format: [Keep a Changelog 1.1.0](https:
 Vertical slice mudah alih (Pelan 004 & 005).
 
 ### Ditambah
+- **Kamera berjalan kaki (Pelan 019):** kamera mengekalkan jarak asal berhampiran dinding. Hanya bangunan atau rumah yang menghalang pandangan antara kamera dan kurier menjadi separa lutsinar. Kamera motor dan serah terima tidak berubah.
 - **Pilihan pelanggan (Pelan 018):** pelanggan boleh berada di rumah, tiada, diwakili jiran atau menolak paket. Titipan apabila penerima tiada mengurangkan ganjaran, dan ringkasan manifest memaparkan jumlah penolakan.
 - **Bangunan Kenney (Pelan 016):** model GLB menggantikan kotak bangunan dan rumah alamat; lot kosong ditumbuhi pokok.
 - **Kereta trafik (Pelan 015):** enam jenis kereta menggunakan model 3D Kenney Car Kit (CC0).

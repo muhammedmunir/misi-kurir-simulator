@@ -1,6 +1,8 @@
 import { DELIVERY_ZONES } from "@/lib/delivery-system";
 import { Suspense, useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
+import { useOccludedInstances } from "./camera-occlusion";
+import { buildingLayout } from "./city-layout";
 import { destinationHouses } from "./kenney-building-model";
 import { fitMatrix, useMergedModels } from "./merged-model";
 
@@ -30,13 +32,16 @@ export function destinationInstances() {
 }
 
 const { bodies, lines, pads } = destinationInstances();
-const housesByModel = new Map<string, typeof bodies>();
-for (const house of bodies) {
+const housesByModel = new Map<string, ((typeof bodies)[number] & { obstacle: number })[]>();
+const firstHouseObstacle = buildingLayout().length;
+bodies.forEach((house, i) => {
   const houses = housesByModel.get(house.model);
-  if (houses) houses.push(house);
-  else housesByModel.set(house.model, [house]);
-}
+  const instance = { ...house, obstacle: firstHouseObstacle + i };
+  if (houses) houses.push(instance);
+  else housesByModel.set(house.model, [instance]);
+});
 const batches = Array.from(housesByModel);
+const obstacles = batches.map(([, houses]) => houses.map(({ obstacle }) => obstacle));
 const urls = batches.map(([name]) => `/models/city-kit-suburban/${name}.glb`);
 
 function AddressHouses() {
@@ -55,6 +60,7 @@ function AddressHouses() {
       mesh.computeBoundingSphere();
     });
   }, [models]);
+  useOccludedInstances(meshes, obstacles, models);
 
   return batches.map(([name, houses], i) => (
     <instancedMesh

@@ -60,8 +60,8 @@ export function cameraObstacles(): Aabb[] {
 }
 
 /**
- * Parameter t ∈ [0,1] titik masuk segmen eye → eye+d ke dalam kotak.
- * `null` jika tiada persilangan atau jika eye sudah berada di dalam kotak.
+ * Parameter t pada titik masuk sinar eye → eye+d. Sifar jika bermula dalam kotak,
+ * atau `null` jika sinar tidak memotong kotak.
  */
 function entryT(eye: P3, d: P3, b: Aabb): number | null {
   let tNear = 0;
@@ -86,9 +86,18 @@ function entryT(eye: P3, d: P3, b: Aabb): number | null {
     if (tNear > tFar) return null;
   }
 
-  // tNear <= 0 bermaksud eye di dalam (atau pada) kotak → abaikan.
-  if (tNear <= 0) return null;
   return tNear;
+}
+
+export function occluders(eye: P3, cam: P3, boxes: readonly Aabb[]): number[] {
+  const d = { x: cam.x - eye.x, y: cam.y - eye.y, z: cam.z - eye.z };
+  const hits: number[] = [];
+  if (d.x === 0 && d.y === 0 && d.z === 0) return hits;
+  for (let i = 0; i < boxes.length; i++) {
+    const t = entryT(eye, d, boxes[i]);
+    if (t !== null && t <= 1) hits.push(i);
+  }
+  return hits;
 }
 
 /**
@@ -105,7 +114,7 @@ export function clampCamera(eye: P3, desired: P3, boxes: Aabb[]): P3 {
   let tHit = Number.POSITIVE_INFINITY;
   for (const box of boxes) {
     const t = entryT(eye, d, box);
-    if (t !== null && t <= 1 && t < tHit) tHit = t;
+    if (t !== null && t > 0 && t <= 1 && t < tHit) tHit = t;
   }
   if (tHit === Number.POSITIVE_INFINITY) return desired;
 

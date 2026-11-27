@@ -2,10 +2,11 @@ import { DELIVERY_ZONES } from "@/lib/delivery-system";
 import { useDeliveryStore } from "@/store/delivery";
 import { MOTOR_PHYS, speedFov } from "@/vehicles/motor-physics";
 import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { PerspectiveCamera, Vector3 } from "three";
 import { playerState } from "./PlayerController";
-import { cameraObstacles, clampCamera } from "./camera-collision";
+import { cameraObstacles, clampCamera, occluders } from "./camera-collision";
+import { setCameraOcclusion } from "./camera-occlusion";
 
 const CAMERA_HEIGHT_FOOT = 3;
 const OBSTACLES = cameraObstacles();
@@ -42,6 +43,7 @@ export function handoverShot(door: { x: number; z: number }, aspect = 1) {
 export function CameraFollow() {
   const camPos = useRef(new Vector3(0, CAMERA_HEIGHT_FOOT, -CAMERA_DISTANCE));
   const lookAt = useRef(new Vector3());
+  useLayoutEffect(() => () => setCameraOcclusion(), []);
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
@@ -65,6 +67,7 @@ export function CameraFollow() {
     const h = useDeliveryStore.getState().session.handover;
     const door = h ? DELIVERY_ZONES.find((z) => z.id === h.zoneId)?.position : undefined;
     if (door) {
+      setCameraOcclusion();
       const aspect = state.camera instanceof PerspectiveCamera ? state.camera.aspect : 1;
       const shot = handoverShot(door, aspect);
       camPos.current.lerp(shot.cam, lerpFactor);
@@ -78,10 +81,10 @@ export function CameraFollow() {
     camPos.current.y += (targetHeight - camPos.current.y) * (1 - Math.exp(-CAMERA_LERP * 0.5 * dt));
     camPos.current.z += (camTargetZ - camPos.current.z) * lerpFactor;
 
-    // Klamp kamera supaya tidak masuk ke dalam bangunan atau rumah alamat.
     const eye = { x: target.x, y: target.y + (isOnFoot ? 1 : 0.5), z: target.z };
     lookAt.current.set(eye.x, eye.y, eye.z);
-    const cam = clampCamera(eye, camPos.current, OBSTACLES);
+    const cam = isOnFoot ? camPos.current : clampCamera(eye, camPos.current, OBSTACLES);
+    setCameraOcclusion(isOnFoot ? occluders(eye, cam, OBSTACLES) : undefined);
     state.camera.position.set(cam.x, cam.y, cam.z);
     state.camera.lookAt(eye.x, eye.y, eye.z);
 
