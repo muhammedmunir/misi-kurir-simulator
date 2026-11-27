@@ -8,6 +8,7 @@
  */
 import cameraSrc from "@/components/3d/CameraFollow.tsx?raw";
 import { type Aabb, cameraObstacles, clampCamera } from "@/components/3d/camera-collision";
+import { blockPlacements } from "@/components/3d/city-blocks";
 import { buildingLayout } from "@/components/3d/city-layout";
 import { DELIVERY_ZONES } from "@/lib/delivery-system";
 import { NavArrow } from "@/navigation/NavArrow";
@@ -35,7 +36,9 @@ describe("cameraObstacles() — bangunan dan rumah alamat", () => {
   const boxes = cameraObstacles();
 
   it("satu kotak bagi setiap bangunan bandar dan setiap rumah alamat; gudang tidak termasuk", () => {
-    expect(boxes).toHaveLength(buildingLayout().length + deliveryLots.length);
+    // Pelan 023 (dikemas kini oleh perancang): ditambah placement blok pejal setinggi ≥ 2 m, dilampirkan selepas rumah alamat.
+    const tall = blockPlacements().filter((p) => p.solid && p.h >= 2).length;
+    expect(boxes).toHaveLength(buildingLayout().length + deliveryLots.length + tall);
   });
 
   it("kotak bangunan = badan bangunan (lantai hingga bumbung)", () => {
