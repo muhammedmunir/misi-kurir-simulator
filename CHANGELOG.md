@@ -7,6 +7,7 @@ Semua perubahan penting dicatat di sini. Format: [Keep a Changelog 1.1.0](https:
 Vertical slice mudah alih (Pelan 004 & 005).
 
 ### Ditambah
+- **Pilihan pelanggan (Pelan 018):** pelanggan boleh berada di rumah, tiada, diwakili jiran atau menolak paket. Titipan apabila penerima tiada mengurangkan ganjaran, dan ringkasan manifest memaparkan jumlah penolakan.
 - **Bangunan Kenney (Pelan 016):** model GLB menggantikan kotak bangunan dan rumah alamat; lot kosong ditumbuhi pokok.
 - **Kereta trafik (Pelan 015):** enam jenis kereta menggunakan model 3D Kenney Car Kit (CC0).
 - **Trafik pintar (Pelan 014):** kereta berhenti di garis berhenti setiap simpang, tidak merempuh kereta di hadapan, dan berhenti bila pemain berada di hadapannya dalam lorong.

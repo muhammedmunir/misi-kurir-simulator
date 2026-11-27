@@ -61,7 +61,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 |------|--------|---------|
 | Gelung gudang → hantar berbilang paket → ganjaran → ulang | Tested | Ujian unit stor (3 manifest); Chrome: 4 paket ke 2 alamat, RM500 → RM518 |
 | Zon gudang/penghantaran | Tested | 1 meja gudang, 9 alamat (Pelan 010) |
-| Pelanggan NPC, serah terima, bukti | Tested | Langkah 5 (`2c33f7a`); NPC penerima ialah placeholder kotak; E2E melalui UI sebenar |
+| Pelanggan NPC, serah terima, bukti | Tested | Pelan 018: penerima di rumah, tiada, diwakili jiran atau menolak; bukti dan COD mengikut laluan, penolakan dikira dalam ringkasan |
 | Penghantaran gagal / retur | Tested | Penerima tiada → failed → PULANGKAN PAKET → returned (Langkah 5–6); E2E |
 | COD | Tested | Pelan 006 (`75883b4`): ~40% paket COD, baki wang kertas (3 pilihan), Serahkan dikunci sehingga dikutip, "COD disetor" dalam ringkasan; kontrak 006 dan E2E `payCod`. B23 dibaiki (Pelan 006b) |
 

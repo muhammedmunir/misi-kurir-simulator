@@ -1,5 +1,6 @@
 /** API ujian dev untuk E2E Playwright. Hanya wujud dalam `vite dev`. */
 import { getWorldState, motorContext, playerState, restoreWorld } from "@/components/3d/PlayerController";
+import type { CustomerMood } from "@/delivery/customer";
 import { getActionButton, getInteractButtonInfo } from "@/lib/interact-button";
 import { useDeliveryStore } from "@/store/delivery";
 import { useSceneStore } from "@/store/game";
@@ -28,6 +29,7 @@ export interface MksState {
 
 export interface MksTestApi {
   state(): MksState;
+  setNextCustomer(mood: CustomerMood): void;
   goTo(zoneId: string): void;
   /** Berdiri di sebelah motor (motor tidak bergerak). */
   goToMotor(): void;
@@ -46,6 +48,9 @@ declare global {
 
 export function createTestApi(): MksTestApi {
   return {
+    setNextCustomer(mood) {
+      useDeliveryStore.setState({ nextCustomer: mood });
+    },
     state(): MksState {
       const scene = useSceneStore.getState().currentScene;
       const session = useDeliveryStore.getState().session;

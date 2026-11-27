@@ -1,4 +1,5 @@
 import { COD_WRONG_CHANGE, codChangeOptions, codNote } from "@/delivery/cod";
+import { canCollectCustomerCod } from "@/delivery/customer";
 import { formatRinggit } from "@/lib/utils";
 import { useDeliveryStore } from "@/store/delivery";
 import type { DeliverySession } from "@/types/delivery";
@@ -27,14 +28,15 @@ export function HandoverPanel() {
   if (!packet) return null;
 
   const zone = session.nearbyZone;
-  const noReceiver = zone?.type === "delivery" && zone.receiverHome === false;
+  const mood = session.handover.mood ?? (zone?.receiverHome === false ? "absent" : "home");
+  const canCollect = canCollectCustomerCod(mood);
   const hasProof = session.handover.proofTaken;
   const isCod = packet.paymentMethod === "cod";
   const codDone = !isCod || session.handover.codCollected === true;
 
   return (
     <dialog className="wh-panel" open aria-label="Panel Serah Terima" style={{ pointerEvents: "auto" }}>
-      <h3>📦 Serah Terima</h3>
+      <h3>Serah Terima</h3>
 
       <div className="wh-panel__row">
         <span className="wh-panel__label">Penerima:</span>
@@ -56,11 +58,23 @@ export function HandoverPanel() {
         <span>{isCod ? `COD ${formatRinggit(packet.codAmount)}` : "Prabayar"}</span>
       </div>
 
-      {noReceiver ? (
-        <p className="wh-panel__note" style={{ color: "#f87171" }}>
-          Tiada orang di rumah
-        </p>
-      ) : (
+      {mood === "absent" && (
+        <>
+          <p className="wh-panel__note">Tiada orang di rumah</p>
+          {session.handover.neighbourAvailable && (
+            <button
+              type="button"
+              className="wh-btn wh-btn--primary"
+              style={{ minHeight: 48, marginBottom: 8 }}
+              onClick={() => confirmHandover(now)}
+            >
+              Titip pada jiran
+            </button>
+          )}
+        </>
+      )}
+      {mood === "refuse" && <p className="wh-panel__note">Pelanggan menolak paket</p>}
+      {canCollect && (
         <>
           {session.interactionMessage === COD_WRONG_CHANGE && (
             <output className="wh-panel__msg">{COD_WRONG_CHANGE}</output>
@@ -107,32 +121,26 @@ export function HandoverPanel() {
             }}
             disabled={!hasProof || !codDone}
           >
-            Serahkan paket
+            {mood === "neighbour" ? "Serahkan kepada jiran" : "Serahkan paket"}
           </button>
         </>
       )}
 
-      <button
-        type="button"
-        className="wh-btn"
-        style={{ minHeight: 48, marginBottom: 8 }}
-        onClick={() => {
-          reportAbsent(now);
-        }}
-      >
-        Penerima tiada
-      </button>
-
-      <button
-        type="button"
-        className="wh-btn"
-        style={{ minHeight: 48 }}
-        onClick={() => {
-          cancelHandover();
-        }}
-      >
-        Batal
-      </button>
+      {mood !== "neighbour" && (
+        <button
+          type="button"
+          className="wh-btn"
+          style={{ minHeight: 48, marginBottom: 8 }}
+          onClick={() => reportAbsent(now)}
+        >
+          {mood === "refuse" ? "Pelanggan menolak" : "Penerima tiada"}
+        </button>
+      )}
+      {mood !== "refuse" && (
+        <button type="button" className="wh-btn" style={{ minHeight: 48 }} onClick={cancelHandover}>
+          Batal
+        </button>
+      )}
     </dialog>
   );
 }

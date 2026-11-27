@@ -1,3 +1,4 @@
+import type { CustomerMood } from "@/delivery/customer";
 import type { Manifest, Packet } from "@/types/game";
 import type { ParkingCheck, Rect } from "@/vehicles/motor-state";
 
@@ -38,6 +39,8 @@ export interface DeliveryHandover {
   zoneId: string;
   /** Proof photo taken by the rider. */
   proofTaken: boolean;
+  mood?: CustomerMood;
+  neighbourAvailable?: boolean;
   /** COD collected from the receiver (COD packets only). */
   codCollected?: boolean;
 }
@@ -95,6 +98,7 @@ export interface ManifestSummary {
   manifestId: string | undefined;
   delivered: number;
   returned: number;
+  refused?: number;
   earned: number;
   xp: number;
   /** Total COD cash deposited to the warehouse when the manifest closed. */

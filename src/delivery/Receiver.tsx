@@ -1,5 +1,6 @@
 import { CharacterGLB, type CharacterKey } from "@/components/3d/CharacterGLB";
 import { playerState } from "@/components/3d/PlayerController";
+import { canCollectCustomerCod } from "@/delivery/customer";
 import { DELIVERY_ZONES, pendingCargo } from "@/lib/delivery-system";
 import { useDeliveryStore } from "@/store/delivery";
 import type { DeliverySession } from "@/types/delivery";
@@ -43,11 +44,13 @@ export function Receiver() {
     [],
   );
   const [shown, setShown] = useState<string[]>([]);
-  const handoverZone = useDeliveryStore((s) => s.session.handover?.zoneId ?? null);
+  const handover = useDeliveryStore((s) => s.session.handover);
+  const handoverZone = handover?.zoneId;
+  const canReceive = canCollectCustomerCod(handover?.mood);
   // Pelanggan COD menghulur wang kertas sehingga baki diberi.
   const showCash = useDeliveryStore((s) => {
     const h = s.session.handover;
-    if (!h || h.codCollected) return false;
+    if (!h || h.codCollected || !canCollectCustomerCod(h.mood)) return false;
     return s.session.cargo.find((p) => p.id === h.packetId)?.paymentMethod === "cod";
   });
 
@@ -64,11 +67,11 @@ export function Receiver() {
   return (
     <group>
       {spots
-        .filter((s) => shown.includes(s.id))
+        .filter((s) => shown.includes(s.id) && (s.id !== handoverZone || handover?.mood !== "absent"))
         .map((s) => (
           <group key={s.id} position={[s.x, 0, s.z]}>
             <Suspense fallback={null}>
-              <CharacterGLB model={s.model} clip={handoverZone === s.id ? "take" : "idle"} />
+              <CharacterGLB model={s.model} clip={handoverZone === s.id && canReceive ? "take" : "idle"} />
             </Suspense>
             {handoverZone === s.id && showCash && (
               <mesh position={[-0.2, 1.05, 0.38]} rotation={[-0.4, 0.3, 0]}>

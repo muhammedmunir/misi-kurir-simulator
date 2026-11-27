@@ -22,6 +22,10 @@ export function ManifestSummaryPanel() {
           <dd>{returned}</dd>
         </div>
         <div className="wh-summary__row">
+          <dt>Ditolak pelanggan</dt>
+          <dd>{summary.refused ?? 0}</dd>
+        </div>
+        <div className="wh-summary__row">
           <dt>Pendapatan</dt>
           <dd className="wh-summary__value--earned">{formatRinggit(earned)}</dd>
         </div>

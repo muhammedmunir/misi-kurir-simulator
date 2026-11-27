@@ -1,10 +1,11 @@
 import { rollDeliveryReward } from "@/data/economy";
 import { codCollectedTotal } from "@/delivery/cod";
+import { canCollectCustomerCod } from "@/delivery/customer";
 import { closeManifest, isCarrying } from "@/delivery/manifest";
 import { transition } from "@/delivery/packet";
 import { DELIVERY_ZONES } from "@/lib/delivery-system";
 import { formatRinggit } from "@/lib/utils";
-import type { DeliveryAction, DeliveryResult, DeliverySession } from "@/types/delivery";
+import type { DeliveryResult, DeliverySession } from "@/types/delivery";
 import type { Packet } from "@/types/game";
 import type { Deps } from "@/warehouse/warehouse-logic";
 
@@ -15,13 +16,19 @@ function deliverPacket(
   packet: Packet,
   now: number,
   deps: Deps,
+  toNeighbour: boolean,
+  discounted: boolean,
 ): { session: DeliverySession; result: DeliveryResult } {
-  const delivered = transition(packet, "delivered", "Paket diserahkan kepada penerima", now, {
+  const receiver = toNeighbour ? "jiran" : packet.receiverName;
+  const reason = toNeighbour ? "Paket diserahkan kepada jiran" : "Paket diserahkan kepada penerima";
+  const delivered = transition(packet, "delivered", reason, now, {
     inOpenManifest: isCarrying(session.manifest, packet.id),
     hasHandover: true,
   });
+  if (discounted && packet.paymentMethod === "cod") delivered.codCollected = false;
   const cargo = session.cargo.map((p) => (p.id === packet.id ? delivered : p));
-  const reward = rollDeliveryReward(deps.rng);
+  const baseReward = rollDeliveryReward(deps.rng);
+  const reward = discounted ? (baseReward * 80) / 100 : baseReward;
   const xpReward = 25 + Math.floor(deps.rng() * 25);
   const tally = {
     earned: session.tally.earned + reward,
@@ -37,7 +44,7 @@ function deliverPacket(
     interactionMessage: null,
     interactionMessageTime: null,
   };
-  let message = `Diserahkan kepada ${packet.receiverName}! ${formatRinggit(reward)} | +${xpReward} XP`;
+  let message = `Diserahkan kepada ${receiver}! ${formatRinggit(reward)} | +${xpReward} XP`;
 
   if (left === 0) {
     next.phase = "returning";
@@ -95,13 +102,17 @@ export function completeHandover(
   }
 
   const h = session.handover;
-  const zone = lookupZone(h.zoneId);
+  const mood = h.mood ?? (lookupZone(h.zoneId)?.receiverHome === false ? "absent" : "home");
+  const titip = mood === "absent" && h.neighbourAvailable === true;
 
-  if (zone?.receiverHome === false) {
+  if (mood === "refuse") {
+    return { result: { action: "nothing", message: "Pelanggan menolak paket" }, session };
+  }
+  if (mood === "absent" && !titip) {
     return { result: { action: "nothing", message: "Tiada orang di rumah" }, session };
   }
 
-  if (!h.proofTaken) {
+  if (!titip && !h.proofTaken) {
     return { result: { action: "nothing", message: "Ambil bukti penghantaran dahulu" }, session };
   }
 
@@ -110,21 +121,28 @@ export function completeHandover(
     return { result: { action: "nothing", message: "Paket tidak ditemui" }, session };
   }
 
-  if (packet.paymentMethod === "cod" && !h.codCollected) {
+  if (packet.paymentMethod === "cod" && canCollectCustomerCod(mood) && !h.codCollected) {
     return { result: { action: "nothing", message: "Kutip bayaran COD dahulu" }, session };
   }
 
-  const { session: delivered, result } = deliverPacket(session, packet, now, deps);
+  const { session: delivered, result } = deliverPacket(
+    session,
+    packet,
+    now,
+    deps,
+    titip || mood === "neighbour",
+    titip,
+  );
   // Paket berpindah dari tangan kurier kepada penerima.
   const carry = (delivered.carry ?? []).filter((id) => id !== packet.id);
   return {
-    result: { ...result, action: "deliver" as DeliveryAction },
+    result,
     session: { ...delivered, handover: null, carry },
   };
 }
 
 /**
- * Mark the handover packet as failed (receiver absent).
+ * Tandakan paket gagal kerana penerima tiada atau menolak paket.
  */
 export function failHandover(session: DeliverySession, now: number): DeliverySession {
   if (!session.handover) return session;
@@ -135,7 +153,9 @@ export function failHandover(session: DeliverySession, now: number): DeliverySes
     return { ...session, handover: null };
   }
 
-  const failed = transition(packet, "failed", "Penerima tiada di rumah", now, {
+  const refused = h.mood === "refuse";
+  const message = refused ? "Pelanggan menolak paket" : "Penerima tiada di rumah";
+  const failed = transition(packet, "failed", refused ? "refused" : message, now, {
     inOpenManifest: isCarrying(session.manifest, packet.id),
     hasHandover: true,
   });
@@ -144,7 +164,7 @@ export function failHandover(session: DeliverySession, now: number): DeliverySes
     ...session,
     cargo,
     handover: null,
-    interactionMessage: "Penerima tiada di rumah",
+    interactionMessage: message,
     interactionMessageTime: now,
   };
 
@@ -184,6 +204,8 @@ export function returnFailedPackets(session: DeliverySession, now: number): Deli
     manifestId: manifest?.id,
     delivered: cargo.filter((p) => p.status === "delivered").length,
     returned: cargo.filter((p) => p.status === "returned").length,
+    refused: cargo.filter((p) => p.history.some((entry) => entry.status === "failed" && entry.reason === "refused"))
+      .length,
     earned: session.tally.earned,
     xp: session.tally.xp,
     codCollected: codCollectedTotal(cargo),

@@ -32,6 +32,8 @@ export interface Packet {
   specialInstructions: string;
   status: PacketStatus;
   history: PacketHistoryEntry[];
+  /** False jika paket COD dititip tanpa kutipan; rekod lama menganggap COD paket dihantar telah dikutip. */
+  codCollected?: boolean;
   createdAt: number;
   updatedAt: number;
 }
