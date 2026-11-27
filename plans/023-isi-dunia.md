@@ -54,7 +54,7 @@ JANGAN sunting kontrak.
    - **Tiang elektrik** `electricity-pole` setiap ~20 m di bahu jalan (6–9 m dari garis jalan), dengan `electricity-wires` di antara tiang. Wayar elektrik melintang ialah pemandangan biasa di taman perumahan Malaysia.
    - **Lampu isyarat** di ≥ 4 persimpangan utama (paksi x = 0 dan z = 0).
    - **Papan tanda nama jalan** (`road-sign-street`) di persimpangan. Teks BM (contohnya "Jalan Mawar 3", "Lorong Cempaka") melalui `CanvasTexture` pada satah kecil di hadapan papan.
-   - Tidak pejal (kecuali tiang: kotak 0.4 × 0.4 dalam `worldColliders`, jika mudah; tidak dituntut oleh kontrak).
+   - Tidak pejal, dan TIDAK ditambah ke `worldColliders` (termasuk tiang). Kontrak 007 mengira collider dengan tepat: `cameraObstacles + warehouseColliders + placement pejal < 2 m`.
 4. **Render:**
    - komponen baharu `src/components/3d/CityBlocks.tsx` dan `StreetProps.tsx`, dirender dalam `GameScene3D.tsx` dalam `<Suspense>`;
    - corak sama seperti `Buildings.tsx`: `useMergedModels`, satu `instancedMesh` setiap model, `fitMatrix`, `computeBoundingSphere()`;
