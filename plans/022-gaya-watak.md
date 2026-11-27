@@ -14,7 +14,10 @@ Dunia menggunakan Kenney: low-poly dengan warna rata daripada satu `colormap`. W
 | `rata` | Mixamo yang sama, tekstur diganti warna rata ikut bahagian | dijana oleh penukar, `public/models/mixamo/*-rata.glb` (tidak di-commit) |
 | `quaternius` | Quaternius *Universal Base Characters* (kadar "Regular") + *Universal Animation Library*, CC0 | `assets-src/quaternius/` → `public/models/quaternius/*.glb` (BOLEH di-commit, CC0) |
 
-**Prasyarat untuk `quaternius` (pemilik):** muat turun versi *Standard* (percuma) kedua-dua pek dari quaternius.itch.io atau quaternius.com, kemudian ekstrak ke `assets-src/quaternius/base-characters/` dan `assets-src/quaternius/animation-library/`. Jika folder itu tiada, laksanakan `rata` sahaja dan laporkan.
+**Aset Quaternius (sudah diekstrak oleh perancang, CC0):**
+- Badan: `assets-src/quaternius/base-characters/Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_{Male,Female}_FullBody.gltf`. Versi Standard HANYA ada kadar "Superhero" (berotot) dan **berpakaian dalam sahaja, tiada baju**.
+- Rambut: `…/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_*.gltf` (+ `Eyebrows_*`).
+- Animasi: `assets-src/quaternius/animation-library/Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb` (tanpa root motion; JANGAN guna `_RM`).
 
 ## Langkah 022a — prototaip tiga gaya (SATU commit pada `c9/022-gaya-watak`, dicabang daripada `c9/021-tunggang`)
 
@@ -30,11 +33,22 @@ Dunia menggunakan Kenney: low-poly dengan warna rata daripada satu `colormap`. W
    - pilih 3 watak: kurier (lelaki), penerima perempuan dan penerima lelaki;
    - klip mesti dinamakan sama dengan Mixamo: `idle`, `walk`, `run`, `carry`, `pickup`, `take`, `drive`. Petakan daripada nama klip UAL yang paling hampir (contohnya Idle, Walk, Jog/Sprint, Sitting untuk `drive`);
    - jika klip tiada dalam UAL (kemungkinan `carry`, `pickup`, `take`), cuba `SkeletonUtils.retargetClip` daripada FBX Mixamo dalam `assets-src/`. Jika gagal, guna klip terdekat dan **senaraikan dalam laporan** klip yang diganti;
-   - pakaian kurier: warnakan bahan baju jingga `#f59e0b` dan seluar biru tua `#1d3a8a`, sama dengan kotak skuter;
+   - **pakaian wajib (aset tiada baju; watak berpakaian dalam TIDAK boleh muncul dalam permainan):**
+     - buang tekstur badan dan `normalMap` supaya otot tidak ketara, kemudian cat **warna verteks** ikut tulang dengan pemberat terbesar:
+       - badan, bahu, lengan atas → baju;
+       - lengan bawah → baju (lengan panjang) atau kulit (lengan pendek);
+       - pinggul dan kaki hingga buku lali → seluar/kain;
+       - kaki → kasut gelap;
+       - kepala, leher, tangan → kulit sawo matang (`#b07a52` / `#c68e63`);
+     - kurier: baju jingga `#f59e0b` berlengan pendek, seluar biru tua `#1d3a8a`, kasut hitam, rambut `Hair_Buzzed`;
+     - penerima perempuan: baju kurung lengan panjang (cth. `#2f7d6d`), kain labuh hingga buku lali, rambut `Hair_Buns` atau `Hair_Long`;
+     - penerima lelaki: kemeja-T lengan pendek (cth. `#3b5b92`), seluar panjang, rambut `Hair_SimpleParted`;
+     - jika sempadan warna (contohnya leher baju) bergerigi teruk, laporkan dengan tangkapan skrin dekat, jangan sembunyikan;
    - segi tiga ≤ 12 000 setiap watak, tekstur ≤ 512 px (jika ada);
    - output `public/models/quaternius/{courier,receiver-f,receiver-m}.glb`.
 3. **`CharacterGLB.tsx`:**
-   - `CHARACTER_URL` dijadikan peta gaya → URL;
+   - `CHARACTER_URL` KEKAL seperti sekarang (peta rata `courier`/`receiverF`/`receiverM` → `/models/mixamo/*.glb`), kerana kontrak `008-model-kurier.test.ts:25` menuntutnya;
+   - peta gaya diletakkan BERASINGAN dalam `src/components/3d/character-style.ts`: `CHARACTER_STYLE_URLS: Record<CharacterStyle, Record<CharacterKey, string>>`, dengan `asal` = `CHARACTER_URL` (rujukan yang sama, bukan salinan). Tambah juga `characterUrl(model)`, yang digunakan oleh `CharacterGLB` untuk `useGLTF` dan preload (gaya aktif sahaja);
    - gaya dipilih melalui pemalar `CHARACTER_STYLE` dalam modul baharu `src/components/3d/character-style.ts`;
    - semasa dev SAHAJA (`import.meta.env.DEV`), parameter `?watak=asal|rata|quaternius` boleh mengatasinya. Ini dibaca dalam `character-style.ts`, bukan dalam logik permainan;
    - lalai kekal `asal` sehingga pemilik memilih.
@@ -42,7 +56,7 @@ Dunia menggunakan Kenney: low-poly dengan warna rata daripada satu `colormap`. W
    - `UPPER` dalam `layeredClip` dan pencarian tulang IK Pelan 021 mesti berfungsi untuk kedua-dua rangka;
    - tambah `RIG_BONES` dalam `character-style.ts`: peta peranan (`leftArm`, `leftForeArm`, `leftHand`, …, `hips`, `spine`) → nama tulang untuk rangka Mixamo dan rangka Quaternius;
    - Pelan 021 `PlayerController` mesti menggunakan peta ini dan bukan nama Mixamo terus;
-   - `retargetClips(…, keepHipsPosition)` juga ikut peta (`hips`).
+   - `retargetClips(animations, keepHipsPosition)` juga ikut peta (`hips`), TETAPI tandatangannya kekal, dan ia mesti terus lulus kontrak 008 dengan nama trek Mixamo (`mixamorigHips.position`). `layeredClip(name, lower, upper)` juga kekal.
 5. **Ujian (fail biasa, bukan kontrak):** `src/components/3d/character-style.test.ts` menyemak:
    - setiap gaya ada 3 URL;
    - `RIG_BONES` lengkap untuk kedua-dua rangka;
