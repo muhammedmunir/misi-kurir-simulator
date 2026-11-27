@@ -1,6 +1,7 @@
 import { useGLTF } from "@react-three/drei";
 import { useMemo } from "react";
 import * as THREE from "three";
+import { RIDER_STEER_PIVOT_Z } from "./rider-ik";
 
 /**
  * Skuter elektrik penghantaran — "Low Poly Delivery Electric Scooter" oleh
@@ -27,7 +28,15 @@ export function ScooterGLB() {
     inner.scale.setScalar(k);
     inner.rotation.y = (size.x > size.z ? Math.PI / 2 : 0) + FACING_FIX;
     wrap.add(inner);
-    c.traverse((o) => {
+    const frontAssembly = c.getObjectByName(THREE.PropertyBinding.sanitizeNodeName("Cylinder.007_0"));
+    if (frontAssembly) {
+      const pivot = new THREE.Group();
+      pivot.name = "scooter-steering";
+      pivot.position.z = RIDER_STEER_PIVOT_Z;
+      wrap.add(pivot);
+      pivot.attach(frontAssembly);
+    }
+    wrap.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.isMesh) m.castShadow = true;
     });

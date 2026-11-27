@@ -32,6 +32,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Kawalan papan kekunci (WASD, E) | Tested | A/D ikut skrin (B25), disahkan di Chrome oleh E2E Pelan 007; stereng motor juga |
 | Kawalan sentuh (joystick, tindakan, BREK) | Tested | `1b88949`; telefon sebenar Redmi 9 (9b): joystick memandu, butang tindakan berfungsi; potret + landskap lulus selepas B18 (`97da0f4`) |
 | Motor: naik, pandu, brek, turun | Tested | Motor kekal di tempat ditinggalkan; turun hanya bila < 1 m/s. Pelan 009: fizik `stepMotor` (pecutan beransur, condong, belok ikut laju), bunyi enjin, km/j sebenar. Disahkan di Chrome |
+| Postur menunggang | Tested | Pelan 021: IK meletakkan tangan pada genggaman dan kaki pada lantai skuter; postur dan stereng disemak dalam Chrome. |
 | Kotak parkir di setiap alamat | Tested | Direkod betul/tidak (tiada penalti lagi); ujian unit sahaja, belum dipandu ke kotak di pelayar |
 | Collision watak & motor | Tested | `world-collision.ts`: bulatan vs kotak XZ untuk bangunan, rumah, dinding gudang, meja dan rak (Pelan 007). Bukan Rapier; tiada collision dengan trafik NPC atau tiang lampu |
 | HUD asas | Tested | Wang, level, kad misi dan status pandu reaktif (B19); petunjuk ikut mod input (B20). Disahkan di telefon sebenar |
@@ -90,5 +91,5 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 
 ---
 
-**Kemas kini terakhir:** 2026-11-27 (Pelan 020: kitaran siang/malam dan hujan)
+**Kemas kini terakhir:** 2026-11-27 (Pelan 021: postur menunggang)
 **Versi:** 0.0.0-alpha

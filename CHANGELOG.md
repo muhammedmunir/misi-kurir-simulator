@@ -39,6 +39,7 @@ Vertical slice mudah alih (Pelan 004 & 005).
 - **Dokumen:** `THIRD_PARTY_NOTICES.md`, `QA_REPORT.md` dan `CHANGELOG.md`.
 
 ### Diubah
+- **Postur skuter (Pelan 021):** penunggang membengkokkan siku dan lutut secara analitik supaya tangan mengikut pemegang yang berpusing dan kaki kekal di lantai skuter. Badan condong ke hadapan dan mengimbangi sedikit condongan skuter ketika membelok.
 - **Watak lebih ringan (Pelan 017):** model Mixamo dihadkan kepada 12,000 segi tiga setiap watak; penerima bertekstur sehingga 512 px hanya muncul berhampiran alamat dengan paket aktif.
 - Latar Malaysia: mata wang RM dan teks BM (TPD-016), termasuk huraian manifest PWA.
 - Manifest tidak lagi ditutup secara automatik di alamat terakhir. Pemain mesti kembali ke gudang (master prompt H.10).

@@ -12,10 +12,11 @@ import { isRaining } from "@/world/daytime";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { Suspense } from "react";
-import { type Group, Vector3 } from "three";
+import { Euler, type Group, MathUtils, type Object3D, Quaternion, Vector3 } from "three";
 import { CharacterGLB } from "./CharacterGLB";
 import { ScooterGLB } from "./ScooterGLB";
 import { courierClip } from "./courier-anim";
+import { RIDER_STEER_ANGLE, riderTargets, solveTwoBoneIK } from "./rider-ik";
 import { MOTOR_RADIUS, PLAYER_RADIUS, angleDelta, moveHeading, resolveCircle, worldColliders } from "./world-collision";
 
 // ── Keyboard state ────────────────────────────────────────────────
@@ -39,7 +40,7 @@ const BOX_Y = 1.13;
 const BOX_Z = -0.62;
 /** Kedudukan pinggul penunggang di atas tempat duduk (setempat motor). */
 /** Kedudukan tapak kaki penunggang (klip `drive`) supaya punggung di atas tempat duduk. */
-const RIDER_OFFSET: [number, number, number] = [0, SEAT_TOP - 0.51, -0.12];
+const RIDER_OFFSET: [number, number, number] = [0, SEAT_TOP - 0.54, -0.04];
 /** Kadar kamera berjalan kaki menyusul arah hadapan watak (rad/s). */
 const VIEW_FOLLOW = 2.5;
 
@@ -162,6 +163,38 @@ function pickRiderClip() {
   return RIDER_CLIP;
 }
 
+function findRiderRig(root: Object3D) {
+  const hips = root
+    .getObjectsByProperty("type", "Bone")
+    .find((bone) => bone.name.endsWith("Hips") && bone.children.length > 1);
+  if (!hips) return null;
+  const prefix = hips.name.slice(0, -"Hips".length);
+  // Sesetengah tulang ada anak pendua bernama sama; semak hierarki rantai sebenar.
+  const chain = (a: string, b: string, c: string) => {
+    const upper = hips.getObjectByName(prefix + a);
+    const lower = upper?.getObjectByName(prefix + b);
+    const end = lower?.getObjectByName(prefix + c);
+    return upper && lower && end ? ([upper, lower, end] as const) : null;
+  };
+  const leftArm = chain("LeftArm", "LeftForeArm", "LeftHand");
+  const rightArm = chain("RightArm", "RightForeArm", "RightHand");
+  const leftLeg = chain("LeftUpLeg", "LeftLeg", "LeftFoot");
+  const rightLeg = chain("RightUpLeg", "RightLeg", "RightFoot");
+  const spine = hips.getObjectByName(`${prefix}Spine`);
+  const spine1 = spine?.getObjectByName(`${prefix}Spine1`);
+  if (!leftArm || !rightArm || !leftLeg || !rightLeg || !spine || !spine1) return null;
+  const baseRotations = [spine, spine1, ...leftArm, ...rightArm, ...leftLeg, ...rightLeg].map(
+    (bone) => [bone, bone.quaternion.clone()] as const,
+  );
+  return { leftArm, rightArm, leftLeg, rightLeg, spine, spine1, baseRotations, posed: false };
+}
+
+const riderPole = new Vector3();
+const riderEndRotation = new Quaternion();
+const riderMotorRotation = new Quaternion();
+const riderEndEuler = new Euler(0, 0, 0, "YXZ");
+const RIDER_FORWARD_LEAN = MathUtils.degToRad(14);
+
 /** Klip animasi kurier berjalan kaki setiap frame. */
 function pickCourierClip() {
   return courierClip({
@@ -190,6 +223,43 @@ export function PlayerController() {
   const riderRef = useRef<Group>(null);
   const boxRefs = useRef<(Group | null)[]>([]);
   const sackRef = useRef<Group>(null);
+  const riderRig = useRef<{ root: Object3D; rig: ReturnType<typeof findRiderRig> }>(null);
+
+  function resetIK() {
+    const rig = riderRig.current?.rig;
+    if (!rig?.posed) return;
+    for (const [bone, base] of rig.baseRotations) bone.quaternion.copy(base);
+    rig.posed = false;
+  }
+
+  function poseRider(root: Object3D) {
+    const motorGroup = motorRef.current;
+    if (!riderRef.current?.visible || !motorGroup) return;
+    if (riderRig.current?.root !== root) riderRig.current = { root, rig: findRiderRig(root) };
+    const rig = riderRig.current.rig;
+    if (!rig) return;
+
+    for (const [bone, base] of rig.baseRotations) base.copy(bone.quaternion);
+    rig.posed = true;
+    rig.spine.rotateX(RIDER_FORWARD_LEAN);
+    rig.spine1.rotateZ(-motorLean * 0.4);
+    const { leftHand, rightHand, leftFoot, rightFoot } = riderTargets(motorSteer);
+    motorGroup.getWorldQuaternion(riderMotorRotation);
+    for (const [chain, target, arm] of [
+      [rig.leftArm, leftHand, true],
+      [rig.rightArm, rightHand, true],
+      [rig.leftLeg, leftFoot, false],
+      [rig.rightLeg, rightFoot, false],
+    ] as const) {
+      riderPole.set(arm ? target.x * 1.5 : target.x, arm ? 0.9 : 0.6, arm ? -0.4 : 0.6);
+      motorGroup.localToWorld(riderPole);
+      motorGroup.localToWorld(target);
+      solveTwoBoneIK(...chain, target, riderPole);
+      riderEndEuler.set(arm ? Math.PI / 2 : Math.PI / 2 - 0.18, arm ? -motorSteer * RIDER_STEER_ANGLE : 0, 0);
+      chain[1].getWorldQuaternion(riderEndRotation).invert();
+      chain[2].quaternion.setFromEuler(riderEndEuler).premultiply(riderMotorRotation).premultiply(riderEndRotation);
+    }
+  }
 
   // Keyboard handlers inside useEffect (not module level)
   useEffect(() => {
@@ -364,6 +434,8 @@ export function PlayerController() {
     if (motorRef.current) {
       motorRef.current.position.set(motor.x, MOTOR_Y, motor.z);
       motorRef.current.rotation.set(0, motor.heading, onFoot ? 0 : motorLean);
+      const steering = motorRef.current.getObjectByName("scooter-steering");
+      if (steering) steering.rotation.y = onFoot ? 0 : -motorSteer * RIDER_STEER_ANGLE;
     }
   }, PLAYER_FRAME_PRIORITY);
 
@@ -429,7 +501,7 @@ export function PlayerController() {
           {/* Penunggang (postur duduk), disorok bila berjalan kaki */}
           <group ref={riderRef} position={RIDER_OFFSET} visible={false}>
             <Suspense fallback={null}>
-              <CharacterGLB model="courier" pickClip={pickRiderClip} />
+              <CharacterGLB model="courier" pickClip={pickRiderClip} beforeAnimate={resetIK} afterAnimate={poseRider} />
             </Suspense>
           </group>
         </group>

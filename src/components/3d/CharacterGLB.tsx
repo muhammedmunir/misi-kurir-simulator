@@ -67,11 +67,15 @@ export function CharacterGLB({
   clip = "idle",
   pickClip,
   timeScale,
+  beforeAnimate,
+  afterAnimate,
 }: {
   model: CharacterKey;
   clip?: Clip;
   pickClip?: () => { clip: Clip; timeScale?: number };
   timeScale?: number;
+  beforeAnimate?: () => void;
+  afterAnimate?: (root: THREE.Object3D, dt: number) => void;
 }) {
   const { scene, animations } = useGLTF(CHARACTER_URL[model]);
   const clips = useMemo(() => retargetClips(animations, model === "courier"), [animations, model]);
@@ -90,6 +94,8 @@ export function CharacterGLB({
     });
     return c;
   }, [scene]);
+  // Pulihkan pose klip sebelum mixer: Three.js tidak menulis semula trek yang tidak berubah.
+  useFrame(() => beforeAnimate?.());
   const { actions } = useAnimations(clips, root);
   const current = useRef<Clip | null>(null);
 
@@ -108,10 +114,12 @@ export function CharacterGLB({
     if (!pickClip) play(clip, timeScale ?? 1);
   });
 
-  useFrame(() => {
-    if (!pickClip) return;
-    const p = pickClip();
-    play(p.clip, p.timeScale ?? 1);
+  useFrame((_state, dt) => {
+    if (pickClip) {
+      const p = pickClip();
+      play(p.clip, p.timeScale ?? 1);
+    }
+    if (root.current) afterAnimate?.(root.current, dt);
   });
 
   return (
