@@ -33,6 +33,10 @@ Pelan 020 berfungsi, tetapi rupanya belum meyakinkan:
    - fail biasa `src/world/atmosphere-mix.test.ts` untuk fungsi tulen pencampur warna dan nilai mengikut (masa, hujan): siang cerah, senja, malam, hujan siang dan hujan malam;
    - pastikan semua kontrak sedia ada lulus.
 
+## Kekangan kontrak sedia ada (011-pencahayaan)
+
+`Atmosphere.tsx` MESTI mengekalkan `new THREE.Fog(HORIZON` dan `new THREE.Color(HORIZON)` sebagai nilai awal; ubah warnanya selepas itu dengan `.color.copy(...)`/`lerp`. Pastikan juga `light.target.position.set(p.x, 0, p.z)` kekal. `GameScene3D` tidak boleh menambah `<ambientLight` atau `<color attach="background"`. Satu-satunya `SpotLight` lampu motor diletakkan dalam `PlayerController`, bukan sebagai `<ambientLight>`.
+
 ## Tangkapan skrin wajib — `.playwright-mcp/plan-024/`
 
 Sudut dan kedudukan mesti sama dengan `test-results/pelan-020/`, supaya boleh dibandingkan sebelum dan selepas:
