@@ -1,10 +1,10 @@
+/// <reference types="vite/client" />
 /**
  * Pelan 023 — isi dunia (kepadatan blok + perabot jalan). Ditulis oleh perancang. C9 TIDAK boleh menyunting fail ini.
  *
  * Blok: pusat = garis jalan + 20 (ROAD_LINES), dalaman blok = pusat ±14 (jalan selebar 12 pada garis).
  * Placement.rotY mesti gandaan π/2; bila ±π/2, lebar (w) dan dalam (d) bertukar paksi.
  */
-import { existsSync } from "node:fs";
 import { cameraObstacles } from "@/components/3d/camera-collision";
 import { type Placement, blockPlacements, streetProps } from "@/components/3d/city-blocks";
 import { buildingLayout } from "@/components/3d/city-layout";
@@ -14,6 +14,9 @@ import gameSceneSrc from "@/components/GameScene3D.tsx?raw";
 import { DELIVERY_ZONES } from "@/lib/delivery-system";
 import { WAREHOUSE } from "@/warehouse/warehouse-logic";
 import { describe, expect, it } from "vitest";
+
+/** Fail GLB dalam public/models/ (tsconfig tiada jenis Node, jadi guna import.meta.glob dan bukan node:fs). */
+const MODEL_FILES = new Set(Object.keys(import.meta.glob("/public/models/**/*.glb")));
 
 type Box = { minX: number; maxX: number; minZ: number; maxZ: number };
 
@@ -57,7 +60,7 @@ describe("blockPlacements() — blok bandar diisi, bukan padang kosong", () => {
   it("setiap model wujud dalam public/models/ (disalin daripada arkib Kenney dalam assets-src/)", () => {
     for (const p of [...placements, ...streetProps()]) {
       expect(p.model).toMatch(/^(city-kit-suburban|city-kit-commercial|city-kit-roads|car-kit)\/[a-z0-9-]+$/);
-      expect(existsSync(`public/models/${p.model}.glb`), p.model).toBe(true);
+      expect(MODEL_FILES.has(`/public/models/${p.model}.glb`), p.model).toBe(true);
     }
   });
 
