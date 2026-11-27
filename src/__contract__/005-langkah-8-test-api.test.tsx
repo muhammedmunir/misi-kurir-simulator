@@ -153,6 +153,8 @@ describe("B16 — autosave selepas serahan mesti menyimpan wang yang sudah ditam
       clear: async () => {},
     };
     const stop = startAutosave(backend);
+    // Pelan 018 (dikemas kini oleh perancang): mood pelanggan dirawak; tetapkan "home" supaya serahan memberi ganjaran.
+    createTestApi().setNextCustomer("home");
     const store = useDeliveryStore.getState();
     store.interact(5000, { onFoot: true });
     store.takeProof();
