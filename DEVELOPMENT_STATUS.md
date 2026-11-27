@@ -25,7 +25,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Ciri | Status | Catatan |
 |------|--------|---------|
 | Navigasi menu → permainan | Tested | Dibaiki `dc5d761`; disahkan di Chrome |
-| Scene 3D: tanah, jalan, bangunan | Implemented | Geometri placeholder |
+| Scene 3D: tanah, jalan, bangunan | Tested | Jalan dan bangunan Kenney; blok perumahan, kedai dan perabot jalan (Pelan 023) |
 | Karakter berjalan/berlari | Tested | Kaki di tanah (y = 0); arah ikut kamera; E2E `pergerakan.spec.ts` (Pelan 007). Model kurier bersendi dengan animasi langkah (Pelan 008a, dibina dengan kod) |
 | Optimasi watak Mixamo | Tested | Pelan 017: geometri berkulit dikurangkan, tekstur penerima dikecilkan dan penerima ditapis ikut paket aktif. Pose berjalan, menunggang dan penerima di pintu disemak dalam Chrome. |
 | Kamera orang ketiga | Tested | Pelan 019: jarak penuh semasa berjalan kaki; hanya bangunan atau rumah yang menghalang pandangan menjadi separa lutsinar. Disahkan di pintu Mak Minah dalam Chrome. Kamera motor dan serah terima kekal. |
@@ -34,7 +34,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Motor: naik, pandu, brek, turun | Tested | Motor kekal di tempat ditinggalkan; turun hanya bila < 1 m/s. Pelan 009: fizik `stepMotor` (pecutan beransur, condong, belok ikut laju), bunyi enjin, km/j sebenar. Disahkan di Chrome |
 | Postur menunggang | Tested | Pelan 021: IK meletakkan tangan pada genggaman dan kaki pada lantai skuter; postur dan stereng disemak dalam Chrome. |
 | Kotak parkir di setiap alamat | Tested | Direkod betul/tidak (tiada penalti lagi); ujian unit sahaja, belum dipandu ke kotak di pelayar |
-| Collision watak & motor | Tested | `world-collision.ts`: bulatan vs kotak XZ untuk bangunan, rumah, dinding gudang, meja dan rak (Pelan 007). Bukan Rapier; tiada collision dengan trafik NPC atau tiang lampu |
+| Collision watak & motor | Tested | `world-collision.ts`: bulatan vs kotak XZ untuk bangunan, pagar, kereta diparkir, tong sampah dan halangan gudang. Perabot jalan tidak pejal (Pelan 007 dan 023). |
 | HUD asas | Tested | Wang, level, kad misi dan status pandu reaktif (B19); petunjuk ikut mod input (B20). Disahkan di telefon sebenar |
 | Simpan/muat | Tested | Skema v1 + validasi + autosave + Teruskan (Pelan 005 Langkah 7); E2E muat semula halaman |
 
@@ -43,7 +43,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Ciri | Status | Catatan |
 |------|--------|---------|
 | Grid jalan bandar kecil | Tested | Satu kawasan; jalan utara–selatan kini rata (B29, Pelan 009) |
-| Bangunan, rumah dan pokok Kenney | Tested | GLB berkelompok mengikut model (Pelan 016); collision dan parkir kekal |
+| Bangunan, rumah dan pokok Kenney | Tested | GLB berkelompok mengikut model; Pelan 023 menambah jiran di kiri dan kanan rumah alamat tanpa menyekat laluan ke pintu. |
 | Kawasan bersambung (perumahan, kampung, dll.) | Not started | |
 | Navigasi / minimap | Tested | Anak panah dan minimap (Pelan 010); E2E minimap tidak menutup butang |
 | Chunk streaming, LOD | Not started | |
@@ -52,7 +52,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 
 | Ciri | Status | Catatan |
 |------|--------|---------|
-| Gudang 3D (bangunan, rak, meja sortir) | Tested | Placeholder geometri; dinding, meja dan rak pejal (Pelan 007). Disahkan di Chrome |
+| Gudang 3D (bangunan, rak, meja sortir) | Tested | Dinding zink, pintu gulung, papan tanda PUSAT POS KURIR dan van penghantaran (Pelan 023); halangan gudang Pelan 007 dikekalkan. |
 | Imbas (simulasi), muat, kapasiti berat/isipadu, berangkat | Tested | Ujian unit + Chrome: paket ke-5 ditolak pada 20/20 unit |
 | Manifest | Tested | Dibuka pada muatan pertama, ditutup di meja gudang dengan ringkasan (Langkah 6, `2600f2f`); E2E |
 
@@ -91,5 +91,5 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 
 ---
 
-**Kemas kini terakhir:** 2026-11-27 (Pelan 021: postur menunggang)
+**Kemas kini terakhir:** 2026-11-27 (Pelan 023: isi dunia dan gudang pos)
 **Versi:** 0.0.0-alpha

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { Buildings } from "./Buildings";
 import { CityRoads } from "./CityRoads";
-import { CityTrees } from "./CityTrees";
 
 export function WorldEnvironment() {
   return (
@@ -17,9 +16,6 @@ export function WorldEnvironment() {
         <CityRoads />
       </Suspense>
       <Buildings />
-      <Suspense fallback={null}>
-        <CityTrees />
-      </Suspense>
     </group>
   );
 }

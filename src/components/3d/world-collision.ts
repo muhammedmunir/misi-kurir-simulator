@@ -6,6 +6,7 @@
  */
 import { WAREHOUSE } from "@/warehouse/warehouse-logic";
 import { cameraObstacles } from "./camera-collision";
+import { blockPlacements, placementFootprint } from "./city-blocks";
 
 export type Rect = { minX: number; maxX: number; minZ: number; maxZ: number };
 export type P2 = { x: number; z: number };
@@ -44,7 +45,10 @@ export function warehouseColliders(): Rect[] {
 /** Semua halangan pejal: bangunan bandar, rumah alamat dan gudang. */
 export function worldColliders(): Rect[] {
   const fromCamera = cameraObstacles().map((b) => ({ minX: b.minX, maxX: b.maxX, minZ: b.minZ, maxZ: b.maxZ }));
-  return [...fromCamera, ...warehouseColliders()];
+  const lowProps = blockPlacements()
+    .filter((p) => p.solid && p.h < 2)
+    .map(placementFootprint);
+  return [...fromCamera, ...warehouseColliders(), ...lowProps];
 }
 
 /**

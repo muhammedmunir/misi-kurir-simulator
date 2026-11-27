@@ -5,6 +5,7 @@
  * titik masuk terawal supaya tidak berada di dalam bangunan.
  */
 import { DELIVERY_ZONES, HOUSE } from "@/lib/delivery-system";
+import { blockPlacements, placementFootprint } from "./city-blocks";
 import { buildingLayout } from "./city-layout";
 
 export type P3 = { x: number; y: number; z: number };
@@ -54,6 +55,10 @@ export function cameraObstacles(): Aabb[] {
       minZ: cz - HOUSE.depth / 2,
       maxZ: cz + HOUSE.depth / 2,
     });
+  }
+
+  for (const p of blockPlacements()) {
+    if (p.solid && p.h >= 2) boxes.push({ ...placementFootprint(p), minY: 0, maxY: p.h });
   }
 
   return boxes;

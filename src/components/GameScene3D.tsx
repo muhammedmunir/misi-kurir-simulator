@@ -12,9 +12,10 @@ import { WarehousePanel } from "@/warehouse/WarehousePanel";
 import { advanceTime } from "@/world/daytime";
 import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { Atmosphere } from "./3d/Atmosphere";
 import { CameraFollow } from "./3d/CameraFollow";
+import { CityBlocks } from "./3d/CityBlocks";
 import { DeliverySystemController } from "./3d/DeliverySystemController";
 import { DeliveryZones } from "./3d/DeliveryZones";
 import { Destinations } from "./3d/Destinations";
@@ -23,6 +24,7 @@ import { InteractionPrompt } from "./3d/InteractionPrompt";
 import { NPCTraffic } from "./3d/NPCTraffic";
 import { PlayerController } from "./3d/PlayerController";
 import { Rain } from "./3d/Rain";
+import { StreetProps } from "./3d/StreetProps";
 import { WorldEnvironment } from "./3d/WorldEnvironment";
 import { TouchJoystick } from "./TouchJoystick";
 
@@ -114,6 +116,12 @@ export function GameScene3D() {
 
           {/* World */}
           <WorldEnvironment />
+          <Suspense fallback={null}>
+            <CityBlocks />
+          </Suspense>
+          <Suspense fallback={null}>
+            <StreetProps />
+          </Suspense>
           <WarehouseBuilding />
           <Destinations />
 
