@@ -58,9 +58,9 @@ function SettingSelect<K extends string | number>({
   onChange: (v: K) => void;
 }) {
   return (
-    <div
+    <label
       style={{
-        padding: "12px 0",
+        padding: "4px 0",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         display: "flex",
         justifyContent: "space-between",
@@ -72,8 +72,10 @@ function SettingSelect<K extends string | number>({
         value={value}
         onChange={(e) => onChange(e.target.value as K)}
         style={{
+          minHeight: "44px",
           padding: "6px 12px",
-          background: "rgba(255,255,255,0.1)",
+          colorScheme: "dark",
+          background: "#24242d",
           border: "1px solid rgba(255,255,255,0.2)",
           borderRadius: "8px",
           color: "#e8e8f0",
@@ -86,7 +88,7 @@ function SettingSelect<K extends string | number>({
           </option>
         ))}
       </select>
-    </div>
+    </label>
   );
 }
 
@@ -94,6 +96,7 @@ export function SettingsPanel() {
   const navigate = useSceneStore((s) => s.navigate);
   const settings = useGameStateStore((s) => s.settings);
   const updateSetting = useGameStateStore((s) => s.updateSetting);
+  const setRainMode = useGameStateStore((s) => s.setRainMode);
 
   return (
     <div
@@ -162,6 +165,16 @@ export function SettingsPanel() {
             { value: "high", label: "Tinggi" },
           ]}
           onChange={(v) => updateSetting("graphicsPreset", v)}
+        />
+        <SettingSelect
+          label="Hujan"
+          value={settings.rainMode}
+          options={[
+            { value: "auto", label: "Auto" },
+            { value: "on", label: "Sentiasa hujan" },
+            { value: "off", label: "Tiada hujan" },
+          ]}
+          onChange={setRainMode}
         />
         <SettingSelect
           label="Saiz Font"

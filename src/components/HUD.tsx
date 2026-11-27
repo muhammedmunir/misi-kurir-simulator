@@ -17,6 +17,8 @@ export function HUD() {
   const navigate = useSceneStore((s) => s.navigate);
   const currentScene = useSceneStore((s) => s.currentScene);
   const player = useGameStateStore((s) => s.player);
+  const minutes = useGameStateStore((s) => Math.floor(s.worldMinutes));
+  const clock = `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
   const session = useDeliveryStore((s) => s.session);
 
   const pending = pendingCargo(session);
@@ -58,31 +60,20 @@ export function HUD() {
       }}
     >
       {/* Top bar */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "12px 16px",
-          background: "linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 100%)",
-        }}
-      >
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+      <div className="hud-top">
+        <div className="hud-top__status">
           <div
+            className="hud-top__level"
             style={{
               background: "rgba(12, 14, 20, 0.84)",
               backdropFilter: "blur(10px)",
               borderRadius: "8px",
-              padding: "6px 12px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
             }}
           >
             <span style={{ fontSize: "14px", fontWeight: 600, color: "#f59e0b" }}>Lv.{player.level}</span>
             <div
+              className="hud-top__xp"
               style={{
-                width: "60px",
                 height: "4px",
                 background: "rgba(255,255,255,0.2)",
                 borderRadius: "2px",
@@ -100,21 +91,32 @@ export function HUD() {
             </div>
           </div>
           <div
+            className="hud-top__balance"
             style={{
               background: "rgba(12, 14, 20, 0.84)",
               border: "1px solid rgba(34, 197, 94, 0.3)",
               borderRadius: "8px",
-              padding: "6px 12px",
               fontSize: "14px",
               fontWeight: 600,
               color: "#22c55e",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              whiteSpace: "nowrap",
             }}
           >
-            {formatRinggit(player.money)}
+            <span>{formatRinggit(player.money)}</span>
+            <time
+              dateTime={clock}
+              aria-label={`Waktu permainan: ${clock}`}
+              style={{ color: "#e8e8f0", fontSize: "12px", fontVariantNumeric: "tabular-nums" }}
+            >
+              {clock}
+            </time>
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "8px", pointerEvents: "auto" }}>
+        <div className="hud-top__actions">
           <button
             type="button"
             onClick={handleSave}

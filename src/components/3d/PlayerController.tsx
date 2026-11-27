@@ -5,8 +5,10 @@ import type { MotorContext } from "@/lib/interact-button";
 import { liveTrafficRects } from "@/lib/npc-traffic";
 import { consumeAction, touchInput } from "@/lib/touch";
 import { useDeliveryStore } from "@/store/delivery";
+import { useGameStateStore } from "@/store/gamestate";
 import { stepMotor } from "@/vehicles/motor-physics";
 import { type MotorState, canDismount, canMount, checkParking, dismountPosition } from "@/vehicles/motor-state";
+import { isRaining } from "@/world/daytime";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { Suspense } from "react";
@@ -319,10 +321,12 @@ export function PlayerController() {
       // ── ON MOTOR ──────────────────────────────────────────────
     } else {
       lastThrottle = inputForward;
+      const { settings, worldMinutes } = useGameStateStore.getState();
       const next = stepMotor(
         { speed: motor.speed, heading: motor.heading, steer: motorSteer, lean: motorLean },
         { throttle: inputForward, steer: inputRight, handBrake: ti.brake },
         dt,
+        isRaining(settings.rainMode, worldMinutes),
       );
       motor.speed = next.speed;
       motor.heading = next.heading;

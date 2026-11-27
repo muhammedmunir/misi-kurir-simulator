@@ -133,6 +133,7 @@ export interface Player {
 }
 
 export interface GameSettings {
+  rainMode: "auto" | "on" | "off";
   soundEnabled: boolean;
   musicVolume: number;
   sfxVolume: number;

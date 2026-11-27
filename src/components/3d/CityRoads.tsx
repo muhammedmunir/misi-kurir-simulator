@@ -1,4 +1,6 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useGameStateStore } from "@/store/gamestate";
+import { dayPhase, isRaining } from "@/world/daytime";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { fitMatrix, useMergedModels } from "./merged-model";
 import { type RoadTile, roadTiles, streetLamps } from "./road-tiles";
@@ -14,6 +16,15 @@ const STRAIGHT_ALONG_Z = false;
 /** Ketebalan jubin: skala menegak lebih kecil daripada mendatar supaya bebendul ~12 cm. */
 const THICKNESS_SCALE = 6;
 const LAMP_HEIGHT = 7;
+
+// Hanya kanta pada atlas Kenney memancar; tiang dan perumah kekal gelap.
+const MASK_SIZE = 32;
+const mask = new Uint8Array(MASK_SIZE * MASK_SIZE * 4);
+for (const y of [19, 20]) {
+  for (const x of [16, 17]) mask.fill(255, (y * MASK_SIZE + x) * 4, (y * MASK_SIZE + x + 1) * 4);
+}
+const LAMP_LENS = new THREE.DataTexture(mask, MASK_SIZE, MASK_SIZE);
+LAMP_LENS.needsUpdate = true;
 
 function tileMatrix(box: THREE.Box3, t: RoadTile): THREE.Matrix4 {
   const alongZ = t.axis === "z";
@@ -34,6 +45,38 @@ export function CityRoads() {
   const sRef = useRef<THREE.InstancedMesh>(null);
   const cRef = useRef<THREE.InstancedMesh>(null);
   const lRef = useRef<THREE.InstancedMesh>(null);
+  const lampsOn = useGameStateStore((s) => dayPhase(s.worldMinutes).lampsOn);
+  const wet = useGameStateStore((s) => isRaining(s.settings.rainMode, s.worldMinutes));
+  const surfaces = useMemo(
+    () => [straight.material, cross.material, lamp.material].map((m) => (m as THREE.MeshStandardMaterial).clone()),
+    [straight.material, cross.material, lamp.material],
+  );
+  const [straightSurface, crossSurface, lampSurface] = surfaces;
+
+  useEffect(
+    () => () => {
+      for (const surface of surfaces) surface.dispose();
+    },
+    [surfaces],
+  );
+
+  useLayoutEffect(() => {
+    for (const [surface, dry] of [
+      [straightSurface, straight.material],
+      [crossSurface, cross.material],
+    ] as const) {
+      const base = dry as THREE.MeshStandardMaterial;
+      surface.color.copy(base.color).multiplyScalar(wet ? 0.58 : 1);
+      surface.roughness = wet ? 0.28 : base.roughness;
+    }
+  }, [straightSurface, straight.material, crossSurface, cross.material, wet]);
+
+  useLayoutEffect(() => {
+    lampSurface.emissive.set("#ffe0a3");
+    lampSurface.emissiveMap = LAMP_LENS;
+    lampSurface.emissiveIntensity = lampsOn ? 2.2 : 0;
+    lampSurface.needsUpdate = true;
+  }, [lampSurface, lampsOn]);
 
   useLayoutEffect(() => {
     const m = new THREE.Matrix4();
@@ -57,9 +100,9 @@ export function CityRoads() {
 
   return (
     <group>
-      <instancedMesh ref={sRef} args={[straight.geometry, straight.material, straightTiles.length]} receiveShadow />
-      <instancedMesh ref={cRef} args={[cross.geometry, cross.material, crossTiles.length]} receiveShadow />
-      <instancedMesh ref={lRef} args={[lamp.geometry, lamp.material, lamps.length]} castShadow />
+      <instancedMesh ref={sRef} args={[straight.geometry, straightSurface, straightTiles.length]} receiveShadow />
+      <instancedMesh ref={cRef} args={[cross.geometry, crossSurface, crossTiles.length]} receiveShadow />
+      <instancedMesh ref={lRef} args={[lamp.geometry, lampSurface, lamps.length]} castShadow />
     </group>
   );
 }

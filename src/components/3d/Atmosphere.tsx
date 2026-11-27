@@ -1,4 +1,5 @@
 import { useGameStateStore } from "@/store/gamestate";
+import { dayPhase, isRaining } from "@/world/daytime";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
@@ -6,7 +7,8 @@ import { playerState } from "./PlayerController";
 
 /** Warna ufuk: latar, kabus dan bahagian bawah langit mesti sama supaya tiada jahitan. */
 export const HORIZON = "#cfe0ee";
-const ZENITH = "#3f7cc4";
+const SKY_RADIUS = 380;
+const OVERCAST = new THREE.Color("#748397");
 const SUN_COLOR = "#fff1d8";
 /** Arah matahari (dari sasaran ke matahari): petang tropika, condong dari barat daya. */
 const SUN_OFFSET = new THREE.Vector3(-45, 75, -30);
@@ -34,32 +36,30 @@ function isCoarse(): boolean {
   return typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches === true;
 }
 
-/** Kubah langit bergradien (ufuk cerah → zenit biru), tanpa tekstur. */
-function SkyDome() {
-  const geometry = useMemo(() => {
-    const g = new THREE.SphereGeometry(380, 32, 16);
-    const pos = g.getAttribute("position");
-    const colors = new Float32Array(pos.count * 3);
-    const top = new THREE.Color(ZENITH);
-    const horizon = new THREE.Color(HORIZON);
-    const c = new THREE.Color();
-    for (let i = 0; i < pos.count; i++) {
-      const h = Math.max(0, pos.getY(i) / 380); // 0 di ufuk, 1 di zenit
-      c.copy(horizon).lerp(top, h ** 0.6);
-      colors.set([c.r, c.g, c.b], i * 3);
-    }
-    g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    return g;
-  }, []);
-  return (
-    <mesh geometry={geometry} userData={{ noShadow: true }} renderOrder={-1}>
-      <meshBasicMaterial vertexColors side={THREE.BackSide} fog={false} depthWrite={false} />
-    </mesh>
+function makeSkyGeometry() {
+  const geometry = new THREE.SphereGeometry(SKY_RADIUS, 32, 16);
+  const position = geometry.getAttribute("position");
+  geometry.setAttribute(
+    "color",
+    new THREE.BufferAttribute(new Float32Array(position.count * 3), 3).setUsage(THREE.DynamicDrawUsage),
   );
+  return geometry;
+}
+
+function tintSky(geometry: THREE.BufferGeometry, horizon: THREE.Color, zenith: THREE.Color) {
+  const position = geometry.getAttribute("position");
+  const colors = geometry.getAttribute("color");
+  const color = new THREE.Color();
+  for (let i = 0; i < position.count; i++) {
+    const height = Math.max(0, position.getY(i) / SKY_RADIUS);
+    color.copy(horizon).lerp(zenith, height ** 0.6);
+    colors.setXYZ(i, color.r, color.g, color.b);
+  }
+  colors.needsUpdate = true;
 }
 
 /**
- * Pencahayaan siang: langit, kabus, lampu hemisfera dan matahari yang
+ * Pencahayaan siang dan malam: langit, kabus, lampu hemisfera dan matahari yang
  * mengikut pemain (bayang-bayang tajam hanya di sekeliling pemain).
  */
 export function Atmosphere() {
@@ -67,6 +67,11 @@ export function Atmosphere() {
   const shadows = shadowsEnabled(preset, isCoarse());
   const { gl, scene } = useThree();
   const sun = useRef<THREE.DirectionalLight>(null);
+  const hemisphere = useRef<THREE.HemisphereLight>(null);
+  const skyGeometry = useMemo(makeSkyGeometry, []);
+  const lastTint = useRef(Number.NEGATIVE_INFINITY);
+
+  useEffect(() => () => skyGeometry.dispose(), [skyGeometry]);
 
   useEffect(() => {
     scene.fog = new THREE.Fog(HORIZON, 90, 320);
@@ -98,19 +103,43 @@ export function Atmosphere() {
     return () => window.clearTimeout(id);
   }, [gl, scene, shadows]);
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
     const light = sun.current;
     if (!light) return;
     const p = playerState.getPosition();
     light.target.position.set(p.x, 0, p.z);
     light.position.set(p.x + SUN_OFFSET.x, SUN_OFFSET.y, p.z + SUN_OFFSET.z);
     light.target.updateMatrixWorld();
+
+    if (clock.elapsedTime - lastTint.current < 0.5) return;
+    lastTint.current = clock.elapsedTime;
+    const { worldMinutes, settings } = useGameStateStore.getState();
+    const phase = dayPhase(worldMinutes);
+    const wet = isRaining(settings.rainMode, worldMinutes);
+    const horizon = new THREE.Color(phase.horizon);
+    const zenith = new THREE.Color(phase.sky);
+    if (wet) {
+      horizon.lerp(OVERCAST, phase.sun * 0.62);
+      zenith.lerp(OVERCAST, phase.sun * 0.7);
+    }
+    tintSky(skyGeometry, horizon, zenith);
+    if (scene.background instanceof THREE.Color) scene.background.copy(horizon);
+    if (scene.fog instanceof THREE.Fog) {
+      scene.fog.color.copy(horizon);
+      scene.fog.near = wet ? 45 : 90;
+      scene.fog.far = wet ? 200 : 320;
+    }
+    light.intensity = 2.4 * phase.sun * (wet ? 0.62 : 1);
+    light.castShadow = shadows && phase.sun > 0;
+    if (hemisphere.current) hemisphere.current.intensity = 0.4 + phase.sun * (wet ? 0.6 : 0.75);
   });
 
   return (
     <>
-      <SkyDome />
-      <hemisphereLight args={["#d7e9ff", "#6b5a3e", 1.15]} />
+      <mesh geometry={skyGeometry} userData={{ noShadow: true }} renderOrder={-1}>
+        <meshBasicMaterial vertexColors side={THREE.BackSide} fog={false} depthWrite={false} toneMapped={false} />
+      </mesh>
+      <hemisphereLight ref={hemisphere} color="#d7e9ff" groundColor="#6b5a3e" />
       <directionalLight
         ref={sun}
         color={SUN_COLOR}

@@ -6,8 +6,10 @@ import { Minimap } from "@/navigation/Minimap";
 import { NavArrow } from "@/navigation/NavArrow";
 import { startAutosave } from "@/save/autosave";
 import { saveBackends } from "@/save/backend";
+import { useGameStateStore } from "@/store/gamestate";
 import { WarehouseBuilding } from "@/warehouse/WarehouseBuilding";
 import { WarehousePanel } from "@/warehouse/WarehousePanel";
+import { advanceTime } from "@/world/daytime";
 import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { useCallback, useEffect, useState } from "react";
@@ -20,6 +22,7 @@ import { HUD3D } from "./3d/HUD3D";
 import { InteractionPrompt } from "./3d/InteractionPrompt";
 import { NPCTraffic } from "./3d/NPCTraffic";
 import { PlayerController } from "./3d/PlayerController";
+import { Rain } from "./3d/Rain";
 import { WorldEnvironment } from "./3d/WorldEnvironment";
 import { TouchJoystick } from "./TouchJoystick";
 
@@ -32,6 +35,18 @@ export function GameScene3D() {
   }, []);
 
   useEffect(() => startAutosave(saveBackends.current), []);
+
+  useEffect(() => {
+    if (contextLost) return;
+    let last = performance.now();
+    const timer = window.setInterval(() => {
+      const now = performance.now();
+      const seconds = (now - last) / 1000;
+      last = now;
+      useGameStateStore.setState((s) => ({ worldMinutes: advanceTime(s.worldMinutes, seconds) }));
+    }, 500);
+    return () => window.clearInterval(timer);
+  }, [contextLost]);
 
   useEffect(() => {
     const canvas = document.querySelector("canvas");
@@ -87,6 +102,7 @@ export function GameScene3D() {
         {/* Langit, kabus, matahari dan bayang-bayang (Pelan 011). Canvas shadows={false}:
             Atmosphere menghidupkan shadowMap terus pada renderer ikut tetapan grafik. */}
         <Atmosphere />
+        <Rain />
 
         <Physics gravity={[0, -20, 0]}>
           {/* Camera follow player */}

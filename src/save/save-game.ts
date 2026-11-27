@@ -49,12 +49,13 @@ export async function loadSaved(backend: SaveBackend): Promise<{ ok: true } | { 
   const save = validated.save;
 
   // 1. Restore player, vehicles, settings
-  useGameStateStore.setState({
+  useGameStateStore.setState((state) => ({
     player: save.player,
     vehicles: save.vehicles,
-    settings: save.settings,
+    settings: { ...save.settings, rainMode: state.rainModeOverride ?? save.settings.rainMode },
+    worldMinutes: save.worldMinutes,
     isNewGame: false,
-  });
+  }));
 
   // 2. Restore delivery session
   const baseSession = createSession();

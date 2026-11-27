@@ -70,7 +70,8 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Ciri | Status | Catatan |
 |------|--------|---------|
 | Trafik NPC | Tested | 8 kenderaan di lorong kiri (Pelan 009); motor berlanggar dengan kenderaan; NPC belum mengelak pemain |
-| Siang/malam, cuaca, BBM, kerosakan, audio | Not started | |
+| Kitaran siang/malam dan hujan | Tested | Pelan 020: jam HUD dan save v1, pencahayaan dan lampu jalan mengikut waktu, hujan boleh ditetapkan dan mengurangkan cengkaman motor; ujian unit dan semakan Chrome |
+| BBM, kerosakan, audio | Not started | |
 
 ## Phase 6 — Economy / career
 
@@ -89,5 +90,5 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 
 ---
 
-**Kemas kini terakhir:** 2026-11-25 (Pelan 005 Langkah 9b: ujian telefon sebenar)
+**Kemas kini terakhir:** 2026-11-27 (Pelan 020: kitaran siang/malam dan hujan)
 **Versi:** 0.0.0-alpha

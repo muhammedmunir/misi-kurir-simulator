@@ -381,6 +381,73 @@ select {
   outline-offset: 2px;
 }
 
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.28), transparent);
+}
+
+.hud-top__status,
+.hud-top__actions,
+.hud-top__level {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hud-top__level,
+.hud-top__balance {
+  padding: 6px 12px;
+}
+
+.hud-top__xp {
+  width: 60px;
+}
+
+.hud-top__actions {
+  pointer-events: auto;
+}
+
+@media (max-width: 460px) {
+  .hud-top {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px 12px;
+  }
+
+  .hud-top__status,
+  .hud-top__actions {
+    gap: 4px;
+  }
+
+  .hud-top__level {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .hud-top__level,
+  .hud-top__balance {
+    padding: 4px 6px;
+  }
+
+  .hud-top__xp {
+    width: 24px;
+  }
+
+  .hud-top__actions {
+    margin-left: auto;
+  }
+
+  .hud-top__actions button {
+    min-width: 44px;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+}
+
 /* ── Navigation arrow (HUD) ─────────────────────────────────── */
 
 /* ── Minimap (Pelan 010) ─────────────────────────────────────── */
