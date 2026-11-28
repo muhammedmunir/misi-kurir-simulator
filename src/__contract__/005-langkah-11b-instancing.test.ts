@@ -26,28 +26,25 @@ describe("buildingLayout() — susun atur sama seperti sebelum 11b", () => {
   const bs = buildingLayout();
   const sum = (k: "x" | "z" | "width" | "height" | "depth") => bs.reduce((a, b) => a + b[k], 0);
 
-  it("23 bangunan; jumlah kedudukan & saiz sama", () => {
+  it("23 bangunan; jumlah kedudukan sama", () => {
     expect(bs).toHaveLength(23);
     expect(sum("x")).toBeCloseTo(499.8389093688119, 9);
     expect(sum("z")).toBeCloseTo(700.5501228762326, 9);
-    expect(sum("width")).toBeCloseTo(225.8310730530238, 9);
-    expect(sum("height")).toBeCloseTo(383.0998724681324, 9);
-    expect(sum("depth")).toBeCloseTo(218.8455547772773, 9);
+    // Pelan 025 (dikemas kini oleh perancang): width/height/depth kini saiz model × faktor skala seragam
+    // (kontrak 025), jadi hanya kedudukan, turutan dan warna dikunci. y dan floors mengikut height.
+    for (const b of bs) {
+      expect(b.y).toBeCloseTo(b.height / 2, 9);
+      expect(b.floors).toBe(Math.floor(b.height / 3));
+    }
   });
 
   it("bangunan pertama & terakhir sama tepat; warna ikut turutan", () => {
     const first = bs[0];
     expect(first.x).toBeCloseTo(-99.9016515928336, 9);
-    expect(first.y).toBeCloseTo(4.4628582540553605, 9);
     expect(first.z).toBeCloseTo(-99.05830587172723, 9);
-    expect(first.width).toBeCloseTo(8.10644432353456, 9);
-    expect(first.height).toBeCloseTo(8.925716508110721, 9);
-    expect(first.depth).toBeCloseTo(9.009791768165112, 9);
-    expect(first.floors).toBe(2);
     const last = bs[bs.length - 1];
     expect(last.x).toBeCloseTo(139.71398372176475, 9);
     expect(last.z).toBeCloseTo(140.92442959074344, 9);
-    expect(last.floors).toBe(4);
     expect(bs.map((b) => b.color).join(",")).toBe(
       "#4b5c6d,#4a5568,#7a8a9a,#4a5568,#4a5568,#3d4f5f,#4b5c6d,#7a8a9a,#4b5c6d,#4a5568,#4b5c6d,#5a6578,#6a7588,#4b5c6d,#3d4f5f,#7a8a9a,#6a7588,#3d4f5f,#3d4f5f,#6a7588,#7a8a9a,#7a8a9a,#7a8a9a",
     );
@@ -61,8 +58,7 @@ describe("buildingLayout() — susun atur sama seperti sebelum 11b", () => {
 describe("tingkap & pintu dalam koordinat dunia", () => {
   const bs = buildingLayout();
 
-  it("jumlah tingkap 303 (min(floors, 5) × 3 setiap bangunan)", () => {
-    expect(bs.reduce((a, b) => a + windowPositions(b).length, 0)).toBe(303);
+  it("tingkap: min(floors, 5) × 3 setiap bangunan", () => {
     for (const b of bs) expect(windowPositions(b)).toHaveLength(Math.min(b.floors, 5) * 3);
   });
 

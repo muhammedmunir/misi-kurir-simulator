@@ -45,6 +45,13 @@ Akibatnya pintu, tingkap dan kereta berlainan saiz di antara satu sama lain dan 
     - pintu di hadapan rumah;
     - model `building-type-[a-u]`;
     - `cameraObstacles()` ada kotak yang sama saiz dengan setiap rumah (maxY = h).
+  - **005-11b** `buildingLayout`:
+    - jumlah, kedudukan x/z, turutan dan warna kekal dikunci;
+    - jangkaan width/height/depth/y/floors dan jumlah 303 tingkap dibuang;
+    - kini y = height/2 dan floors = floor(height/3) untuk setiap bangunan.
+    - Untuk mengekalkan x/z, kekalkan bilangan dan urutan panggilan `pseudoRandom()` (nilai saiz rawak boleh dibuang selepas dibaca).
+  - **005-12**: kotak kamera rumah lot (60, 20) kini mesti sama dengan `destinationHouses()` (bukan 56–64 × 21–27 × 6.4), dan berada di belakang pintu.
+  - Selepas penyelarasan ini, perancang telah menyemak semua fail kontrak. Pada 59c4221+, hanya 025 dan 009 gagal, dan kedua-duanya menunggu kod 025.
   - Jika `HOUSE.width/height/depth` tidak lagi digunakan, buang atau kekalkan ikut knip. `HOUSE.zOffset/doorOffset` boleh kekal.
 
 - **Ujian unit biasa** (di luar `src/__contract__/` dan `tests/contract/`) yang menetapkan saiz lama secara tetap, contohnya `kenney-building-model.test.ts`, `city-blocks.test.ts` dan ujian kotak trafik: C9 BOLEH mengemas kininya supaya ikut saiz model × faktor. Jangan berhenti kerana ini.
