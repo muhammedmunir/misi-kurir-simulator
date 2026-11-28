@@ -12,14 +12,10 @@ export type Clip = "idle" | "walk" | "run" | "carry" | "carryWalk" | "pickup" | 
 
 const TARGET_HEIGHT = 1.75;
 const FADE = 0.25;
-const UPPER =
-  /^(?:mixamorig\d*:?(?:Spine|Neck|Head|(?:Left|Right)(?:Shoulder|Arm|ForeArm|Hand))|spine_|neck_|Head$|(?:clavicle|upperarm|lowerarm|hand|thumb|index|middle|ring|pinky)_)/;
+const UPPER = /^mixamorig\d*:?(?:Spine|Neck|Head|(?:Left|Right)(?:Shoulder|Arm|ForeArm|Hand))/;
 
 function isHipsPosition(name: string): boolean {
-  return (
-    name === `${RIG_BONES.quaternius.hips}.position` ||
-    name.replace(/^mixamorig\d*:?/, "") === `${RIG_BONES.mixamo.hips}.position`
-  );
+  return name.replace(/^mixamorig\d*:?/, "") === `${RIG_BONES.hips}.position`;
 }
 
 /**

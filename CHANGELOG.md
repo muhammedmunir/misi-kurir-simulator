@@ -40,6 +40,7 @@ Vertical slice mudah alih (Pelan 004 & 005).
 - **Dokumen:** `THIRD_PARTY_NOTICES.md`, `QA_REPORT.md` dan `CHANGELOG.md`.
 
 ### Diubah
+- **Gaya watak (Pelan 022b):** pemilik memilih `asal`, iaitu Mixamo bertekstur. Pilihan `rata` menjadikan penerima perempuan kelabu. Model `quaternius` berkadar adiwira dan tiada baju sebenar; tangan kurier tersasar 0.21–0.25 m daripada pemegang skuter selepas IK. Kod perbandingan dan kredit prototaip dibuang.
 - **Postur skuter (Pelan 021):** penunggang membengkokkan siku dan lutut secara analitik supaya tangan mengikut pemegang yang berpusing dan kaki kekal di lantai skuter. Badan condong ke hadapan dan mengimbangi sedikit condongan skuter ketika membelok.
 - **Watak lebih ringan (Pelan 017):** model Mixamo dihadkan kepada 12,000 segi tiga setiap watak; penerima bertekstur sehingga 512 px hanya muncul berhampiran alamat dengan paket aktif.
 - Latar Malaysia: mata wang RM dan teks BM (TPD-016), termasuk huraian manifest PWA.

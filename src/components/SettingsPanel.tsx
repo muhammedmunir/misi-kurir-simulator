@@ -266,7 +266,6 @@ export function SettingsPanel() {
             Sketchfab, CC BY 4.0
           </li>
           <li>Watak dan animasi: Adobe Mixamo</li>
-          <li>Aset sumber watak dan animasi alternatif: Quaternius, CC0. Klip retarget: Adobe Mixamo.</li>
           <li>Jalan dan bandar: Kenney (kenney.nl), CC0</li>
         </ul>
       </div>

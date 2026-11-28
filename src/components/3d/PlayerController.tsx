@@ -165,16 +165,14 @@ function pickRiderClip() {
 }
 
 function findRiderRig(root: Object3D) {
-  const { mixamo, quaternius } = RIG_BONES;
   const hips = root
     .getObjectsByProperty("type", "Bone")
-    .find((bone) => bone.children.length > 1 && (bone.name === quaternius.hips || bone.name.endsWith(mixamo.hips)));
+    .find((bone) => bone.children.length > 1 && bone.name.endsWith(RIG_BONES.hips));
   if (!hips) return null;
-  const names = hips.name === quaternius.hips ? quaternius : mixamo;
-  const prefix = hips.name.slice(0, -names.hips.length);
+  const prefix = hips.name.slice(0, -RIG_BONES.hips.length);
   // Sesetengah tulang Mixamo ada nama pendua; semak hierarki rantai sebenar.
-  type Role = keyof typeof names;
-  const bone = (parent: Object3D | undefined, role: Role) => parent?.getObjectByName(prefix + names[role]);
+  type Role = keyof typeof RIG_BONES;
+  const bone = (parent: Object3D | undefined, role: Role) => parent?.getObjectByName(prefix + RIG_BONES[role]);
   const chain = (a: Role, b: Role, c: Role) => {
     const upper = bone(hips, a);
     const lower = bone(upper, b);

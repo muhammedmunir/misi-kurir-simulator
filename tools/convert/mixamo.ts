@@ -60,86 +60,26 @@ function shrink(
 }
 
 /** Bahan Phong Mixamo → MeshStandardMaterial (warna + normal sahaja). */
-function averageColor(texture: THREE.Texture): THREE.Color {
-  const image = texture.image as CanvasImageSource & { width: number; height: number };
-  const canvas = document.createElement("canvas");
-  canvas.width = image.width;
-  canvas.height = image.height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Konteks warna tekstur tidak tersedia");
-  ctx.drawImage(image, 0, 0);
-  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const linear = Array.from(
-    { length: 256 },
-    (_, i) =>
-      THREE.ColorManagement.convert(
-        new THREE.Color().setRGB(i / 255, 0, 0),
-        THREE.SRGBColorSpace,
-        THREE.LinearSRGBColorSpace,
-      ).r,
-  );
-  let r = 0,
-    g = 0,
-    b = 0,
-    sum = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    const a = data[i + 3];
-    r += linear[data[i]] * a;
-    g += linear[data[i + 1]] * a;
-    b += linear[data[i + 2]] * a;
-    sum += a;
-  }
-  return sum ? new THREE.Color(r / sum, g / sum, b / sum) : new THREE.Color(0xffffff);
-}
-
-// GLB menyimpan topeng alpha dalam saluran A baseColorTexture, bukan sebagai alphaMap berasingan.
-function alphaTexture(alphaMap: THREE.Texture): THREE.Texture {
-  const image = alphaMap.image as CanvasImageSource & { width: number; height: number };
-  const canvas = document.createElement("canvas");
-  canvas.width = image.width;
-  canvas.height = image.height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Konteks topeng alpha tidak tersedia");
-  ctx.drawImage(image, 0, 0);
-  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < pixels.data.length; i += 4) {
-    pixels.data[i + 3] = pixels.data[i + 1];
-    pixels.data.fill(255, i, i + 3);
-  }
-  ctx.putImageData(pixels, 0, 0);
-  const texture = alphaMap.clone();
-  texture.source = new THREE.Source(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.userData.mimeType = "image/png";
-  texture.needsUpdate = true;
-  return texture;
-}
-
-function toStandard(
-  m: THREE.Material,
-  maxSize: number,
-  shrunk: Map<THREE.Texture, THREE.Texture>,
-  flat: boolean,
-): THREE.Material {
+function toStandard(m: THREE.Material, maxSize: number, shrunk: Map<THREE.Texture, THREE.Texture>): THREE.Material {
   const p = m as THREE.MeshPhongMaterial;
-  const map = flat ? null : shrink(p.map ?? null, maxSize, shrunk);
+  const map = shrink(p.map ?? null, maxSize, shrunk);
   if (map) map.colorSpace = THREE.SRGBColorSpace;
-  return new THREE.MeshStandardMaterial({
+  const s = new THREE.MeshStandardMaterial({
     name: p.name,
-    color: p.map ? (flat ? averageColor(p.map) : 0xffffff) : (p.color ?? new THREE.Color(0xcccccc)),
+    color: p.map ? 0xffffff : (p.color ?? new THREE.Color(0xcccccc)),
     map,
-    normalMap: flat ? null : shrink(p.normalMap ?? null, maxSize, shrunk),
+    normalMap: shrink(p.normalMap ?? null, maxSize, shrunk),
+    // Rambut dan bulu mata: peta lutsinar dengan alphaTest (tiada isih lutsinar, murah untuk telefon).
     alphaMap: shrink(p.alphaMap ?? null, maxSize, shrunk),
-    alphaTest: p.alphaMap ? 0.45 : p.alphaTest,
-    roughness: flat ? 0.9 : 0.8,
-    flatShading: false,
+    alphaTest: p.alphaMap ? 0.45 : 0,
+    roughness: 0.8,
     metalness: 0,
     side: p.alphaMap ? THREE.DoubleSide : p.side,
   });
+  return s;
 }
 
-async function convert(character: string, outName: string, { flat }: { flat: boolean }) {
-  if (flat) outName = outName.replace(/\.glb$/, "-rata.glb");
+async function convert(character: string, outName: string): Promise<{ name: string; bytes: number; b64: string }> {
   log(`watak ${character}…`);
   const root = await load(character);
   root.animations = [];
@@ -173,7 +113,7 @@ async function convert(character: string, outName: string, { flat }: { flat: boo
   root.traverse((o) => {
     const mesh = o as THREE.SkinnedMesh;
     if (!mesh.isMesh) return;
-    const convertMaterial = (m: THREE.Material) => toStandard(m, maxSize, shrunk, flat);
+    const convertMaterial = (m: THREE.Material) => toStandard(m, maxSize, shrunk);
     mesh.material = Array.isArray(mesh.material) ? mesh.material.map(convertMaterial) : convertMaterial(mesh.material);
     if (mesh.isSkinnedMesh) skinned.push(mesh);
     else fixedTriangles += triangles(mesh.geometry);
@@ -217,23 +157,6 @@ async function convert(character: string, outName: string, { flat }: { flat: boo
     root.animations.push(clip);
     log(`  + ${name} (${clip.duration.toFixed(2)} s, ${clip.tracks.length} trek; ${clip.tracks[1]?.name})`);
   }
-  if (flat) {
-    const masks = new Map<THREE.Texture, THREE.Texture>();
-    root.traverse((o) => {
-      const mesh = o as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      for (const material of [mesh.material].flat() as THREE.MeshStandardMaterial[]) {
-        if (!material.alphaMap) continue;
-        let mask = masks.get(material.alphaMap);
-        if (!mask) {
-          mask = alphaTexture(material.alphaMap);
-          masks.set(material.alphaMap, mask);
-        }
-        material.map = mask;
-        material.alphaMap = null;
-      }
-    });
-  }
   const exporter = new GLTFExporter();
   const glb = (await exporter.parseAsync(root, {
     binary: true,
@@ -249,9 +172,13 @@ async function convert(character: string, outName: string, { flat }: { flat: boo
 
 declare global {
   interface Window {
-    __convert: typeof convert;
+    __convert: (jobs: [string, string][]) => Promise<{ name: string; bytes: number; b64: string }[]>;
   }
 }
 
-window.__convert = convert;
+window.__convert = async (jobs) => {
+  const out = [];
+  for (const [c, n] of jobs) out.push(await convert(c, n));
+  return out;
+};
 log("sedia");

@@ -28,7 +28,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Scene 3D: tanah, jalan, bangunan | Tested | Jalan dan bangunan Kenney; blok perumahan, kedai dan perabot jalan (Pelan 023) |
 | Karakter berjalan/berlari | Tested | Kaki di tanah (y = 0); arah ikut kamera; E2E `pergerakan.spec.ts` (Pelan 007). Model kurier bersendi dengan animasi langkah (Pelan 008a, dibina dengan kod) |
 | Optimasi watak Mixamo | Tested | Pelan 017: geometri berkulit dikurangkan, tekstur penerima dikecilkan dan penerima ditapis ikut paket aktif. Pose berjalan, menunggang dan penerima di pintu disemak dalam Chrome. |
-| Prototaip gaya watak (022a) | Tested | `asal` kekal lalai; `rata` dan `quaternius` boleh dibandingkan dalam dev. Menunggu pilihan pemilik sebelum 022b. Atlas badan penerima perempuan `rata` menghasilkan rupa hampir monokrom. Cat verteks Quaternius ada sempadan bergerigi dan tidak membentuk siluet kain labuh; tangan kurier tidak mencapai pemegang skuter. |
+| Gaya watak (022b) | Tested | Pemilik memilih `asal` (Mixamo bertekstur). Pilihan `rata` menjadikan penerima perempuan kelabu. Model `quaternius` berkadar adiwira dan tiada baju sebenar; tangan kurier tersasar 0.21–0.25 m daripada pemegang skuter selepas IK. |
 | Kamera orang ketiga | Tested | Pelan 019: jarak penuh semasa berjalan kaki; hanya bangunan atau rumah yang menghalang pandangan menjadi separa lutsinar. Disahkan di pintu Mak Minah dalam Chrome. Kamera motor dan serah terima kekal. |
 | Kawalan papan kekunci (WASD, E) | Tested | A/D ikut skrin (B25), disahkan di Chrome oleh E2E Pelan 007; stereng motor juga |
 | Kawalan sentuh (joystick, tindakan, BREK) | Tested | `1b88949`; telefon sebenar Redmi 9 (9b): joystick memandu, butang tindakan berfungsi; potret + landskap lulus selepas B18 (`97da0f4`) |
@@ -92,5 +92,5 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 
 ---
 
-**Kemas kini terakhir:** 2026-11-27 (Pelan 024: suasana malam dan hujan)
+**Kemas kini terakhir:** 2026-11-28 (Pelan 022b: gaya watak Mixamo asal)
 **Versi:** 0.0.0-alpha
