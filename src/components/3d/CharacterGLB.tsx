@@ -3,26 +3,24 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { CHARACTER_URL, type CharacterKey, RIG_BONES, characterUrl } from "./character-style";
 
-/**
- * Watak realistik Mixamo (ditukar ke GLB oleh tools/convert). Semua watak
- * berkongsi klip yang sama: idle, walk, run, carry, pickup, take, drive.
- */
-export const CHARACTER_URL = {
-  courier: "/models/mixamo/courier.glb",
-  receiverF: "/models/mixamo/receiver-f.glb",
-  receiverM: "/models/mixamo/receiver-m.glb",
-} as const;
-
-export type CharacterKey = keyof typeof CHARACTER_URL;
+export { CHARACTER_URL, type CharacterKey };
 
 /** Klip animasi. `carryWalk` dijana: kaki dari `walk`, badan/tangan dari `carry`. */
 export type Clip = "idle" | "walk" | "run" | "carry" | "carryWalk" | "pickup" | "take" | "drive";
 
 const TARGET_HEIGHT = 1.75;
 const FADE = 0.25;
-/** Tulang bahagian atas badan (nama Mixamo, tanpa awalan). */
-const UPPER = /(Spine|Neck|Head|Shoulder|Arm|Hand|Thumb|Index|Middle|Ring|Pinky)/;
+const UPPER =
+  /^(?:mixamorig\d*:?(?:Spine|Neck|Head|(?:Left|Right)(?:Shoulder|Arm|ForeArm|Hand))|spine_|neck_|Head$|(?:clavicle|upperarm|lowerarm|hand|thumb|index|middle|ring|pinky)_)/;
+
+function isHipsPosition(name: string): boolean {
+  return (
+    name === `${RIG_BONES.quaternius.hips}.position` ||
+    name.replace(/^mixamorig\d*:?/, "") === `${RIG_BONES.mixamo.hips}.position`
+  );
+}
 
 /**
  * Gabungkan dua klip: trek bahagian atas badan daripada `upper`, selebihnya
@@ -49,7 +47,7 @@ export function retargetClips(animations: THREE.AnimationClip[], keepHipsPositio
           new THREE.AnimationClip(
             a.name,
             a.duration,
-            a.tracks.filter((t) => !/Hips\.position$/.test(t.name)),
+            a.tracks.filter((t) => !isHipsPosition(t.name)),
           ),
       );
   const walk = clips.find((a) => a.name === "walk");
@@ -77,7 +75,7 @@ export function CharacterGLB({
   beforeAnimate?: () => void;
   afterAnimate?: (root: THREE.Object3D, dt: number) => void;
 }) {
-  const { scene, animations } = useGLTF(CHARACTER_URL[model]);
+  const { scene, animations } = useGLTF(characterUrl(model));
   const clips = useMemo(() => retargetClips(animations, model === "courier"), [animations, model]);
   const root = useRef<THREE.Group>(null);
   const instance = useMemo(() => {
@@ -129,4 +127,4 @@ export function CharacterGLB({
   );
 }
 
-for (const url of Object.values(CHARACTER_URL)) useGLTF.preload(url);
+for (const model of Object.keys(CHARACTER_URL) as CharacterKey[]) useGLTF.preload(characterUrl(model));

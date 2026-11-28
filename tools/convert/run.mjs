@@ -1,26 +1,40 @@
-// Alat dev: tukar FBX Mixamo dalam assets-src/ kepada GLB dalam public/models/mixamo/.
-// Guna: node tools/convert/run.mjs   (memerlukan pelayan Vite pada port 5190)
+// Guna: node tools/convert/run.mjs [asal|rata|quaternius] [alamat Vite]
 import { mkdirSync, writeFileSync } from "node:fs";
 import { chromium } from "@playwright/test";
 
-const JOBS = process.argv[2] ? [[process.argv[2], "debug.glb"]] : [
-  ["Remy.fbx", "courier.glb"],
-  ["Megan.fbx", "receiver-f.glb"],
-  ["James.fbx", "receiver-m.glb"],
+const [style = "asal", base = "http://localhost:5190"] = process.argv.slice(2);
+const jobs = [
+  ["Remy.fbx", "courier"],
+  ["Megan.fbx", "receiver-f"],
+  ["James.fbx", "receiver-m"],
 ];
-const OUT = "public/models/mixamo";
-
+if (!["asal", "rata", "quaternius"].includes(style)) throw new Error(`Gaya tidak sah: ${style}`);
+const quaternius = style === "quaternius";
+const out = `public/models/${quaternius ? "quaternius" : "mixamo"}`;
 const browser = await chromium.launch({ channel: "chrome" });
-const page = await browser.newPage();
-page.on("console", (m) => console.log("[pelayar]", m.text()));
-page.on("pageerror", (e) => console.log("[ralat]", e.message));
-await page.goto("http://localhost:5190/tools/convert/mixamo.html");
-await page.waitForFunction(() => typeof window.__convert === "function", null, { timeout: 60000 });
-const results = await page.evaluate((jobs) => window.__convert(jobs), JOBS);
-mkdirSync(OUT, { recursive: true });
-for (const r of results) {
-  writeFileSync(`${OUT}/${r.name}`, Buffer.from(r.b64, "base64"));
-  console.log(`${r.name}: ${(r.bytes / 1024).toFixed(0)} KB`);
+try {
+  const page = await browser.newPage();
+  page.on("console", (m) => console.log("[pelayar]", m.text()));
+  page.on("pageerror", (e) => console.log("[ralat]", e.message));
+  await page.goto(new URL("/tools/convert/mixamo.html", base).href);
+  await page.waitForFunction(() => typeof window.__convert === "function");
+  if (quaternius)
+    await page.evaluate(async () => {
+      await import("./quaternius.ts");
+    });
+  mkdirSync(out, { recursive: true });
+  for (const [file, name] of jobs) {
+    const r = await page.evaluate(
+      ({ file, name, style }) =>
+        style === "quaternius"
+          ? window.__convertQuaternius(name)
+          : window.__convert(file, `${name}.glb`, { flat: style === "rata" }),
+      { file, name, style },
+    );
+    writeFileSync(`${out}/${r.name}`, Buffer.from(r.b64, "base64"));
+    console.log(`${r.name}: ${r.bytes} bait`);
+  }
+  console.log(await page.textContent("#log"));
+} finally {
+  await browser.close();
 }
-console.log(await page.textContent("#log"));
-await browser.close();

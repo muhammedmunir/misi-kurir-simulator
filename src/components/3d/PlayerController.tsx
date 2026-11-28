@@ -15,6 +15,7 @@ import { Suspense } from "react";
 import { AdditiveBlending, Euler, type Group, MathUtils, Object3D, Quaternion, Vector3 } from "three";
 import { CharacterGLB } from "./CharacterGLB";
 import { ScooterGLB } from "./ScooterGLB";
+import { RIG_BONES } from "./character-style";
 import { courierClip } from "./courier-anim";
 import { RIDER_STEER_ANGLE, riderTargets, solveTwoBoneIK } from "./rider-ik";
 import { MOTOR_RADIUS, PLAYER_RADIUS, angleDelta, moveHeading, resolveCircle, worldColliders } from "./world-collision";
@@ -164,24 +165,28 @@ function pickRiderClip() {
 }
 
 function findRiderRig(root: Object3D) {
+  const { mixamo, quaternius } = RIG_BONES;
   const hips = root
     .getObjectsByProperty("type", "Bone")
-    .find((bone) => bone.name.endsWith("Hips") && bone.children.length > 1);
+    .find((bone) => bone.children.length > 1 && (bone.name === quaternius.hips || bone.name.endsWith(mixamo.hips)));
   if (!hips) return null;
-  const prefix = hips.name.slice(0, -"Hips".length);
-  // Sesetengah tulang ada anak pendua bernama sama; semak hierarki rantai sebenar.
-  const chain = (a: string, b: string, c: string) => {
-    const upper = hips.getObjectByName(prefix + a);
-    const lower = upper?.getObjectByName(prefix + b);
-    const end = lower?.getObjectByName(prefix + c);
+  const names = hips.name === quaternius.hips ? quaternius : mixamo;
+  const prefix = hips.name.slice(0, -names.hips.length);
+  // Sesetengah tulang Mixamo ada nama pendua; semak hierarki rantai sebenar.
+  type Role = keyof typeof names;
+  const bone = (parent: Object3D | undefined, role: Role) => parent?.getObjectByName(prefix + names[role]);
+  const chain = (a: Role, b: Role, c: Role) => {
+    const upper = bone(hips, a);
+    const lower = bone(upper, b);
+    const end = bone(lower, c);
     return upper && lower && end ? ([upper, lower, end] as const) : null;
   };
-  const leftArm = chain("LeftArm", "LeftForeArm", "LeftHand");
-  const rightArm = chain("RightArm", "RightForeArm", "RightHand");
-  const leftLeg = chain("LeftUpLeg", "LeftLeg", "LeftFoot");
-  const rightLeg = chain("RightUpLeg", "RightLeg", "RightFoot");
-  const spine = hips.getObjectByName(`${prefix}Spine`);
-  const spine1 = spine?.getObjectByName(`${prefix}Spine1`);
+  const leftArm = chain("leftArm", "leftForeArm", "leftHand");
+  const rightArm = chain("rightArm", "rightForeArm", "rightHand");
+  const leftLeg = chain("leftUpLeg", "leftLeg", "leftFoot");
+  const rightLeg = chain("rightUpLeg", "rightLeg", "rightFoot");
+  const spine = bone(hips, "spine");
+  const spine1 = bone(spine, "spine1");
   if (!leftArm || !rightArm || !leftLeg || !rightLeg || !spine || !spine1) return null;
   const baseRotations = [spine, spine1, ...leftArm, ...rightArm, ...leftLeg, ...rightLeg].map(
     (bone) => [bone, bone.quaternion.clone()] as const,
