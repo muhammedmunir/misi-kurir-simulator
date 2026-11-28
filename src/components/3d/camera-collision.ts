@@ -105,6 +105,16 @@ export function occluders(eye: P3, cam: P3, boxes: readonly Aabb[]): number[] {
   return hits;
 }
 
+/** Indeks kotak yang mengandungi titik `p` (kamera di dalam bangunan). */
+export function containing(p: P3, boxes: readonly Aabb[]): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < boxes.length; i++) {
+    const b = boxes[i];
+    if (p.x > b.minX && p.x < b.maxX && p.y > b.minY && p.y < b.maxY && p.z > b.minZ && p.z < b.maxZ) out.push(i);
+  }
+  return out;
+}
+
 /**
  * Klamp kedudukan kamera `desired` supaya kamera tidak masuk ke dalam
  * mana-mana kotak. Kamera diletak pada titik masuk terawal tolak padding

@@ -5,7 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useRef } from "react";
 import { PerspectiveCamera, Vector3 } from "three";
 import { playerState } from "./PlayerController";
-import { cameraObstacles, clampCamera, occluders } from "./camera-collision";
+import { cameraObstacles, clampCamera, containing, occluders } from "./camera-collision";
 import { setCameraOcclusion } from "./camera-occlusion";
 
 const CAMERA_HEIGHT_FOOT = 3;
@@ -84,7 +84,8 @@ export function CameraFollow() {
     const eye = { x: target.x, y: target.y + (isOnFoot ? 1 : 0.5), z: target.z };
     lookAt.current.set(eye.x, eye.y, eye.z);
     const cam = isOnFoot ? camPos.current : clampCamera(eye, camPos.current, OBSTACLES);
-    setCameraOcclusion(isOnFoot ? occluders(eye, cam, OBSTACLES) : undefined);
+    if (isOnFoot) setCameraOcclusion(occluders(eye, cam, OBSTACLES), containing(cam, OBSTACLES));
+    else setCameraOcclusion();
     state.camera.position.set(cam.x, cam.y, cam.z);
     state.camera.lookAt(eye.x, eye.y, eye.z);
 

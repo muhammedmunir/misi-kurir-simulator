@@ -8,7 +8,8 @@ Vertical slice mudah alih (Pelan 004 & 005).
 
 ### Ditambah
 - **Suasana malam dan hujan (Pelan 024):** lampu jalan menyinari asfalt, tingkap terpilih bercahaya dan lampu motor menyala pada malam atau ketika hujan. Langit bertukar warna pada senja dan subuh. Hujan menambah garisan titis, kabus yang lebih dekat, asfalt lebih gelap dan bunyi yang mengikut tetapan Bunyi. Pilihan Kurangkan Gerakan menyembunyikan garisan tanpa mengubah cuaca.
-- **Isi dunia (Pelan 023):** deretan rumah dengan jiran, pagar dan kereta diparkir; kedai berkanopi, tiang berwayar, lampu isyarat serta papan tanda jalan dalam Bahasa Melayu. Gudang pos mendapat dinding zink, pintu gulung dan van penghantaran tanpa mengubah ruang laluan.- **Kamera berjalan kaki (Pelan 019):** kamera mengekalkan jarak asal berhampiran dinding. Hanya bangunan atau rumah yang menghalang pandangan antara kamera dan kurier menjadi separa lutsinar. Kamera motor dan serah terima tidak berubah.
+- **Isi dunia (Pelan 023):** deretan rumah dengan jiran, pagar dan kereta diparkir; kedai berkanopi, tiang berwayar, lampu isyarat serta papan tanda jalan dalam Bahasa Melayu. Gudang pos mendapat dinding zink, pintu gulung dan van penghantaran tanpa mengubah ruang laluan.
+- **Kamera berjalan kaki (Pelan 019):** kamera mengekalkan jarak asal berhampiran dinding. Hanya bangunan atau rumah yang menghalang pandangan antara kamera dan kurier menjadi separa lutsinar. Kamera motor dan serah terima tidak berubah.
 - **Pilihan pelanggan (Pelan 018):** pelanggan boleh berada di rumah, tiada, diwakili jiran atau menolak paket. Titipan apabila penerima tiada mengurangkan ganjaran, dan ringkasan manifest memaparkan jumlah penolakan.
 - **Bangunan Kenney (Pelan 016):** model GLB menggantikan kotak bangunan dan rumah alamat; lot kosong ditumbuhi pokok.
 - **Kereta trafik (Pelan 015):** enam jenis kereta menggunakan model 3D Kenney Car Kit (CC0).
@@ -49,6 +50,7 @@ Vertical slice mudah alih (Pelan 004 & 005).
 - **Prestasi:** bangunan dan jalan dilukis dengan instancing (`2ad40f8`). Draw call di kedudukan mula turun daripada 265 ke 51–78 (desktop) dan daripada 127–145 ke 25–40 (emulasi Pixel 7); susun atur bandar tidak berubah.
 
 ### Dibaiki
+- **Semakan akhir Pelan 016–024:** wayar elektrik kini kabel nipis yang melendut antara tiang (model Kenney yang diregang 20 m menjadi gumpalan hitam). Lampu skuter hanya menyala ketika ditunggang, bukan semasa diparkir. Kamera berjalan kaki yang masuk ke dalam rumah kini menyorok rumah itu sepenuhnya, bukan menutup skrin dengan lapisan lutsinar.
 - **Dunia (B28, B29):** dinding hitam gergasi (Terrain yang tegak) dibuang, dan jalan utara–selatan yang berdiri tegak sebagai dinding kini rata. Separuh rangkaian jalan sebelum ini tidak wujud.
 - **Kamera motor (B27):** kamera kini dikemas kini selepas motor bergerak dalam setiap frame, dengan redaman yang tidak bergantung pada FPS. Ini mengurangkan gegaran semasa memandu (Pelan 007b).
 - **Pergerakan (B24–B26):** watak dan motor kini berdiri di atas jalan (tidak terapung); A/D dan joystick ikut arah skrin, termasuk stereng motor; watak dan motor tidak lagi tembus bangunan, rumah, dinding gudang, meja dan rak. Penunggang kelihatan di atas motor (Pelan 007).

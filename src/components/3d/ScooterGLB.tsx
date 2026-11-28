@@ -1,9 +1,11 @@
 import { useGameStateStore } from "@/store/gamestate";
 import { scooterLightingOn } from "@/world/daytime";
 import { useGLTF } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { RIDER_STEER_PIVOT_Z } from "./rider-ik";
+import { isScooterRidden } from "./scooter-ride";
 
 /**
  * Skuter elektrik penghantaran — "Low Poly Delivery Electric Scooter" oleh
@@ -54,9 +56,12 @@ export function ScooterGLB() {
     });
     return { model: wrap, lenses };
   }, [scene]);
-  useEffect(() => {
-    for (const lens of lenses) lens.emissiveIntensity = lightsOn ? 1.6 : 0;
-  }, [lenses, lightsOn]);
+  useFrame(() => {
+    const on = lightsOn && isScooterRidden();
+    const level = on ? 1.6 : 0;
+    if (lenses[0] && lenses[0].emissiveIntensity === level) return;
+    for (const lens of lenses) lens.emissiveIntensity = level;
+  });
   useEffect(
     () => () => {
       for (const lens of lenses) lens.dispose();

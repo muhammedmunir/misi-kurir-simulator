@@ -38,7 +38,6 @@ export function PlacementModels({ data }: { data: ReturnType<typeof batchPlaceme
       batch.placements.forEach((p, j) => {
         fitMatrix(models[i].box, p, matrix);
         if (model.endsWith("/detail-awning-wide")) matrix.elements[13] += 2.65;
-        if (model.endsWith("/electricity-wires")) matrix.elements[13] += 6.15;
         mesh.setMatrixAt(j, matrix);
       });
       mesh.instanceMatrix.needsUpdate = true;

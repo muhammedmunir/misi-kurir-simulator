@@ -12,12 +12,23 @@ import { isRaining, scooterLightingOn } from "@/world/daytime";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import { Suspense } from "react";
-import { AdditiveBlending, Euler, type Group, MathUtils, Object3D, Quaternion, Vector3 } from "three";
+import {
+  AdditiveBlending,
+  Euler,
+  type Group,
+  MathUtils,
+  type Mesh,
+  Object3D,
+  Quaternion,
+  type SpotLight,
+  Vector3,
+} from "three";
 import { CharacterGLB } from "./CharacterGLB";
 import { ScooterGLB } from "./ScooterGLB";
 import { RIG_BONES } from "./character-style";
 import { courierClip } from "./courier-anim";
 import { RIDER_STEER_ANGLE, riderTargets, solveTwoBoneIK } from "./rider-ik";
+import { setScooterRidden } from "./scooter-ride";
 import { MOTOR_RADIUS, PLAYER_RADIUS, angleDelta, moveHeading, resolveCircle, worldColliders } from "./world-collision";
 
 // ── Keyboard state ────────────────────────────────────────────────
@@ -220,7 +231,18 @@ export function motorContext(): MotorContext {
 }
 
 // ── Component ─────────────────────────────────────────────────────
+/** Lampu skuter hanya menyala ketika ditunggang (motor diparkir = lampu padam). */
+const HEADLIGHT_INTENSITY = 70;
+
 function ScooterLights() {
+  const spot = useRef<SpotLight>(null);
+  const cone = useRef<Mesh>(null);
+  // Intensiti 0 (bukan unmount/visible) supaya bilangan lampu adegan tetap — elak kompil semula shader.
+  useFrame(() => {
+    const on = !onFoot;
+    if (spot.current) spot.current.intensity = on ? HEADLIGHT_INTENSITY : 0;
+    if (cone.current) cone.current.visible = on;
+  });
   const [target] = useState(() => {
     const aim = new Object3D();
     aim.position.set(0, -0.25, 6.8);
@@ -231,17 +253,24 @@ function ScooterLights() {
     <group name="scooter-lights">
       <primitive object={target} />
       <spotLight
+        ref={spot}
         name="scooter-headlight"
         position={[0, 0.61, 0.84]}
         target={target}
         color="#ffe3b5"
-        intensity={70}
+        intensity={0}
         distance={24}
         angle={0.29}
         penumbra={0.78}
         castShadow={false}
       />
-      <mesh position={[0, 0.39, 2.24]} rotation={[-1.42, 0, 0]} userData={{ noShadow: true }}>
+      <mesh
+        ref={cone}
+        visible={false}
+        position={[0, 0.39, 2.24]}
+        rotation={[-1.42, 0, 0]}
+        userData={{ noShadow: true }}
+      >
         <coneGeometry args={[0.62, 2.85, 24, 1, true]} />
         <meshBasicMaterial color="#ffe3b5" transparent opacity={0.055} blending={AdditiveBlending} depthWrite={false} />
       </mesh>
@@ -467,6 +496,7 @@ export function PlayerController() {
     if (motorRef.current) {
       motorRef.current.position.set(motor.x, MOTOR_Y, motor.z);
       motorRef.current.rotation.set(0, motor.heading, onFoot ? 0 : motorLean);
+      setScooterRidden(!onFoot);
       const steering = motorRef.current.getObjectByName("scooter-steering");
       if (steering) steering.rotation.y = onFoot ? 0 : -motorSteer * RIDER_STEER_ANGLE;
     }

@@ -1,7 +1,8 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
-import { CanvasTexture, type InstancedMesh, Object3D, SRGBColorSpace } from "three";
+import { BufferAttribute, BufferGeometry, CanvasTexture, type InstancedMesh, Object3D, SRGBColorSpace } from "three";
 import { PlacementModels, batchPlacements } from "./PlacementModels";
 import { streetProps } from "./city-blocks";
+import { powerLineSegments } from "./power-lines";
 
 const props = streetProps();
 const data = batchPlacements(props);
@@ -56,10 +57,30 @@ function StreetName({ text, parity }: { text: string; parity: number }) {
   );
 }
 
+/** Kabel elektrik melendut antara tiang (satu draw call; pengganti model wayar Kenney yang diregang). */
+function PowerLines() {
+  const geometry = useMemo(() => {
+    const g = new BufferGeometry();
+    g.setAttribute(
+      "position",
+      new BufferAttribute(powerLineSegments(props.filter((p) => p.model.endsWith("/electricity-pole"))), 3),
+    );
+    g.computeBoundingSphere();
+    return g;
+  }, []);
+  useLayoutEffect(() => () => geometry.dispose(), [geometry]);
+  return (
+    <lineSegments name="power-lines" geometry={geometry} userData={{ noShadow: true }}>
+      <lineBasicMaterial color="#1f2328" />
+    </lineSegments>
+  );
+}
+
 export function StreetProps() {
   return (
     <>
       <PlacementModels data={data} />
+      <PowerLines />
       <StreetName text="Jalan Mawar 3" parity={0} />
       <StreetName text="Lorong Cempaka" parity={1} />
     </>

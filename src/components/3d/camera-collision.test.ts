@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Aabb, cameraObstacles, clampCamera, occluders } from "./camera-collision";
+import { type Aabb, cameraObstacles, clampCamera, containing, occluders } from "./camera-collision";
 
 const eye = { x: 0, y: 1, z: 0 };
 const cam = { x: 0, y: 3, z: -8 };
@@ -35,5 +35,13 @@ describe("occluders", () => {
     expect(house).toBeGreaterThanOrEqual(0);
     expect(occluders(door, desired, obstacles)).toEqual([house]);
     expect(clampCamera(door, desired, obstacles).z).toBeGreaterThan(27);
+  });
+});
+
+describe("containing — kamera di dalam bangunan", () => {
+  const b = { minX: 0, minY: 0, minZ: 0, maxX: 4, maxY: 3, maxZ: 4 };
+  it("memulangkan kotak yang mengandungi titik sahaja", () => {
+    expect(containing({ x: 2, y: 1, z: 2 }, [b, { ...b, minX: 10, maxX: 12 }])).toEqual([0]);
+    expect(containing({ x: 2, y: 5, z: 2 }, [b])).toEqual([]);
   });
 });

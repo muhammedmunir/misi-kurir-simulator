@@ -154,7 +154,6 @@ export function streetProps(): Placement[] {
       for (const offset of [10, 30]) {
         const z = line + offset;
         props.push(prop(`${ROADS}/electricity-pole`, road + 7.2, z, 1.6, 7, 0.45));
-        if (z < 150) props.push(prop(`${ROADS}/electricity-wires`, road + 7.2, z + 10, 1.1, 0.8, 20));
       }
     }
   }

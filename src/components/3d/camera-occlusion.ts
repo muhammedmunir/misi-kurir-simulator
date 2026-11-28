@@ -4,13 +4,25 @@ import type { MergedModel } from "./merged-model";
 
 const NO_OCCLUSION: readonly number[] = [];
 let active = NO_OCCLUSION;
-const listeners = new Set<(hits: ReadonlySet<number>) => void>();
+let activeHidden = NO_OCCLUSION;
+const listeners = new Set<(hits: ReadonlySet<number>, hidden: ReadonlySet<number>) => void>();
+const same = (a: readonly number[], b: readonly number[]) => a.length === b.length && a.every((id, i) => id === b[i]);
 
-export function setCameraOcclusion(indices: readonly number[] = NO_OCCLUSION) {
-  if (indices.length === active.length && indices.every((id, i) => id === active[i])) return;
+/**
+ * `indices`: halangan di antara mata dan kamera → dilukis lutsinar.
+ * `hidden`: halangan yang MENGANDUNGI kamera → tidak dilukis langsung (lutsinar dari dalam
+ * menjadi kabus hijau-kelabu yang menutup skrin).
+ */
+export function setCameraOcclusion(
+  indices: readonly number[] = NO_OCCLUSION,
+  hidden: readonly number[] = NO_OCCLUSION,
+) {
+  if (same(indices, active) && same(hidden, activeHidden)) return;
   active = indices;
+  activeHidden = hidden;
   const hits = new Set(indices);
-  for (const listener of listeners) listener(hits);
+  const gone = new Set(hidden);
+  for (const listener of listeners) listener(hits, gone);
 }
 
 /** Kongsi geometri kelompok legap; kelompok lutsinar hanya dilukis jika mempunyai instance. */
@@ -41,15 +53,16 @@ export function useOccludedInstances(
       translucent.count = 0;
       opaque.add(translucent);
 
-      let previous: number[] = [];
-      const update = (hits: ReadonlySet<number>) => {
-        const hidden = indices.filter((id) => hits.has(id));
-        if (hidden.length === previous.length && hidden.every((id, j) => id === previous[j])) return;
-        previous = hidden;
+      let previous = "";
+      const update = (hits: ReadonlySet<number>, gone: ReadonlySet<number>) => {
+        const key = indices.map((id) => (gone.has(id) ? "x" : hits.has(id) ? "g" : "o")).join("");
+        if (key === previous) return;
+        previous = key;
 
         let solidCount = 0;
         let glassCount = 0;
         matrices.forEach((matrix, j) => {
+          if (gone.has(indices[j])) return;
           if (hits.has(indices[j])) translucent.setMatrixAt(glassCount++, matrix);
           else opaque.setMatrixAt(solidCount++, matrix);
         });
@@ -60,9 +73,9 @@ export function useOccludedInstances(
         if (glassCount > 0) translucent.instanceMatrix.needsUpdate = true;
       };
       listeners.add(update);
-      update(new Set(active));
+      update(new Set(active), new Set(activeHidden));
       return () => {
-        update(new Set());
+        update(new Set(), new Set());
         listeners.delete(update);
         opaque.remove(translucent);
         translucent.dispose();
