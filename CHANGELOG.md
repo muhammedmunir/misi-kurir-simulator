@@ -7,6 +7,11 @@ Semua perubahan penting dicatat di sini. Format: [Keep a Changelog 1.1.0](https:
 Vertical slice mudah alih (Pelan 004 & 005).
 
 ### Ditambah
+- **Suasana malam dan hujan (Pelan 024):** lampu jalan menyinari asfalt, tingkap terpilih bercahaya dan lampu motor menyala pada malam atau ketika hujan. Langit bertukar warna pada senja dan subuh. Hujan menambah garisan titis, kabus yang lebih dekat, asfalt lebih gelap dan bunyi yang mengikut tetapan Bunyi. Pilihan Kurangkan Gerakan menyembunyikan garisan tanpa mengubah cuaca.
+- **Isi dunia (Pelan 023):** deretan rumah dengan jiran, pagar dan kereta diparkir; kedai berkanopi, tiang berwayar, lampu isyarat serta papan tanda jalan dalam Bahasa Melayu. Gudang pos mendapat dinding zink, pintu gulung dan van penghantaran tanpa mengubah ruang laluan.
+- **Kamera berjalan kaki (Pelan 019):** kamera mengekalkan jarak asal berhampiran dinding. Hanya bangunan atau rumah yang menghalang pandangan antara kamera dan kurier menjadi separa lutsinar. Kamera motor dan serah terima tidak berubah.
+- **Pilihan pelanggan (Pelan 018):** pelanggan boleh berada di rumah, tiada, diwakili jiran atau menolak paket. Titipan apabila penerima tiada mengurangkan ganjaran, dan ringkasan manifest memaparkan jumlah penolakan.
+- **Bangunan Kenney (Pelan 016):** model GLB menggantikan kotak bangunan dan rumah alamat; lot kosong ditumbuhi pokok.
 - **Kereta trafik (Pelan 015):** enam jenis kereta menggunakan model 3D Kenney Car Kit (CC0).
 - **Trafik pintar (Pelan 014):** kereta berhenti di garis berhenti setiap simpang, tidak merempuh kereta di hadapan, dan berhenti bila pemain berada di hadapannya dalam lorong.
 - **Watak realistik dan skuter sebenar (Pelan 012c):** kurier dan penerima kini manusia realistik (Mixamo) dengan animasi berjalan, berlari, memegang dan membawa kotak, mengambil barang dan menunggang. Motor ialah skuter elektrik penghantaran (Sketchfab, CC BY 4.0) dengan kotak penghantaran di rak. Kredit dalam Tetapan.
@@ -36,12 +41,16 @@ Vertical slice mudah alih (Pelan 004 & 005).
 - **Dokumen:** `THIRD_PARTY_NOTICES.md`, `QA_REPORT.md` dan `CHANGELOG.md`.
 
 ### Diubah
+- **Gaya watak (Pelan 022b):** pemilik memilih `asal`, iaitu Mixamo bertekstur. Pilihan `rata` menjadikan penerima perempuan kelabu. Model `quaternius` berkadar adiwira dan tiada baju sebenar; tangan kurier tersasar 0.21–0.25 m daripada pemegang skuter selepas IK. Kod perbandingan dan kredit prototaip dibuang.
+- **Postur skuter (Pelan 021):** penunggang membengkokkan siku dan lutut secara analitik supaya tangan mengikut pemegang yang berpusing dan kaki kekal di lantai skuter. Badan condong ke hadapan dan mengimbangi sedikit condongan skuter ketika membelok.
+- **Watak lebih ringan (Pelan 017):** model Mixamo dihadkan kepada 12,000 segi tiga setiap watak; penerima bertekstur sehingga 512 px hanya muncul berhampiran alamat dengan paket aktif.
 - Latar Malaysia: mata wang RM dan teks BM (TPD-016), termasuk huraian manifest PWA.
 - Manifest tidak lagi ditutup secara automatik di alamat terakhir. Pemain mesti kembali ke gudang (master prompt H.10).
 - **Prestasi telefon:** kesan Bloom dan pakej `@react-three/postprocessing` dibuang (~5 FPS pada Redmi 9).
 - **Prestasi:** bangunan dan jalan dilukis dengan instancing (`2ad40f8`). Draw call di kedudukan mula turun daripada 265 ke 51–78 (desktop) dan daripada 127–145 ke 25–40 (emulasi Pixel 7); susun atur bandar tidak berubah.
 
 ### Dibaiki
+- **Semakan akhir Pelan 016–024:** wayar elektrik kini kabel nipis yang melendut antara tiang (model Kenney yang diregang 20 m menjadi gumpalan hitam). Lampu skuter hanya menyala ketika ditunggang, bukan semasa diparkir. Kamera berjalan kaki yang masuk ke dalam rumah kini menyorok rumah itu sepenuhnya, bukan menutup skrin dengan lapisan lutsinar.
 - **Dunia (B28, B29):** dinding hitam gergasi (Terrain yang tegak) dibuang, dan jalan utara–selatan yang berdiri tegak sebagai dinding kini rata. Separuh rangkaian jalan sebelum ini tidak wujud.
 - **Kamera motor (B27):** kamera kini dikemas kini selepas motor bergerak dalam setiap frame, dengan redaman yang tidak bergantung pada FPS. Ini mengurangkan gegaran semasa memandu (Pelan 007b).
 - **Pergerakan (B24–B26):** watak dan motor kini berdiri di atas jalan (tidak terapung); A/D dan joystick ikut arah skrin, termasuk stereng motor; watak dan motor tidak lagi tembus bangunan, rumah, dinding gudang, meja dan rak. Penunggang kelihatan di atas motor (Pelan 007).

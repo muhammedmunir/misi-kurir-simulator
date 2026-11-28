@@ -6,6 +6,7 @@
 import { getWorldState, playerState, restoreWorld } from "@/components/3d/PlayerController";
 import playerSrc from "@/components/3d/PlayerController.tsx?raw";
 import { cameraObstacles } from "@/components/3d/camera-collision";
+import { blockPlacements } from "@/components/3d/city-blocks";
 import {
   MOTOR_RADIUS,
   PLAYER_RADIUS,
@@ -73,7 +74,10 @@ describe("worldColliders", () => {
   const all = worldColliders();
 
   it("meliputi setiap bangunan dan rumah (kotak kamera) serta gudang", () => {
-    expect(all.length).toBe(cameraObstacles().length + warehouseColliders().length);
+    // Pelan 023 (dikemas kini oleh perancang): placement pejal rendah (< 2 m: pagar, kereta, dumpster) menyekat
+    // pergerakan tetapi bukan kamera; placement pejal tinggi sudah dikira dalam cameraObstacles().
+    const low = blockPlacements().filter((p) => p.solid && p.h < 2).length;
+    expect(all.length).toBe(cameraObstacles().length + warehouseColliders().length + low);
     for (const b of cameraObstacles()) {
       expect(all).toContainEqual({ minX: b.minX, maxX: b.maxX, minZ: b.minZ, maxZ: b.maxZ });
     }

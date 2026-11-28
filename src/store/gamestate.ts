@@ -1,6 +1,7 @@
 import { STARTING_MONEY, VEHICLE_PRICES } from "@/data/economy";
 import { generateId } from "@/lib/utils";
 import type { Delivery, GameSettings, Manifest, Player, Vehicle } from "@/types/game";
+import { START_MINUTES } from "@/world/daytime";
 import { create } from "zustand";
 
 // ─── Default / factory ────────────────────────────────────────────
@@ -28,6 +29,7 @@ export function createPlayer(name = "Pelanggan"): Player {
 
 export function createSettings(): GameSettings {
   return {
+    rainMode: "auto",
     soundEnabled: true,
     musicVolume: 0.7,
     sfxVolume: 0.8,
@@ -163,6 +165,8 @@ interface GameState {
   activeManifest: Manifest | null;
   activeDelivery: Delivery | null;
   settings: GameSettings;
+  worldMinutes: number;
+  rainModeOverride: GameSettings["rainMode"] | null;
   isNewGame: boolean;
 
   // Player actions
@@ -186,6 +190,8 @@ interface GameState {
   // Settings
   updateSetting: <K extends keyof GameSettings>(key: K, value: GameSettings[K]) => void;
 
+  setRainMode: (mode: GameSettings["rainMode"]) => void;
+
   // Reset
   resetGame: () => void;
 }
@@ -196,17 +202,20 @@ export const useGameStateStore = create<GameState>((set) => ({
   activeManifest: null,
   activeDelivery: null,
   settings: createSettings(),
+  worldMinutes: START_MINUTES,
+  rainModeOverride: null,
   isNewGame: true,
 
   createNewGame: (name: string) => {
-    set({
+    set((state) => ({
       player: createPlayer(name),
       vehicles: DEFAULT_VEHICLES.map((v) => ({ ...v, id: generateId() })),
       activeManifest: null,
       activeDelivery: null,
-      settings: createSettings(),
+      settings: { ...createSettings(), rainMode: state.settings.rainMode },
+      worldMinutes: START_MINUTES,
       isNewGame: false,
-    });
+    }));
   },
 
   updatePlayer: (updater) => {
@@ -346,6 +355,10 @@ export const useGameStateStore = create<GameState>((set) => ({
     set((state) => ({ settings: { ...state.settings, [key]: value } }));
   },
 
+  setRainMode: (mode) => {
+    set((state) => ({ settings: { ...state.settings, rainMode: mode }, rainModeOverride: mode }));
+  },
+
   resetGame: () => {
     set({
       player: null,
@@ -353,6 +366,8 @@ export const useGameStateStore = create<GameState>((set) => ({
       activeManifest: null,
       activeDelivery: null,
       settings: createSettings(),
+      worldMinutes: START_MINUTES,
+      rainModeOverride: null,
       isNewGame: true,
     });
   },

@@ -1,6 +1,7 @@
 import type { GameSettings, Player } from "@/types/game";
 import { Scene } from "@/types/scene";
 import { create } from "zustand";
+import { createSettings } from "./gamestate";
 
 interface SceneManagerState {
   currentScene: Scene;
@@ -42,21 +43,6 @@ interface GameState {
 }
 
 export const useGameStore = create<GameState>((set) => ({
-  settings: {
-    soundEnabled: true,
-    musicVolume: 0.7,
-    sfxVolume: 0.8,
-    ambientVolume: 0.5,
-    graphicsPreset: "medium",
-    shadowQuality: "medium",
-    textureQuality: "medium",
-    drawDistance: 200,
-    trafficDensity: 0.5,
-    fontScale: 1,
-    colorblindMode: false,
-    highContrast: false,
-    reducedMotion: false,
-    telemetryEnabled: true,
-  },
+  settings: createSettings(),
   updateSetting: (key, value) => set((state) => ({ settings: { ...state.settings, [key]: value } })),
 }));

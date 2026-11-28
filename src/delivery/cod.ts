@@ -1,3 +1,4 @@
+import { canCollectCustomerCod } from "@/delivery/customer";
 import { formatRinggit } from "@/lib/utils";
 import type { DeliverySession } from "@/types/delivery";
 import type { Packet } from "@/types/game";
@@ -38,7 +39,7 @@ export function codChangeOptions(amount: number): number[] {
  */
 export function collectCod(session: DeliverySession, change: number, now: number): DeliverySession {
   const h = session.handover;
-  if (!h || h.codCollected) return session;
+  if (!h || h.codCollected || !canCollectCustomerCod(h.mood)) return session;
   const packet = session.cargo.find((p) => p.id === h.packetId);
   if (!packet || packet.paymentMethod !== "cod") return session;
 
@@ -58,9 +59,13 @@ export function collectCod(session: DeliverySession, change: number, now: number
   };
 }
 
-/** Jumlah tunai COD yang disetor: Σ codAmount bagi paket delivered + COD. */
+/** Jumlah tunai COD yang disetor, tidak termasuk paket yang dititip tanpa kutipan. */
 export function codCollectedTotal(cargo: readonly Packet[]): number {
   return sen(
-    cargo.reduce((sum, p) => (p.paymentMethod === "cod" && p.status === "delivered" ? sum + p.codAmount : sum), 0),
+    cargo.reduce(
+      (sum, p) =>
+        p.paymentMethod === "cod" && p.status === "delivered" && p.codCollected !== false ? sum + p.codAmount : sum,
+      0,
+    ),
   );
 }

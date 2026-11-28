@@ -32,7 +32,9 @@ describe("interact di alamat — mesti berjalan kaki, buka serah terima", () => 
     expect(result.action).toBe("open_handover");
     expect(interactBlocksMotorSwap(result.action)).toBe(true);
     const packet = s.cargo[0];
-    expect(session.handover).toEqual({ packetId: packet.id, zoneId: SHOP.id, proofTaken: false });
+    // Pelan 018 (dikemas kini oleh perancang): mood pelanggan digulung semasa dibuka; rng 0.5 → "home".
+    // Medan tambahan Pelan 018 (cth. neighbourAvailable) dibenarkan.
+    expect(session.handover).toMatchObject({ packetId: packet.id, zoneId: SHOP.id, proofTaken: false, mood: "home" });
     expect(statusOf(session, SHOP)).toBe("out_for_delivery");
   });
 

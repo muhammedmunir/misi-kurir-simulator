@@ -1,3 +1,4 @@
+import { type CustomerMood, rollCustomer } from "@/delivery/customer";
 import { returnFailedPackets } from "@/delivery/handover";
 import type { CargoLimits } from "@/delivery/manifest";
 import type { DeliveryAction, DeliveryHandover, DeliveryResult, DeliverySession, DeliveryZone } from "@/types/delivery";
@@ -151,7 +152,7 @@ export function interact(
   zone: DeliveryZone | null,
   now: number,
   deps: Deps,
-  ctx?: { onFoot: boolean },
+  ctx?: { onFoot: boolean; nextCustomer?: CustomerMood },
 ): { result: DeliveryResult; session: DeliverySession } {
   // Default: no context = onFoot is false (not inferred from zone type).
   const flag = ctx?.onFoot ?? false;
@@ -211,8 +212,18 @@ export function interact(
     return say(session, "nothing", "Ambil paket dari motor dahulu", now);
   }
 
-  // Open handover workflow
-  const handover: DeliveryHandover = { packetId: packet.id, zoneId: zone.id, proofTaken: false };
+  if (session.handover?.packetId === packet.id) {
+    return { result: { action: "blocked", message: "Serah terima sedang berlangsung" }, session };
+  }
+
+  const mood = zone.receiverHome === false ? "absent" : (ctx?.nextCustomer ?? rollCustomer(deps.rng, zone));
+  const handover: DeliveryHandover = {
+    packetId: packet.id,
+    zoneId: zone.id,
+    proofTaken: false,
+    mood,
+    ...(mood === "absent" && { neighbourAvailable: deps.rng() < 0.5 }),
+  };
   return {
     result: { action: "open_handover", message: "Serah terima dibuka" },
     session: {

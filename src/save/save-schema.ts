@@ -6,6 +6,8 @@ import { useGameStateStore } from "@/store/gamestate";
 import type { DeliverySession } from "@/types/delivery";
 import type { GameSettings, Manifest, Packet, PacketStatus, Player, Vehicle } from "@/types/game";
 
+import { MINUTES_PER_DAY, START_MINUTES } from "@/world/daytime";
+
 export const SAVE_VERSION = 1;
 
 /** Subset of DeliverySession that is persisted. */
@@ -17,6 +19,7 @@ export type PersistedSession = Pick<
 export interface SaveV1 {
   version: 1;
   savedAt: number;
+  worldMinutes: number;
   player: Player;
   vehicles: Vehicle[];
   settings: GameSettings;
@@ -49,6 +52,7 @@ export function buildSave(now: number): SaveV1 {
   return {
     version: SAVE_VERSION,
     savedAt: now,
+    worldMinutes: gameState.worldMinutes,
     player: gameState.player,
     vehicles: gameState.vehicles,
     settings: gameState.settings,
@@ -191,5 +195,14 @@ export function validateSave(raw: unknown): { ok: true; save: SaveV1 } | { ok: f
   if (!isArray(raw.vehicles)) return { ok: false, error: "Kenderaan tidak sah" };
   if (!isObject(raw.settings)) return { ok: false, error: "Tetapan tidak sah" };
 
-  return { ok: true, save: raw as unknown as SaveV1 };
+  const worldMinutes = raw.worldMinutes === undefined ? START_MINUTES : raw.worldMinutes;
+  if (!isFiniteNumber(worldMinutes) || worldMinutes < 0 || worldMinutes >= MINUTES_PER_DAY) {
+    return { ok: false, error: "Masa permainan tidak sah" };
+  }
+  const rainMode = raw.settings.rainMode === undefined ? "auto" : raw.settings.rainMode;
+  if (rainMode !== "auto" && rainMode !== "on" && rainMode !== "off") {
+    return { ok: false, error: "Pilihan hujan tidak sah" };
+  }
+  const save = raw as unknown as SaveV1;
+  return { ok: true, save: { ...save, worldMinutes, settings: { ...save.settings, rainMode } } };
 }

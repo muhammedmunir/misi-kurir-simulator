@@ -4,6 +4,8 @@
  * Pic dan kelantangan mengikut laju dan pendikit.
  */
 
+import { createRainSound } from "./rain-sound";
+
 /** Pic (Hz) bagi nisbah laju 0…1: melahu 38 Hz hingga 150 Hz. */
 export function enginePitch(speedRatio: number, throttle: number): number {
   const r = Math.max(0, Math.min(1, speedRatio));
@@ -18,7 +20,7 @@ export function engineGain(speedRatio: number, throttle: number): number {
 
 export interface EngineSound {
   /** Kemas kini setiap frame. `running` false = senyap (berjalan kaki atau bunyi dimatikan). */
-  update(running: boolean, speedRatio: number, throttle: number): void;
+  update(running: boolean, speedRatio: number, throttle: number, raining: boolean): void;
   dispose(): void;
 }
 
@@ -30,6 +32,7 @@ export function createEngineSound(): EngineSound | null {
   if (!Ctor) return null;
 
   const ctx = new Ctor();
+  const rain = createRainSound(ctx);
   const out = ctx.createGain();
   out.gain.value = 0;
   const filter = ctx.createBiquadFilter();
@@ -49,9 +52,10 @@ export function createEngineSound(): EngineSound | null {
   sub.start();
 
   return {
-    update(running, speedRatio, throttle) {
+    update(running, speedRatio, throttle, raining) {
       // Pelayar menahan audio sehingga ada gerak isyarat pengguna; cuba sambung semula.
-      if (running && ctx.state === "suspended") void ctx.resume();
+      if ((running || raining) && ctx.state === "suspended") void ctx.resume();
+      rain.update(raining);
       const t = ctx.currentTime;
       const hz = enginePitch(speedRatio, throttle);
       base.frequency.setTargetAtTime(hz, t, 0.08);
@@ -60,6 +64,7 @@ export function createEngineSound(): EngineSound | null {
       out.gain.setTargetAtTime(running ? engineGain(speedRatio, throttle) : 0, t, 0.15);
     },
     dispose() {
+      rain.dispose();
       base.stop();
       sub.stop();
       void ctx.close();

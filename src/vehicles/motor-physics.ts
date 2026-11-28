@@ -46,18 +46,19 @@ const approach = (cur: number, target: number, rate: number, dt: number) =>
   cur + (target - cur) * (1 - Math.exp(-rate * dt));
 
 /** Satu langkah fizik. Tidak mengubah `s`; memulangkan keadaan baharu. */
-export function stepMotor(s: MotorPhysState, input: MotorInput, dt: number): MotorPhysState {
+export function stepMotor(s: MotorPhysState, input: MotorInput, dt: number, raining = false): MotorPhysState {
   const P = MOTOR_PHYS;
+  const brakeFactor = raining ? 0.8 : 1;
   let speed = s.speed;
 
   // ── Laju ──
   if (input.handBrake) {
-    speed = towardZero(speed, P.handBrake * dt);
+    speed = towardZero(speed, P.handBrake * brakeFactor * dt);
   } else if (input.throttle > 0.15) {
-    if (speed < 0) speed = towardZero(speed, P.brake * dt);
+    if (speed < 0) speed = towardZero(speed, P.brake * brakeFactor * dt);
     else speed += P.accel * input.throttle * (1 - (speed / P.maxSpeed) ** 2) * dt;
   } else if (input.throttle < -0.15) {
-    if (speed > 0.3) speed = towardZero(speed, P.brake * -input.throttle * dt);
+    if (speed > 0.3) speed = towardZero(speed, P.brake * brakeFactor * -input.throttle * dt);
     else speed -= P.reverseAccel * -input.throttle * dt;
   } else {
     speed = towardZero(speed, (P.rollDrag + P.airDrag * speed * speed) * dt);
@@ -70,7 +71,7 @@ export function stepMotor(s: MotorPhysState, input: MotorInput, dt: number): Mot
   // ── Belok: perlahan pada laju rendah, stabil pada laju tinggi; undur membalikkan arah ──
   const abs = Math.abs(speed);
   const turn = P.turnRate * Math.min(abs / P.turnFullAt, 1) * (1 - P.turnHighSpeedLoss * Math.min(abs / P.maxSpeed, 1));
-  const heading = s.heading - steer * Math.sign(speed) * turn * dt;
+  const heading = s.heading - steer * Math.sign(speed) * turn * (raining ? 0.85 : 1) * dt;
 
   // ── Condong ke arah belokan, lebih banyak bila laju ──
   const leanTarget = speed > 0.5 ? steer * P.maxLean * Math.min(abs / (P.maxSpeed * 0.6), 1) : 0;

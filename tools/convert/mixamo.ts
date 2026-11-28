@@ -2,13 +2,15 @@
  * Alat dev (bukan sebahagian permainan): tukar watak dan animasi Mixamo (FBX)
  * kepada GLB untuk three.js. Dijalankan dalam pelayar oleh tools/convert/run.mjs.
  *
- * - Watak: FBX "With Skin". Tekstur dikecilkan ke ≤ 1024 px (telefon).
+ * - Watak: FBX "With Skin". Tekstur kurier ≤ 1024 px, penerima ≤ 512 px.
  * - Animasi: FBX "Without Skin"; klip dinamakan semula dan digabungkan ke watak.
  * - Output: satu GLB setiap watak, dengan semua klip permainan.
  */
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
+
+import { simplifySkinned } from "./simplify-skinned";
 
 const log = (m: string) => {
   const el = document.getElementById("log");
@@ -25,14 +27,16 @@ const CLIPS: Record<string, string> = {
   take: "Taking Item.fbx",
   drive: "Driving.fbx",
 };
-const MAX_TEX = 1024;
+const MAX_TRIANGLES = 12000;
 
 const loader = new FBXLoader();
 const load = (file: string) => loader.loadAsync(SRC + encodeURIComponent(file));
 
-const shrunk = new Map<THREE.Texture, THREE.Texture>();
-
-function shrink(tex: THREE.Texture | null): THREE.Texture | null {
+function shrink(
+  tex: THREE.Texture | null,
+  maxSize: number,
+  shrunk: Map<THREE.Texture, THREE.Texture>,
+): THREE.Texture | null {
   if (!tex?.image) return tex;
   const hit = shrunk.get(tex);
   if (hit) return hit;
@@ -40,7 +44,7 @@ function shrink(tex: THREE.Texture | null): THREE.Texture | null {
   const w = (img as HTMLImageElement).naturalWidth || img.width;
   const h = (img as HTMLImageElement).naturalHeight || img.height;
   if (!w || !h) return tex;
-  const k = Math.min(1, MAX_TEX / Math.max(w, h));
+  const k = Math.min(1, maxSize / Math.max(w, h));
   const c = document.createElement("canvas");
   c.width = Math.max(1, Math.round(w * k));
   c.height = Math.max(1, Math.round(h * k));
@@ -56,17 +60,17 @@ function shrink(tex: THREE.Texture | null): THREE.Texture | null {
 }
 
 /** Bahan Phong Mixamo → MeshStandardMaterial (warna + normal sahaja). */
-function toStandard(m: THREE.Material): THREE.Material {
+function toStandard(m: THREE.Material, maxSize: number, shrunk: Map<THREE.Texture, THREE.Texture>): THREE.Material {
   const p = m as THREE.MeshPhongMaterial;
-  const map = shrink(p.map ?? null);
+  const map = shrink(p.map ?? null, maxSize, shrunk);
   if (map) map.colorSpace = THREE.SRGBColorSpace;
   const s = new THREE.MeshStandardMaterial({
     name: p.name,
     color: p.map ? 0xffffff : (p.color ?? new THREE.Color(0xcccccc)),
     map,
-    normalMap: shrink(p.normalMap ?? null),
+    normalMap: shrink(p.normalMap ?? null, maxSize, shrunk),
     // Rambut dan bulu mata: peta lutsinar dengan alphaTest (tiada isih lutsinar, murah untuk telefon).
-    alphaMap: shrink(p.alphaMap ?? null),
+    alphaMap: shrink(p.alphaMap ?? null, maxSize, shrunk),
     alphaTest: p.alphaMap ? 0.45 : 0,
     roughness: 0.8,
     metalness: 0,
@@ -101,11 +105,27 @@ async function convert(character: string, outName: string): Promise<{ name: stri
   root.traverse((o) => {
     o.name = THREE.PropertyBinding.sanitizeNodeName(o.name);
   });
+  const maxSize = outName.startsWith("receiver-") ? 512 : 1024;
+  const shrunk = new Map<THREE.Texture, THREE.Texture>();
+  const skinned: THREE.SkinnedMesh[] = [];
+  const triangles = (g: THREE.BufferGeometry) => (g.getIndex()?.count ?? g.getAttribute("position").count) / 3;
+  let fixedTriangles = 0;
   root.traverse((o) => {
     const mesh = o as THREE.SkinnedMesh;
     if (!mesh.isMesh) return;
-    mesh.material = Array.isArray(mesh.material) ? mesh.material.map(toStandard) : toStandard(mesh.material);
+    const convertMaterial = (m: THREE.Material) => toStandard(m, maxSize, shrunk);
+    mesh.material = Array.isArray(mesh.material) ? mesh.material.map(convertMaterial) : convertMaterial(mesh.material);
+    if (mesh.isSkinnedMesh) skinned.push(mesh);
+    else fixedTriangles += triangles(mesh.geometry);
   });
+  const originalTriangles = skinned.reduce((sum, mesh) => sum + triangles(mesh.geometry), 0);
+  const ratio = Math.min(1, (MAX_TRIANGLES - fixedTriangles) / originalTriangles);
+  for (const mesh of skinned) {
+    mesh.geometry = simplifySkinned(mesh.geometry, Math.floor(triangles(mesh.geometry) * ratio));
+  }
+  const finalTriangles = skinned.reduce((sum, mesh) => sum + triangles(mesh.geometry), fixedTriangles);
+  if (finalTriangles > MAX_TRIANGLES) throw new Error(`${character}: ${finalTriangles} segi tiga melebihi bajet`);
+  log(`  segi tiga: ${originalTriangles + fixedTriangles} → ${finalTriangles}`);
   const bones: string[] = [];
   const meshes: string[] = [];
   root.traverse((o) => {
@@ -114,7 +134,9 @@ async function convert(character: string, outName: string): Promise<{ name: stri
     if (m.isMesh) {
       const mat = m.material as THREE.MeshStandardMaterial;
       const img = mat.map?.image as { width?: number; height?: number; constructor?: { name: string } } | undefined;
-      meshes.push(`${m.name}: v=${m.geometry.attributes.position.count} map=${img ? `${img.constructor?.name} ${img.width}x${img.height}` : "tiada"}`);
+      meshes.push(
+        `${m.name}: v=${m.geometry.attributes.position.count} map=${img ? `${img.constructor?.name} ${img.width}x${img.height}` : "tiada"}`,
+      );
     }
   });
   log(`  tulang: ${bones.join(", ")}`);

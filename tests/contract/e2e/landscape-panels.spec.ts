@@ -1,6 +1,6 @@
 /**
  * E2E kontrak Pelan 005 Langkah 10 — B18: panel dalam landskap telefon.
- * Ditulis oleh perancang. C9 TIDAK boleh menyunting fail ini.
+ * Ditulis oleh perancang. C9 TIDAK boleh menyunting fail ini. (Pelan 018: mood pelanggan via __mks.setNextCustomer.)
  *
  * Viewport diambil daripada telefon sebenar (Redmi 9, Chrome 158, landskap): 823×309 CSS px.
  * Panel Serah Terima (444 px) lebih tinggi daripada viewport. Setiap butang mesti boleh dicapai
@@ -31,6 +31,19 @@ test.use({ viewport: { width: 823, height: 309 } });
 
 const state = (page: Page) =>
   page.evaluate(() => (window as unknown as { __mks: { state(): MksState } }).__mks.state());
+
+/**
+ * Pelan 018 (dikemas kini oleh perancang): mood pelanggan dirawak semasa serah terima dibuka.
+ * E2E menetapkannya secara eksplisit melalui API dev supaya laluan ujian deterministik.
+ * `setNextCustomer` berlaku untuk SATU serah terima seterusnya sahaja.
+ */
+type Mood = "home" | "absent" | "refuse" | "neighbour";
+async function setNextCustomer(page: Page, mood: Mood) {
+  await page.evaluate(
+    (m) => (window as unknown as { __mks: { setNextCustomer(m: string): void } }).__mks.setNextCustomer(m),
+    mood,
+  );
+}
 
 async function goTo(page: Page, zoneId: string) {
   await page.evaluate((id) => (window as unknown as { __mks: { goTo(z: string): void } }).__mks.goTo(id), zoneId);
@@ -83,10 +96,12 @@ test("B18: landskap 823×309 — serah terima, penerima tiada dan ringkasan bole
 
   // Paket 1: setiap butang panel boleh dicapai; Batal menutup panel
   await goTo(page, first.target);
+  await setNextCustomer(page, "home");
   await action(page, "SERAH PAKET");
   await (await reachable(page, "Batal")).click();
   await expect(page.getByRole("button", { name: "Penerima tiada" })).toHaveCount(0);
 
+  await setNextCustomer(page, "home");
   await action(page, "SERAH PAKET");
   const proof = page.getByRole("button", { name: "Ambil bukti", exact: true });
   if ((await proof.count()) > 0) {
@@ -101,6 +116,7 @@ test("B18: landskap 823×309 — serah terima, penerima tiada dan ringkasan bole
 
   // Paket 2: Penerima tiada
   await goTo(page, second.target);
+  await setNextCustomer(page, "absent");
   await action(page, "SERAH PAKET");
   await (await reachable(page, "Penerima tiada")).click();
   await expect.poll(async () => (await state(page)).phase).toBe("returning");

@@ -1,6 +1,6 @@
 /**
  * E2E kontrak Pelan 005 Langkah 8 — vertical slice penuh.
- * Ditulis oleh perancang. C9 TIDAK boleh menyunting fail ini.
+ * Ditulis oleh perancang. C9 TIDAK boleh menyunting fail ini. (Pelan 018: mood pelanggan via __mks.setNextCustomer.)
  *
  * Aliran: permainan baharu → meja gudang → imbas & muat 2 paket → berangkat →
  * paket 1 diselesaikan (dengan baki COD jika paket COD) → MUAT SEMULA HALAMAN → Teruskan → paket 2 "Penerima tiada" →
@@ -36,6 +36,19 @@ async function payCod(page: Page, cod: number) {
 
 const state = (page: Page) =>
   page.evaluate(() => (window as unknown as { __mks: { state(): MksState } }).__mks.state());
+
+/**
+ * Pelan 018 (dikemas kini oleh perancang): mood pelanggan dirawak semasa serah terima dibuka.
+ * E2E menetapkannya secara eksplisit melalui API dev supaya laluan ujian deterministik.
+ * `setNextCustomer` berlaku untuk SATU serah terima seterusnya sahaja.
+ */
+type Mood = "home" | "absent" | "refuse" | "neighbour";
+async function setNextCustomer(page: Page, mood: Mood) {
+  await page.evaluate(
+    (m) => (window as unknown as { __mks: { setNextCustomer(m: string): void } }).__mks.setNextCustomer(m),
+    mood,
+  );
+}
 
 async function goTo(page: Page, zoneId: string) {
   await page.evaluate((id) => (window as unknown as { __mks: { goTo(z: string): void } }).__mks.goTo(id), zoneId);
@@ -92,6 +105,7 @@ test("vertical slice: gudang → hantar → muat semula → gagal → pulang →
 
   // ── Paket 1: serah (jika ada penerima) atau penerima tiada ──
   await goTo(page, first.target);
+  await setNextCustomer(page, "home");
   await action(page, isMobile, "SERAH PAKET");
   await expect(page.getByRole("button", { name: "Penerima tiada" })).toBeVisible();
   const proof = page.getByRole("button", { name: "Ambil bukti" });
@@ -125,6 +139,7 @@ test("vertical slice: gudang → hantar → muat semula → gagal → pulang →
 
   // ── Paket 2: penerima tiada → returning ──
   await goTo(page, second.target);
+  await setNextCustomer(page, "absent");
   await action(page, isMobile, "SERAH PAKET");
   await page.getByRole("button", { name: "Penerima tiada" }).click();
   await expect.poll(async () => (await state(page)).phase).toBe("returning");

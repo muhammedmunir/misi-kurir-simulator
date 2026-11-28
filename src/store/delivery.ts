@@ -1,5 +1,6 @@
 import { stowCarry as stowCarryPure, takeFromMotor as takeFromMotorPure } from "@/delivery/carry";
 import { collectCod as collectCodPure } from "@/delivery/cod";
+import type { CustomerMood } from "@/delivery/customer";
 import { completeHandover, failHandover, takeProof as takeProofPure } from "@/delivery/handover";
 import { acknowledgeSummary as acknowledgeSummaryPure } from "@/lib/delivery-system";
 import {
@@ -34,6 +35,7 @@ interface DeliveryStore {
   zones: DeliveryZone[];
   /** Injected so tests can make ids/randomness deterministic. */
   deps: Deps;
+  nextCustomer: CustomerMood | undefined;
 
   tick: (now: number) => void;
   /** E key / action button. Applies the reward to the player on "deliver". Accepts optional onFoot context. */
@@ -95,6 +97,7 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => {
     session: createSession(),
     zones: DELIVERY_ZONES,
     deps: runtimeDeps,
+    nextCustomer: undefined,
 
     tick: (now) => {
       const session = get().session;
@@ -106,8 +109,12 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => {
     interact: (now, ctx) => {
       const s = get().session;
       if (!s.nearbyZone) return { result: null };
-      const { result, session } = interactPure(s, s.nearbyZone, now, get().deps, ctx);
-      set({ session });
+      const { deps, nextCustomer } = get();
+      const { result, session } = interactPure(s, s.nearbyZone, now, deps, {
+        onFoot: ctx?.onFoot ?? false,
+        nextCustomer,
+      });
+      set({ session, nextCustomer: result.action === "open_handover" ? undefined : nextCustomer });
       if (result.action === "deliver") {
         useGameStateStore.getState().addMoney(result.reward ?? 0);
         useGameStateStore.getState().addXP(result.xpReward ?? 0);
@@ -149,7 +156,7 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => {
       set({ session: { ...s, nearbyZone: zone, panelOpen, handover } });
     },
 
-    reset: () => set({ session: createSession() }),
+    reset: () => set({ session: createSession(), nextCustomer: undefined }),
 
     // Handover workflow
     takeProof: () => {
@@ -168,21 +175,7 @@ export const useDeliveryStore = create<DeliveryStore>((set, get) => {
       }
       set({ session });
     },
-    reportAbsent: (now) => {
-      const s = get().session;
-      const h = s.handover;
-      if (!h) return;
-      // Reject confirm (no proof, no receiverHome=false); fall through to failHandover
-      const failed = failHandover(s, now);
-      set({
-        session: {
-          ...failed,
-          handover: null,
-          interactionMessage: "Penerima tiada di rumah",
-          interactionMessageTime: now,
-        },
-      });
-    },
+    reportAbsent: (now) => set({ session: failHandover(get().session, now) }),
     cancelHandover: () => {
       set((s) => ({ session: { ...s.session, handover: null } }));
     },

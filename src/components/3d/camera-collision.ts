@@ -5,6 +5,7 @@
  * titik masuk terawal supaya tidak berada di dalam bangunan.
  */
 import { DELIVERY_ZONES, HOUSE } from "@/lib/delivery-system";
+import { blockPlacements, placementFootprint } from "./city-blocks";
 import { buildingLayout } from "./city-layout";
 
 export type P3 = { x: number; y: number; z: number };
@@ -56,12 +57,16 @@ export function cameraObstacles(): Aabb[] {
     });
   }
 
+  for (const p of blockPlacements()) {
+    if (p.solid && p.h >= 2) boxes.push({ ...placementFootprint(p), minY: 0, maxY: p.h });
+  }
+
   return boxes;
 }
 
 /**
- * Parameter t ∈ [0,1] titik masuk segmen eye → eye+d ke dalam kotak.
- * `null` jika tiada persilangan atau jika eye sudah berada di dalam kotak.
+ * Parameter t pada titik masuk sinar eye → eye+d. Sifar jika bermula dalam kotak,
+ * atau `null` jika sinar tidak memotong kotak.
  */
 function entryT(eye: P3, d: P3, b: Aabb): number | null {
   let tNear = 0;
@@ -86,9 +91,28 @@ function entryT(eye: P3, d: P3, b: Aabb): number | null {
     if (tNear > tFar) return null;
   }
 
-  // tNear <= 0 bermaksud eye di dalam (atau pada) kotak → abaikan.
-  if (tNear <= 0) return null;
   return tNear;
+}
+
+export function occluders(eye: P3, cam: P3, boxes: readonly Aabb[]): number[] {
+  const d = { x: cam.x - eye.x, y: cam.y - eye.y, z: cam.z - eye.z };
+  const hits: number[] = [];
+  if (d.x === 0 && d.y === 0 && d.z === 0) return hits;
+  for (let i = 0; i < boxes.length; i++) {
+    const t = entryT(eye, d, boxes[i]);
+    if (t !== null && t <= 1) hits.push(i);
+  }
+  return hits;
+}
+
+/** Indeks kotak yang mengandungi titik `p` (kamera di dalam bangunan). */
+export function containing(p: P3, boxes: readonly Aabb[]): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < boxes.length; i++) {
+    const b = boxes[i];
+    if (p.x > b.minX && p.x < b.maxX && p.y > b.minY && p.y < b.maxY && p.z > b.minZ && p.z < b.maxZ) out.push(i);
+  }
+  return out;
 }
 
 /**
@@ -105,7 +129,7 @@ export function clampCamera(eye: P3, desired: P3, boxes: Aabb[]): P3 {
   let tHit = Number.POSITIVE_INFINITY;
   for (const box of boxes) {
     const t = entryT(eye, d, box);
-    if (t !== null && t <= 1 && t < tHit) tHit = t;
+    if (t !== null && t > 0 && t <= 1 && t < tHit) tHit = t;
   }
   if (tHit === Number.POSITIVE_INFINITY) return desired;
 

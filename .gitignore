@@ -59,3 +59,6 @@ assets-src/
 # Model Mixamo: lesen tidak membenarkan pengedaran fail mentah dalam repo awam.
 # Jana semula: npx vite --port 5190 & node tools/convert/run.mjs
 public/models/mixamo/
+
+# GLB Quaternius tempatan mengandungi klip retarget Mixamo (bukan CC0) — jangan commit.
+public/models/quaternius/

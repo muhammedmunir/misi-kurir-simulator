@@ -78,6 +78,7 @@ describe("tutup manifest di meja gudang → ringkasan", () => {
       xp: d.xp,
       durationMs: 8000, // manifest.createdAt 1000 → ditutup 9000
       codCollected: 0, // paket prabayar (Pelan 006)
+      refused: 0, // Pelan 018 (dikemas kini oleh perancang): kiraan paket ditolak pelanggan
     });
   });
 

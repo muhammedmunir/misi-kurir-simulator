@@ -5,15 +5,30 @@ import type { MotorContext } from "@/lib/interact-button";
 import { liveTrafficRects } from "@/lib/npc-traffic";
 import { consumeAction, touchInput } from "@/lib/touch";
 import { useDeliveryStore } from "@/store/delivery";
+import { useGameStateStore } from "@/store/gamestate";
 import { stepMotor } from "@/vehicles/motor-physics";
 import { type MotorState, canDismount, canMount, checkParking, dismountPosition } from "@/vehicles/motor-state";
+import { isRaining, scooterLightingOn } from "@/world/daytime";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Suspense } from "react";
-import { type Group, Vector3 } from "three";
+import {
+  AdditiveBlending,
+  Euler,
+  type Group,
+  MathUtils,
+  type Mesh,
+  Object3D,
+  Quaternion,
+  type SpotLight,
+  Vector3,
+} from "three";
 import { CharacterGLB } from "./CharacterGLB";
 import { ScooterGLB } from "./ScooterGLB";
+import { RIG_BONES } from "./character-style";
 import { courierClip } from "./courier-anim";
+import { RIDER_STEER_ANGLE, riderTargets, solveTwoBoneIK } from "./rider-ik";
+import { setScooterRidden } from "./scooter-ride";
 import { MOTOR_RADIUS, PLAYER_RADIUS, angleDelta, moveHeading, resolveCircle, worldColliders } from "./world-collision";
 
 // ── Keyboard state ────────────────────────────────────────────────
@@ -37,7 +52,7 @@ const BOX_Y = 1.13;
 const BOX_Z = -0.62;
 /** Kedudukan pinggul penunggang di atas tempat duduk (setempat motor). */
 /** Kedudukan tapak kaki penunggang (klip `drive`) supaya punggung di atas tempat duduk. */
-const RIDER_OFFSET: [number, number, number] = [0, SEAT_TOP - 0.51, -0.12];
+const RIDER_OFFSET: [number, number, number] = [0, SEAT_TOP - 0.54, -0.04];
 /** Kadar kamera berjalan kaki menyusul arah hadapan watak (rad/s). */
 const VIEW_FOLLOW = 2.5;
 
@@ -160,6 +175,40 @@ function pickRiderClip() {
   return RIDER_CLIP;
 }
 
+function findRiderRig(root: Object3D) {
+  const hips = root
+    .getObjectsByProperty("type", "Bone")
+    .find((bone) => bone.children.length > 1 && bone.name.endsWith(RIG_BONES.hips));
+  if (!hips) return null;
+  const prefix = hips.name.slice(0, -RIG_BONES.hips.length);
+  // Sesetengah tulang Mixamo ada nama pendua; semak hierarki rantai sebenar.
+  type Role = keyof typeof RIG_BONES;
+  const bone = (parent: Object3D | undefined, role: Role) => parent?.getObjectByName(prefix + RIG_BONES[role]);
+  const chain = (a: Role, b: Role, c: Role) => {
+    const upper = bone(hips, a);
+    const lower = bone(upper, b);
+    const end = bone(lower, c);
+    return upper && lower && end ? ([upper, lower, end] as const) : null;
+  };
+  const leftArm = chain("leftArm", "leftForeArm", "leftHand");
+  const rightArm = chain("rightArm", "rightForeArm", "rightHand");
+  const leftLeg = chain("leftUpLeg", "leftLeg", "leftFoot");
+  const rightLeg = chain("rightUpLeg", "rightLeg", "rightFoot");
+  const spine = bone(hips, "spine");
+  const spine1 = bone(spine, "spine1");
+  if (!leftArm || !rightArm || !leftLeg || !rightLeg || !spine || !spine1) return null;
+  const baseRotations = [spine, spine1, ...leftArm, ...rightArm, ...leftLeg, ...rightLeg].map(
+    (bone) => [bone, bone.quaternion.clone()] as const,
+  );
+  return { leftArm, rightArm, leftLeg, rightLeg, spine, spine1, baseRotations, posed: false };
+}
+
+const riderPole = new Vector3();
+const riderEndRotation = new Quaternion();
+const riderMotorRotation = new Quaternion();
+const riderEndEuler = new Euler(0, 0, 0, "YXZ");
+const RIDER_FORWARD_LEAN = MathUtils.degToRad(14);
+
 /** Klip animasi kurier berjalan kaki setiap frame. */
 function pickCourierClip() {
   return courierClip({
@@ -182,12 +231,97 @@ export function motorContext(): MotorContext {
 }
 
 // ── Component ─────────────────────────────────────────────────────
+/** Lampu skuter hanya menyala ketika ditunggang (motor diparkir = lampu padam). */
+const HEADLIGHT_INTENSITY = 70;
+
+function ScooterLights() {
+  const spot = useRef<SpotLight>(null);
+  const cone = useRef<Mesh>(null);
+  // Intensiti 0 (bukan unmount/visible) supaya bilangan lampu adegan tetap — elak kompil semula shader.
+  useFrame(() => {
+    const on = !onFoot;
+    if (spot.current) spot.current.intensity = on ? HEADLIGHT_INTENSITY : 0;
+    if (cone.current) cone.current.visible = on;
+  });
+  const [target] = useState(() => {
+    const aim = new Object3D();
+    aim.position.set(0, -0.25, 6.8);
+    return aim;
+  });
+
+  return (
+    <group name="scooter-lights">
+      <primitive object={target} />
+      <spotLight
+        ref={spot}
+        name="scooter-headlight"
+        position={[0, 0.61, 0.84]}
+        target={target}
+        color="#ffe3b5"
+        intensity={0}
+        distance={24}
+        angle={0.29}
+        penumbra={0.78}
+        castShadow={false}
+      />
+      <mesh
+        ref={cone}
+        visible={false}
+        position={[0, 0.39, 2.24]}
+        rotation={[-1.42, 0, 0]}
+        userData={{ noShadow: true }}
+      >
+        <coneGeometry args={[0.62, 2.85, 24, 1, true]} />
+        <meshBasicMaterial color="#ffe3b5" transparent opacity={0.055} blending={AdditiveBlending} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
 export function PlayerController() {
   const groupRef = useRef<Group>(null);
+  const scooterLightsOn = useGameStateStore((s) => scooterLightingOn(s.settings.rainMode, s.worldMinutes));
   const motorRef = useRef<Group>(null);
   const riderRef = useRef<Group>(null);
   const boxRefs = useRef<(Group | null)[]>([]);
   const sackRef = useRef<Group>(null);
+  const riderRig = useRef<{ root: Object3D; rig: ReturnType<typeof findRiderRig> }>(null);
+
+  function resetIK() {
+    const rig = riderRig.current?.rig;
+    if (!rig?.posed) return;
+    for (const [bone, base] of rig.baseRotations) bone.quaternion.copy(base);
+    rig.posed = false;
+  }
+
+  function poseRider(root: Object3D) {
+    const motorGroup = motorRef.current;
+    if (!riderRef.current?.visible || !motorGroup) return;
+    if (riderRig.current?.root !== root) riderRig.current = { root, rig: findRiderRig(root) };
+    const rig = riderRig.current.rig;
+    if (!rig) return;
+
+    for (const [bone, base] of rig.baseRotations) base.copy(bone.quaternion);
+    rig.posed = true;
+    rig.spine.rotateX(RIDER_FORWARD_LEAN);
+    rig.spine1.rotateZ(-motorLean * 0.4);
+    const { leftHand, rightHand, leftFoot, rightFoot } = riderTargets(motorSteer);
+    motorGroup.getWorldQuaternion(riderMotorRotation);
+    for (const [chain, target, arm] of [
+      [rig.leftArm, leftHand, true],
+      [rig.rightArm, rightHand, true],
+      [rig.leftLeg, leftFoot, false],
+      [rig.rightLeg, rightFoot, false],
+    ] as const) {
+      riderPole.set(arm ? target.x * 1.5 : target.x, arm ? 0.9 : 0.6, arm ? -0.4 : 0.6);
+      motorGroup.localToWorld(riderPole);
+      motorGroup.localToWorld(target);
+      solveTwoBoneIK(...chain, target, riderPole);
+      riderEndEuler.set(arm ? Math.PI / 2 : Math.PI / 2 - 0.18, arm ? -motorSteer * RIDER_STEER_ANGLE : 0, 0);
+      chain[1].getWorldQuaternion(riderEndRotation).invert();
+      chain[2].quaternion.setFromEuler(riderEndEuler).premultiply(riderMotorRotation).premultiply(riderEndRotation);
+    }
+  }
 
   // Keyboard handlers inside useEffect (not module level)
   useEffect(() => {
@@ -319,10 +453,12 @@ export function PlayerController() {
       // ── ON MOTOR ──────────────────────────────────────────────
     } else {
       lastThrottle = inputForward;
+      const { settings, worldMinutes } = useGameStateStore.getState();
       const next = stepMotor(
         { speed: motor.speed, heading: motor.heading, steer: motorSteer, lean: motorLean },
         { throttle: inputForward, steer: inputRight, handBrake: ti.brake },
         dt,
+        isRaining(settings.rainMode, worldMinutes),
       );
       motor.speed = next.speed;
       motor.heading = next.heading;
@@ -360,6 +496,9 @@ export function PlayerController() {
     if (motorRef.current) {
       motorRef.current.position.set(motor.x, MOTOR_Y, motor.z);
       motorRef.current.rotation.set(0, motor.heading, onFoot ? 0 : motorLean);
+      setScooterRidden(!onFoot);
+      const steering = motorRef.current.getObjectByName("scooter-steering");
+      if (steering) steering.rotation.y = onFoot ? 0 : -motorSteer * RIDER_STEER_ANGLE;
     }
   }, PLAYER_FRAME_PRIORITY);
 
@@ -413,6 +552,7 @@ export function PlayerController() {
           <Suspense fallback={null}>
             <ScooterGLB />
           </Suspense>
+          {scooterLightsOn && <ScooterLights />}
           {/* Kotak penghantaran di rak belakang */}
           <mesh position={[0, BOX_Y, BOX_Z]} castShadow>
             <boxGeometry args={[0.5, 0.44, 0.46]} />
@@ -425,7 +565,7 @@ export function PlayerController() {
           {/* Penunggang (postur duduk), disorok bila berjalan kaki */}
           <group ref={riderRef} position={RIDER_OFFSET} visible={false}>
             <Suspense fallback={null}>
-              <CharacterGLB model="courier" pickClip={pickRiderClip} />
+              <CharacterGLB model="courier" pickClip={pickRiderClip} beforeAnimate={resetIK} afterAnimate={poseRider} />
             </Suspense>
           </group>
         </group>

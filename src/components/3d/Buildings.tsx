@@ -1,90 +1,55 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { Suspense, useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
-import { buildingLayout, doorPosition, windowPositions } from "./city-layout";
+import { useOccludedInstances } from "./camera-occlusion";
+import { type BuildingLot, buildingLayout } from "./city-layout";
+import { commercialBuildingModel } from "./kenney-building-model";
+import { fitMatrix, useMergedModels, windowMaterial } from "./merged-model";
 
-const tempObj = new THREE.Object3D();
+const lotsByModel = new Map<string, (BuildingLot & { obstacle: number })[]>();
+buildingLayout().forEach((lot, i) => {
+  const name = commercialBuildingModel(lot.height, i);
+  const lots = lotsByModel.get(name);
+  const instance = { ...lot, obstacle: i };
+  if (lots) lots.push(instance);
+  else lotsByModel.set(name, [instance]);
+});
+const batches = Array.from(lotsByModel);
+const obstacles = batches.map(([, lots]) => lots.map(({ obstacle }) => obstacle));
+const urls = batches.map(([name]) => `/models/city-kit-commercial/${name}.glb`);
 
-/**
- * Palet siang gaya bandar Malaysia (krim, pastel, terakota). Data susun atur
- * (`city-layout`) mengekalkan warna asal; ia dipetakan di sini semasa melukis.
- */
-const DAY_PALETTE: Record<string, string> = {
-  "#4a5568": "#e6dcc6",
-  "#5a6578": "#cdb89a",
-  "#6a7588": "#b9c6cc",
-  "#3d4f5f": "#d9b49b",
-  "#7a8a9a": "#e8e2d4",
-  "#4b5c6d": "#aebfa5",
-};
-const tempColor = new THREE.Color();
-
-export function Buildings() {
-  const buildings = useMemo(() => buildingLayout(), []);
-  const windows = useMemo(() => buildings.flatMap((b) => windowPositions(b)), [buildings]);
-  const doors = useMemo(() => buildings.map((b) => doorPosition(b)), [buildings]);
-
-  const bodyRef = useRef<THREE.InstancedMesh>(null);
-  const windowRef = useRef<THREE.InstancedMesh>(null);
-  const doorRef = useRef<THREE.InstancedMesh>(null);
+function CommercialBuildings() {
+  const models = useMergedModels(urls);
+  const meshes = useRef<(THREE.InstancedMesh | null)[]>([]);
 
   useLayoutEffect(() => {
-    const body = bodyRef.current;
-    if (!body) return;
-    buildings.forEach((b, i) => {
-      tempObj.position.set(b.x, b.y, b.z);
-      tempObj.rotation.set(0, 0, 0);
-      tempObj.scale.set(b.width, b.height, b.depth);
-      tempObj.updateMatrix();
-      body.setMatrixAt(i, tempObj.matrix);
-      body.setColorAt(i, tempColor.set(DAY_PALETTE[b.color] ?? b.color));
+    const matrix = new THREE.Matrix4();
+    batches.forEach(([, lots], i) => {
+      const mesh = meshes.current[i];
+      if (!mesh) return;
+      lots.forEach(({ x, z, width: w, height: h, depth: d }, j) => {
+        mesh.setMatrixAt(j, fitMatrix(models[i].box, { x, z, w, h, d }, matrix));
+      });
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingSphere();
     });
-    body.instanceMatrix.needsUpdate = true;
-    if (body.instanceColor) body.instanceColor.needsUpdate = true;
-    body.computeBoundingSphere();
+  }, [models]);
+  useOccludedInstances(meshes, obstacles, models);
 
-    const window = windowRef.current;
-    if (window) {
-      windows.forEach((p, i) => {
-        tempObj.position.set(p[0], p[1], p[2]);
-        tempObj.rotation.set(0, 0, 0);
-        tempObj.scale.set(1, 1, 1);
-        tempObj.updateMatrix();
-        window.setMatrixAt(i, tempObj.matrix);
-      });
-      window.instanceMatrix.needsUpdate = true;
-      window.computeBoundingSphere();
-    }
+  return batches.map(([name, lots], i) => (
+    <instancedMesh
+      key={name}
+      ref={(mesh) => {
+        meshes.current[i] = mesh;
+      }}
+      args={[models[i].geometry, windowMaterial(models[i].material), lots.length]}
+    />
+  ));
+}
 
-    const door = doorRef.current;
-    if (door) {
-      doors.forEach((p, i) => {
-        tempObj.position.set(p[0], p[1], p[2]);
-        tempObj.rotation.set(0, 0, 0);
-        tempObj.scale.set(1, 1, 1);
-        tempObj.updateMatrix();
-        door.setMatrixAt(i, tempObj.matrix);
-      });
-      door.instanceMatrix.needsUpdate = true;
-      door.computeBoundingSphere();
-    }
-  }, [buildings, windows, doors]);
-
+export function Buildings() {
   return (
-    <group>
-      <instancedMesh ref={bodyRef} args={[undefined, undefined, buildings.length]}>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial roughness={0.9} />
-      </instancedMesh>
-
-      <instancedMesh ref={windowRef} args={[undefined, undefined, windows.length]}>
-        <planeGeometry args={[1.2, 1.5]} />
-        <meshStandardMaterial color="#2e4457" roughness={0.15} metalness={0.6} />
-      </instancedMesh>
-
-      <instancedMesh ref={doorRef} args={[undefined, undefined, doors.length]}>
-        <planeGeometry args={[1.5, 3]} />
-        <meshStandardMaterial color="#5a3b24" roughness={0.7} />
-      </instancedMesh>
-    </group>
+    <Suspense fallback={null}>
+      <CommercialBuildings />
+    </Suspense>
   );
 }

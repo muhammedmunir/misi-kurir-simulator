@@ -94,6 +94,10 @@ test("B21: panel Serah Terima landskap — penunjuk arah disembunyikan", async (
   await goTo(page, first.target);
   await expect(page.locator(".nav-hud")).toHaveCount(1);
 
+  // Pelan 018: mood pelanggan dirawak; "refuse" menyembunyikan Batal. Tetapkan "home" (sekali guna).
+  await page.evaluate(() =>
+    (window as unknown as { __mks: { setNextCustomer(m: string): void } }).__mks.setNextCustomer("home"),
+  );
   await action(page, "SERAH PAKET");
   await expect(page.getByRole("dialog", { name: "Panel Serah Terima" })).toBeVisible();
   await expect(page.locator(".nav-hud")).toHaveCount(0);
