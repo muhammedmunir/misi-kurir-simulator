@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const resolve = (p: string) => new URL(p, import.meta.url).pathname;
+const resolve = (p: string) => decodeURIComponent(new URL(p, import.meta.url).pathname).replace(/^\/(?=[A-Za-z]:\/)/, '');
 
 export default defineConfig({
   plugins: [react()],

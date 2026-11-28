@@ -1,5 +1,6 @@
 /** Susun atur bandar — data tulen, tiada React/three. Dipakai oleh `Buildings` dan `Roads`. */
 import { DELIVERY_ZONES } from "@/lib/delivery-system";
+import { commercialBuildingModel, commercialBuildingSize } from "./kenney-building-size";
 
 export type BuildingLot = {
   x: number;
@@ -34,12 +35,22 @@ export function buildingLayout(): BuildingLot[] {
       // multiples of 40, so a block spans ±14 around its centre.
       const bx = gx * 40 + 20 + (pseudoRandom() - 0.5) * 4;
       const bz = gz * 40 + 20 + (pseudoRandom() - 0.5) * 4;
-      const width = 6 + pseudoRandom() * 8;
-      const depth = 6 + pseudoRandom() * 8;
+      // Kekalkan urutan cabutan supaya kedudukan dan warna tidak berubah.
+      pseudoRandom();
+      pseudoRandom();
       if (emptyLot) continue;
       // The warehouse and delivery addresses occupy their own blocks.
       if (RESERVED_LOTS.has(`${gx * 40 + 20},${gz * 40 + 20}`)) continue;
-      const height = 5 + pseudoRandom() * 20;
+      const preferTower = pseudoRandom() > 0.5;
+      const regular = commercialBuildingSize(commercialBuildingModel(0, result.length));
+      // Model yang dipilih mesti masih berada dalam kumpulan yang sama selepas diskalakan.
+      const {
+        w: width,
+        h: height,
+        d: depth,
+      } = preferTower || regular.h > 15 || regular.w > 12 || regular.d > 12
+        ? commercialBuildingSize(commercialBuildingModel(16, result.length))
+        : regular;
       const floors = Math.floor(height / 3);
 
       result.push({

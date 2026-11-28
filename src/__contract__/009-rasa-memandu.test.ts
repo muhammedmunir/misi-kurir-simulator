@@ -6,6 +6,7 @@
 import { engineGain, enginePitch } from "@/audio/engine-sound";
 import roadsSrc from "@/components/3d/CityRoads.tsx?raw";
 import worldSrc from "@/components/3d/WorldEnvironment.tsx?raw";
+import { CAR_MODELS, carModelFor, trafficCarSize } from "@/components/3d/car-models";
 import { fitMatrix } from "@/components/3d/merged-model";
 import { roadTiles } from "@/components/3d/road-tiles";
 import { LANE_OFFSET, generateNPCTraffic, liveTrafficRects, setLiveTraffic } from "@/lib/npc-traffic";
@@ -130,14 +131,22 @@ describe("trafik", () => {
     }
   });
 
-  it("liveTrafficRects: kotak 1.6 × 3 mengikut arah jalan", () => {
-    const [v] = generateNPCTraffic(1, () => 0.9);
-    setLiveTraffic([v]);
-    const [r] = liveTrafficRects();
-    const w = r.maxX - r.minX;
-    const d = r.maxZ - r.minZ;
-    expect(w).toBeCloseTo(v.roadAxis === "z" ? 1.6 : 3);
-    expect(d).toBeCloseTo(v.roadAxis === "z" ? 3 : 1.6);
+  // Pelan 025 (dikemas kini oleh perancang): kotak = trafficCarSize(model kereta) dan bukan 1.6 × 3 tetap.
+  // Model kenderaan ke-i dalam senarai live = CAR_MODELS[carModelFor(i)], sama seperti NPCTraffic.tsx.
+  it("liveTrafficRects: kotak saiz model kereta (trafficCarSize) mengikut arah jalan", () => {
+    const vs = generateNPCTraffic(CAR_MODELS.length * 2, () => 0.9);
+    setLiveTraffic(vs);
+    const rects = liveTrafficRects();
+    expect(rects).toHaveLength(vs.length);
+    vs.forEach((v, i) => {
+      const model = CAR_MODELS[carModelFor(i)].replace(/^\/models\//, "").replace(/\.glb$/, "");
+      const size = trafficCarSize(model);
+      const r = rects[i];
+      expect(r.maxX - r.minX, model).toBeCloseTo(v.roadAxis === "z" ? size.w : size.d);
+      expect(r.maxZ - r.minZ, model).toBeCloseTo(v.roadAxis === "z" ? size.d : size.w);
+      expect((r.minX + r.maxX) / 2).toBeCloseTo(v.position.x);
+      expect((r.minZ + r.maxZ) / 2).toBeCloseTo(v.position.z);
+    });
     setLiveTraffic([]);
     expect(liveTrafficRects()).toEqual([]);
   });

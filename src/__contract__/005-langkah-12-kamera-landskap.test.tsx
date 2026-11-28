@@ -4,12 +4,13 @@
  * Ditulis oleh perancang. C9 TIDAK boleh menyunting fail ini.
  *
  * Konvensyen arah: hadapan = (sin h, cos h). Kamera di belakang = kedudukan − 8 × hadapan.
- * Rumah alamat (HOUSE): lebar 8, tinggi 5 (+ bumbung 1.4), dalam 6, pusat lot.z + 4; pintu lot.z + 9.
+ * Rumah alamat: saiz ikut model GLB × faktor skala (Pelan 025); pintu lot.z + 9.
  */
 import cameraSrc from "@/components/3d/CameraFollow.tsx?raw";
 import { type Aabb, cameraObstacles, clampCamera } from "@/components/3d/camera-collision";
 import { blockPlacements } from "@/components/3d/city-blocks";
 import { buildingLayout } from "@/components/3d/city-layout";
+import { destinationHouses } from "@/components/3d/kenney-building-model";
 import { DELIVERY_ZONES } from "@/lib/delivery-system";
 import { NavArrow } from "@/navigation/NavArrow";
 import { useDeliveryStore } from "@/store/delivery";
@@ -54,12 +55,22 @@ describe("cameraObstacles() — bangunan dan rumah alamat", () => {
     }
   });
 
-  it("rumah Kedai Runcit Mak Minah (lot 60, 20): x 56–64, y 0–6.4, z 21–27", () => {
-    const house = boxes.find((b) => b.minX === 56 && b.maxX === 64 && b.minZ === 21);
+  // Pelan 025 (dikemas kini oleh perancang): saiz rumah ikut model GLB (kontrak 025), bukan 8 × 6.4 × 6 tetap.
+  it("rumah Kedai Runcit Mak Minah (lot 60, 20): kotak = badan rumah alamat, di belakang pintu", () => {
+    const lot = DELIVERY_ZONES.find((z) => z.type === "delivery" && z.lot?.x === 60 && z.lot?.z === 20);
+    const h = destinationHouses().find((d) => d.x === 60 && Math.abs(d.z - 20) < 14);
+    expect(lot).toBeDefined();
+    expect(h).toBeDefined();
+    if (!h || !lot) return;
+    const house = boxes.find(
+      (b) => Math.abs(b.minX - (h.x - h.w / 2)) < 1e-9 && Math.abs(b.minZ - (h.z - h.d / 2)) < 1e-9,
+    );
     expect(house).toBeDefined();
-    expect(house?.maxZ).toBe(27);
+    expect(house?.maxX).toBeCloseTo(h.x + h.w / 2, 9);
+    expect(house?.maxZ).toBeCloseTo(h.z + h.d / 2, 9);
     expect(house?.minY).toBe(0);
-    expect(house?.maxY).toBeCloseTo(6.4, 9);
+    expect(house?.maxY).toBeCloseTo(h.h, 9);
+    expect(house?.maxZ ?? Number.POSITIVE_INFINITY).toBeLessThan(lot.position.z);
   });
 });
 

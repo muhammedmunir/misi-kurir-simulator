@@ -6,8 +6,8 @@ import type { Packet } from "@/types/game";
 import type { Deps } from "@/warehouse/warehouse-logic";
 import { WAREHOUSE, generateInbound } from "@/warehouse/warehouse-logic";
 
-/** Destination house placeholder, relative to its lot centre. */
-export const HOUSE = { width: 8, height: 5, depth: 6, zOffset: 4, doorOffset: 9 } as const;
+/** Anjakan zon interaksi dari pusat lot alamat. */
+export const HOUSE = { doorOffset: 9 } as const;
 
 /** Starter motor (Motor Matic) cargo, matching DEFAULT_VEHICLES specs. */
 export const STARTER_CARGO: CargoLimits = { maxVolume: 20, maxWeight: 15 };

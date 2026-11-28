@@ -3,13 +3,11 @@ import { useFrame } from "@react-three/fiber";
 import { Suspense, useMemo, useRef, useState } from "react";
 import { type InstancedMesh, Matrix4 } from "three";
 import { playerState } from "./PlayerController";
-import { CAR_MODELS, carModelFor } from "./car-models";
+import { CAR_MODELS, carModelFor, carModelPath, trafficCarSize } from "./car-models";
 import { fitMatrix, useMergedModels } from "./merged-model";
 
 const NPC_COUNT = 8;
-// Sepadan dengan kotak collision dalam liveTrafficRects().
-const CAR_WIDTH = 1.6;
-const CAR_LENGTH = 3.0;
+const sizes = CAR_MODELS.map((url) => trafficCarSize(carModelPath(url)));
 
 function TrafficModels() {
   const models = useMergedModels(CAR_MODELS);
@@ -17,10 +15,6 @@ function TrafficModels() {
   const dataRef = useRef(initial);
   const meshRefs = useRef<(InstancedMesh | null)[]>([]);
   const matrix = useMemo(() => new Matrix4(), []);
-  const heights = useMemo(
-    () => models.map(({ box }) => (box.max.y - box.min.y) * (CAR_LENGTH / (box.max.z - box.min.z))),
-    [models],
-  );
   const counts = useMemo(() => {
     const counts = Array.from(CAR_MODELS, () => 0);
     initial.forEach((_, i) => counts[carModelFor(i)]++);
@@ -38,11 +32,7 @@ function TrafficModels() {
       if (!mesh) return;
       const { x, z } = npc.position;
       const slot = Math.floor(i / CAR_MODELS.length);
-      fitMatrix(
-        models[modelIndex].box,
-        { x, z, w: CAR_WIDTH, h: heights[modelIndex], d: CAR_LENGTH, rotY: npc.heading },
-        matrix,
-      );
+      fitMatrix(models[modelIndex].box, { x, z, ...sizes[modelIndex], rotY: npc.heading }, matrix);
       mesh.setMatrixAt(slot, matrix);
     });
     for (const mesh of meshRefs.current) {
