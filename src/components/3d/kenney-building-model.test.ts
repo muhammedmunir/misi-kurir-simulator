@@ -15,7 +15,12 @@ describe("model bangunan Kenney", () => {
   it("mengira model mengikut turutan alamat dan mengecualikan gudang", () => {
     const houses = destinationHouses();
     expect(houses.map(({ model }) => model)).toEqual([..."abcdefghi"].map((letter) => `building-type-${letter}`));
-    expect(houses[0]).toMatchObject({ x: 60, z: 24, w: 8, h: 6.4, d: 6 });
+    // Pelan 025: w/h/d = saiz model × faktor skala seragam (diuji kontrak 025), bukan lagi 8 × 6.4 × 6 tetap.
+    expect(houses[0]).toMatchObject({ x: 60 });
+    expect(houses[0].z).toBeGreaterThan(20 - 14);
+    expect(houses[0].z + houses[0].d / 2).toBeLessThan(
+      DELIVERY_ZONES.find((z) => z.lot?.x === 60 && z.type === "delivery")?.position.z ?? 0,
+    );
   });
 });
 

@@ -47,6 +47,11 @@ Akibatnya pintu, tingkap dan kereta berlainan saiz di antara satu sama lain dan 
     - `cameraObstacles()` ada kotak yang sama saiz dengan setiap rumah (maxY = h).
   - Jika `HOUSE.width/height/depth` tidak lagi digunakan, buang atau kekalkan ikut knip. `HOUSE.zOffset/doorOffset` boleh kekal.
 
+- **Ujian unit biasa** (di luar `src/__contract__/` dan `tests/contract/`) yang menetapkan saiz lama secara tetap, contohnya `kenney-building-model.test.ts`, `city-blocks.test.ts` dan ujian kotak trafik: C9 BOLEH mengemas kininya supaya ikut saiz model × faktor. Jangan berhenti kerana ini.
+  - Kekalkan semakan model, turutan dan kedudukan.
+  - Senaraikan setiap jangkaan yang diubah (fail:baris, lama → baharu) dalam laporan.
+  - STOP hanya untuk percanggahan dengan fail kontrak.
+
 ## Spesifikasi
 
 1. **Kalibrasi pintu.** Ukur tinggi bukaan pintu dalam satu model rumah suburban dan satu model komersial (unit asli; cari daripada geometri, contohnya segi empat gelap pada muka hadapan).
