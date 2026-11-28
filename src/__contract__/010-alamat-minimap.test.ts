@@ -5,13 +5,16 @@
 import zonesSrc from "@/components/3d/DeliveryZones.tsx?raw";
 import { destinationInstances } from "@/components/3d/Destinations";
 import destinationsSrc from "@/components/3d/Destinations.tsx?raw";
+import { cameraObstacles } from "@/components/3d/camera-collision";
 import { buildingLayout } from "@/components/3d/city-layout";
 import receiverSrc from "@/delivery/Receiver.tsx?raw";
-import { DELIVERY_ZONES, HOUSE } from "@/lib/delivery-system";
+import { DELIVERY_ZONES } from "@/lib/delivery-system";
 import { MINIMAP_RANGE, clampToRadius, toMinimap } from "@/navigation/minimap-math";
 import { describe, expect, it } from "vitest";
 
 const dest = DELIVERY_ZONES.filter((z) => z.type === "delivery");
+const obstacles = cameraObstacles();
+const houseOf = (id: string) => destinationInstances().bodies[dest.findIndex((z) => z.id === id)];
 
 describe("alamat", () => {
   it("9 alamat, setiap satu di lot blok sendiri (gx·40 + 20)", () => {
@@ -35,8 +38,10 @@ describe("alamat", () => {
     const bs = buildingLayout();
     for (const z of dest) {
       if (!z.lot) continue;
-      const hx = [z.lot.x - HOUSE.width / 2, z.lot.x + HOUSE.width / 2];
-      const hz = [z.lot.z + HOUSE.zOffset - HOUSE.depth / 2, z.lot.z + HOUSE.zOffset + HOUSE.depth / 2];
+      // Pelan 025 (dikemas kini oleh perancang): saiz rumah ikut model GLB, bukan HOUSE tetap.
+      const h = houseOf(z.id);
+      const hx = [h.x - h.w / 2, h.x + h.w / 2];
+      const hz = [h.z - h.d / 2, h.z + h.d / 2];
       for (const b of bs) {
         const overlap =
           hx[0] < b.x + b.width / 2 &&
@@ -74,10 +79,24 @@ describe("kos render alamat", () => {
     expect(houses).toHaveLength(9);
     dest.forEach((z, i) => {
       const h = houses[i];
-      expect(h.model, z.id).toMatch(/^building-type-[a-l]$/);
+      // Pelan 025 (dikemas kini oleh perancang): w/h/d = saiz model × faktor skala (diuji kontrak 025),
+      // jadi di sini hanya kedudukan dalam lot dan kotak kamera yang sama saiz.
+      expect(h.model, z.id).toMatch(/^building-type-[a-u]$/);
       expect(h.x).toBe(z.lot?.x);
-      expect(h.z).toBe((z.lot?.z ?? Number.NaN) + HOUSE.zOffset);
-      expect([h.w, h.h, h.d]).toEqual([HOUSE.width, HOUSE.height + 1.4, HOUSE.depth]);
+      const lz = z.lot?.z ?? Number.NaN;
+      expect(h.z - h.d / 2, z.id).toBeGreaterThanOrEqual(lz - 14);
+      expect(Math.abs(h.x - (z.lot?.x ?? Number.NaN)) + h.w / 2, z.id).toBeLessThanOrEqual(14);
+      expect(
+        obstacles.some(
+          (o) =>
+            Math.abs(o.minX - (h.x - h.w / 2)) < 1e-6 &&
+            Math.abs(o.maxX - (h.x + h.w / 2)) < 1e-6 &&
+            Math.abs(o.minZ - (h.z - h.d / 2)) < 1e-6 &&
+            Math.abs(o.maxZ - (h.z + h.d / 2)) < 1e-6 &&
+            Math.abs(o.maxY - h.h) < 1e-6,
+        ),
+        `${z.id}: cameraObstacles mengikut saiz rumah`,
+      ).toBe(true);
       // Model Kenney menghadap +z; tiada putaran (atau putaran 0) = pintu menghadap zon di z lebih besar.
       expect((h as { rotY?: number }).rotY ?? 0).toBe(0);
       expect(z.position.z).toBeGreaterThan(h.z + h.d / 2);

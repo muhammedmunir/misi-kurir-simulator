@@ -37,6 +37,16 @@ Akibatnya pintu, tingkap dan kereta berlainan saiz di antara satu sama lain dan 
   - fungsi baharu `trafficCarSize(model)` dalam `car-models.ts` (model dalam bentuk `car-kit/sedan`) memulangkan saiz yang sama dengan kereta diparkir;
   - `NPCTraffic.tsx` mesti menggunakannya, dan `CAR_LENGTH = 3.0` dibuang.
 
+- **Kontrak lama yang diselaraskan oleh perancang** (selepas C9 STOP):
+  - **009** `liveTrafficRects`: kotak kenderaan ke-i dalam senarai live = `trafficCarSize(CAR_MODELS[carModelFor(i)])` (tanpa `/models/` dan `.glb`), w/d ditukar mengikut `roadAxis`, berpusat pada kedudukan kenderaan. Gunakan indeks senarai, sama seperti `NPCTraffic.tsx`.
+  - **010**: saiz rumah alamat tidak lagi `HOUSE` tetap. Ujian kini memeriksa:
+    - `h.x = lot.x`;
+    - rumah berada dalam dalaman lot (±14);
+    - pintu di hadapan rumah;
+    - model `building-type-[a-u]`;
+    - `cameraObstacles()` ada kotak yang sama saiz dengan setiap rumah (maxY = h).
+  - Jika `HOUSE.width/height/depth` tidak lagi digunakan, buang atau kekalkan ikut knip. `HOUSE.zOffset/doorOffset` boleh kekal.
+
 ## Spesifikasi
 
 1. **Kalibrasi pintu.** Ukur tinggi bukaan pintu dalam satu model rumah suburban dan satu model komersial (unit asli; cari daripada geometri, contohnya segi empat gelap pada muka hadapan).
