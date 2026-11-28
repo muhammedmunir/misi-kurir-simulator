@@ -44,7 +44,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 | Ciri | Status | Catatan |
 |------|--------|---------|
 | Grid jalan bandar kecil | Tested | Satu kawasan; jalan utara–selatan kini rata (B29, Pelan 009) |
-| Bangunan, rumah dan pokok Kenney | Tested | GLB berkelompok mengikut model; Pelan 023 menambah jiran di kiri dan kanan rumah alamat tanpa menyekat laluan ke pintu. |
+| Bangunan, rumah dan pokok Kenney | Tested | Pelan 025: rumah dan bangunan komersial menggunakan dimensi asli GLB × 7.8 pada semua paksi. Kotak kamera dan perlanggaran ikut saiz model; kepadatan blok dan laluan ke pintu kekal lulus kontrak Pelan 023. |
 | Kawasan bersambung (perumahan, kampung, dll.) | Not started | |
 | Navigasi / minimap | Tested | Anak panah dan minimap (Pelan 010); E2E minimap tidak menutup butang |
 | Chunk streaming, LOD | Not started | |
@@ -71,7 +71,7 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 
 | Ciri | Status | Catatan |
 |------|--------|---------|
-| Trafik NPC | Tested | 8 kenderaan di lorong kiri (Pelan 009); motor berlanggar dengan kenderaan; NPC belum mengelak pemain |
+| Trafik NPC | Tested | Trafik kekal di lorong kiri (Pelan 009). Pelan 025 menyamakan saiz model kereta diparkir, model trafik dan kotak perlanggaran mengikut jenis kenderaan. |
 | Kitaran siang/malam dan hujan | Tested | Pelan 020: jam HUD, simpanan dan cengkaman ketika hujan. Pelan 024: senja dan subuh, lampu jalan dan tingkap, lampu motor, hujan bergaris, kabus, jalan basah dan bunyi hujan. Ujian unit dan Playwright lulus pada desktop dan emulasi Pixel 7. |
 | BBM, kerosakan, audio | Not started | |
 
@@ -92,5 +92,5 @@ Latar: Malaysia, RM, teks BM (TPD-016).
 
 ---
 
-**Kemas kini terakhir:** 2026-11-28 (Pelan 022b: gaya watak Mixamo asal)
+**Kemas kini terakhir:** 2026-11-28 (Pelan 025: skala dunia seragam)
 **Versi:** 0.0.0-alpha

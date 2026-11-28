@@ -1,25 +1,19 @@
 import { DELIVERY_ZONES, HOUSE } from "@/lib/delivery-system";
 import { buildingLayout } from "./city-layout";
+import { suburbanBuildingSize } from "./kenney-building-size";
 import { ROAD_LINES } from "./road-tiles";
 
-const COMMERCIAL_MODELS = "abcdefghijklmn";
-const SKYSCRAPER_MODELS = "abcde";
-const HOUSE_MODELS = "abcdefghijkl";
+export { commercialBuildingModel } from "./kenney-building-size";
 
-export function commercialBuildingModel(height: number, index: number): string {
-  if (height > 15) return `building-skyscraper-${SKYSCRAPER_MODELS[index % SKYSCRAPER_MODELS.length]}`;
-  return `building-${COMMERCIAL_MODELS[index % COMMERCIAL_MODELS.length]}`;
-}
+const HOUSE_MODELS = "abcdefghi";
 
 export function destinationHouses() {
-  return DELIVERY_ZONES.flatMap((zone) => (zone.type === "delivery" && zone.lot ? [zone.lot] : [])).map((lot, i) => ({
-    model: `building-type-${HOUSE_MODELS[i % HOUSE_MODELS.length]}`,
-    x: lot.x,
-    z: lot.z + HOUSE.zOffset,
-    w: HOUSE.width,
-    h: HOUSE.height + 1.4,
-    d: HOUSE.depth,
-  }));
+  return DELIVERY_ZONES.flatMap((zone) => (zone.type === "delivery" && zone.lot ? [zone.lot] : [])).map((lot, i) => {
+    const model = `building-type-${HOUSE_MODELS[i % HOUSE_MODELS.length]}`;
+    const size = suburbanBuildingSize(model);
+    // Kekalkan muka rumah 2 m di belakang zon interaksi; kedalaman bertambah ke belakang lot.
+    return { model, x: lot.x, z: lot.z + HOUSE.doorOffset - 2 - size.d / 2, ...size };
+  });
 }
 
 const TREE_MODELS = ["tree-large", "tree-small"] as const;

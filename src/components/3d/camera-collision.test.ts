@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Aabb, cameraObstacles, clampCamera, containing, occluders } from "./camera-collision";
+import { destinationHouses } from "./kenney-building-model";
 
 const eye = { x: 0, y: 1, z: 0 };
 const cam = { x: 0, y: 3, z: -8 };
@@ -31,10 +32,20 @@ describe("occluders", () => {
     const door = { x: 60, y: 1, z: 29 };
     const desired = { x: 60, y: 3, z: 21 };
     const obstacles = cameraObstacles();
-    const house = obstacles.findIndex((b) => b.minX === 56 && b.minZ === 21);
+    const { x, z, w, h, d } = destinationHouses()[0];
+    expect(x).toBe(door.x);
+    const house = obstacles.findIndex((b) => b.minX === x - w / 2 && b.minZ === z - d / 2);
     expect(house).toBeGreaterThanOrEqual(0);
+    expect(obstacles[house]).toEqual({
+      minX: x - w / 2,
+      maxX: x + w / 2,
+      minY: 0,
+      maxY: h,
+      minZ: z - d / 2,
+      maxZ: z + d / 2,
+    });
     expect(occluders(door, desired, obstacles)).toEqual([house]);
-    expect(clampCamera(door, desired, obstacles).z).toBeGreaterThan(27);
+    expect(clampCamera(door, desired, obstacles).z).toBeGreaterThan(z + d / 2);
   });
 });
 

@@ -1,7 +1,9 @@
-import { DELIVERY_ZONES, HOUSE } from "@/lib/delivery-system";
+import { DELIVERY_ZONES } from "@/lib/delivery-system";
 import { WAREHOUSE } from "@/warehouse/warehouse-logic";
+import { trafficCarSize } from "./car-models";
 import { buildingLayout } from "./city-layout";
-import { emptyLotTrees } from "./kenney-building-model";
+import { destinationHouses, emptyLotTrees } from "./kenney-building-model";
+import { commercialBuildingSize, suburbanBuildingSize } from "./kenney-building-size";
 import { ROAD_LINES } from "./road-tiles";
 
 export type Placement = {
@@ -20,8 +22,8 @@ const COM = "city-kit-commercial";
 const ROADS = "city-kit-roads";
 const QUARTER = Math.PI / 2;
 const HALF = 14;
-const HOUSE_MODELS = [`${SUB}/building-type-m`, `${SUB}/building-type-o`, `${SUB}/building-type-r`];
-const SHOP_MODELS = [`${COM}/low-detail-building-c`, `${COM}/low-detail-building-j`];
+const HOUSE_MODELS = ["building-type-m", "building-type-o", "building-type-r"];
+const SHOP_MODELS = ["low-detail-building-c", "low-detail-building-j"];
 const CAR_MODELS = ["car-kit/sedan", "car-kit/hatchback-sports", "car-kit/suv", "car-kit/van"];
 
 function prop(
@@ -53,6 +55,7 @@ function overlaps(a: Footprint, b: Footprint, gap = 0) {
 export function blockPlacements(): Placement[] {
   const placements: Placement[] = [];
   const towers = buildingLayout();
+  const houses = destinationHouses();
   const legacyTrees = emptyLotTrees();
   let seed = 239;
   function pick<T>(items: readonly T[]): T {
@@ -69,12 +72,10 @@ export function blockPlacements(): Placement[] {
       const tower = towers.find((b) => Math.abs(b.x - x) < HALF && Math.abs(b.z - z) < HALF);
       const gardens: Footprint[] = [];
       const keepClear: { box: Footprint; gap: number }[] = [];
-      if (address) {
+      const house = address && houses.find((h) => h.x === x && Math.abs(h.z - z) < HALF);
+      if (address && house) {
         keepClear.push(
-          {
-            box: placementFootprint(prop("", x, z + HOUSE.zOffset, HOUSE.width, HOUSE.height, HOUSE.depth)),
-            gap: 2,
-          },
+          { box: placementFootprint({ ...house, rotY: 0, solid: true }), gap: 2 },
           { box: { minX: x - 3, maxX: x + 3, minZ: address.position.z - 1, maxZ: z + HALF }, gap: 0 },
         );
       }
@@ -99,14 +100,30 @@ export function blockPlacements(): Placement[] {
       }
 
       if (address || (!tower && Math.abs(x) !== 20 && Math.abs(z) !== 20)) {
-        const offsets = address ? [-9.8, 9.8] : [-10.2, -3.4, 3.4, 10.2];
-        offsets.forEach((dx, i) => {
-          add(prop(pick(HOUSE_MODELS), x + dx, z + 3, 6, 4.5, 7, true));
-          add(prop(`${SUB}/driveway-short`, x + dx, z + 10.4, 3.6, 0.08, 6));
-          if (i % 2 === 0) add(prop(pick(CAR_MODELS), x + dx, z + 10.3, 1.9, 1.45, 4.1, true));
+        const plots = address
+          ? [
+              [-9.9, -10],
+              [9.9, -10],
+            ]
+          : [
+              [-8, -8],
+              [8, -8],
+              [-8, 3.5],
+              [8, 3.5],
+            ];
+        for (const [dx, dz] of plots) {
+          const model = address ? "building-type-r" : pick(HOUSE_MODELS);
+          const size = suburbanBuildingSize(model);
+          add({ model: `${SUB}/${model}`, x: x + dx, z: z + dz, ...size, solid: true, rotY: dz < 0 ? Math.PI : 0 });
+        }
+        for (const dx of [-8.5, 8.5]) {
+          add(prop(`${SUB}/driveway-short`, x + dx, z + 10.8, 3.6, 0.08, 5));
+          const model = pick(CAR_MODELS);
+          const { w, h, d } = trafficCarSize(model);
+          add(prop(model, x + dx, z + 10.8, w, h, d, true));
           const fenceX = dx + (dx > 0 ? 3.25 : -3.25);
-          add(prop(`${SUB}/fence-low`, x + fenceX, z + 9.4, 5.8, 0.95, 0.2, true, QUARTER));
-        });
+          add(prop(`${SUB}/fence-low`, x + fenceX, z + 10.8, 5.8, 0.95, 0.2, true, QUARTER));
+        }
         for (const dx of [-9, 0, 9]) {
           const tree = legacyTrees.find((t) => Math.abs(t.x - x - dx) < 2 && Math.abs(t.z - z + 8) < 2);
           add(
@@ -114,15 +131,15 @@ export function blockPlacements(): Placement[] {
           );
         }
       } else if (tower) {
-        // Blok menara masih ada ruang di sudut walaupun tapaknya hampir memenuhi tengah blok.
-        for (const [dx, dz] of [
-          [-10.5, -10.5],
-          [10.5, -10.5],
-          [-10.5, 10.5],
-          [10.5, 10.5],
-        ]) {
-          const added = add(prop(pick(HOUSE_MODELS), x + dx, z + dz, 5.2, 4, 5.2, true, dz < 0 ? Math.PI : 0));
-          if (!added) add(prop(`${SUB}/tree-small`, x + dx, z + dz, 2.4, 3.5, 2.4));
+        const model = "building-type-r";
+        const size = suburbanBuildingSize(model);
+        for (const dx of [-9.9, 9.9]) {
+          for (const dz of [-9.9, 9.9]) {
+            const rotY = dz < 0 ? Math.PI : 0;
+            if (add({ model: `${SUB}/${model}`, x: x + dx, z: z + dz, ...size, solid: true, rotY })) continue;
+            const shop = pick(SHOP_MODELS);
+            add({ model: `${COM}/${shop}`, x: x + dx, z: z + dz, ...commercialBuildingSize(shop), solid: true, rotY });
+          }
         }
         for (const dz of [-11.8, 11.8]) add(prop(`${SUB}/tree-small`, x, z + dz, 2.5, 4.2, 2.5));
       } else {
@@ -134,7 +151,8 @@ export function blockPlacements(): Placement[] {
         for (const u of [-10.2, -3.4, 3.4, 10.2]) {
           const shop = row(u, 1);
           const canopy = row(u, 5.6);
-          add(prop(pick(SHOP_MODELS), shop.x, shop.z, 6.6, 6 + Math.abs(u) / 5, 7, true, rotY));
+          const model = pick(SHOP_MODELS);
+          add({ model: `${COM}/${model}`, ...shop, ...commercialBuildingSize(model), solid: true, rotY });
           add(prop(`${COM}/detail-awning-wide`, canopy.x, canopy.z, 5.8, 0.85, 2.2, false, rotY));
         }
         const bin = row(-10, 8);

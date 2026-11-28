@@ -4,9 +4,9 @@
  * memasuki mana-mana kotak halangan, kamera dipegat 0.3 unit sebelum
  * titik masuk terawal supaya tidak berada di dalam bangunan.
  */
-import { DELIVERY_ZONES, HOUSE } from "@/lib/delivery-system";
 import { blockPlacements, placementFootprint } from "./city-blocks";
 import { buildingLayout } from "./city-layout";
+import { destinationHouses } from "./kenney-building-model";
 
 export type P3 = { x: number; y: number; z: number };
 
@@ -21,8 +21,6 @@ export type Aabb = {
 
 /** Jarak aman (unit dunia) antara kamera dan dinding. */
 const CAMERA_PADDING = 0.3;
-/** Ketebalan bumbung rumah alamat di atas badan rumah. */
-const HOUSE_ROOF = 1.4;
 
 /**
  * Kotak halangan kamera: badan setiap bangunan bandar (lantai hingga
@@ -43,18 +41,8 @@ export function cameraObstacles(): Aabb[] {
     });
   }
 
-  for (const zone of DELIVERY_ZONES) {
-    if (zone.type !== "delivery" || !zone.lot) continue;
-    const cx = zone.lot.x;
-    const cz = zone.lot.z + HOUSE.zOffset;
-    boxes.push({
-      minX: cx - HOUSE.width / 2,
-      maxX: cx + HOUSE.width / 2,
-      minY: 0,
-      maxY: HOUSE.height + HOUSE_ROOF,
-      minZ: cz - HOUSE.depth / 2,
-      maxZ: cz + HOUSE.depth / 2,
-    });
+  for (const { x, z, w, h, d } of destinationHouses()) {
+    boxes.push({ minX: x - w / 2, maxX: x + w / 2, minY: 0, maxY: h, minZ: z - d / 2, maxZ: z + d / 2 });
   }
 
   for (const p of blockPlacements()) {

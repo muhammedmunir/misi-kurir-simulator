@@ -1,3 +1,5 @@
+import { CAR_MODELS, carModelFor, carModelPath, trafficCarSize } from "@/components/3d/car-models";
+
 const NPC_COLORS = ["#3b82f6", "#ef4444", "#22c55e", "#eab308", "#8b5cf6", "#06b6d4", "#f97316"];
 
 const ROAD_VALUES: number[] = [];
@@ -175,11 +177,12 @@ export function setLiveTraffic(vehicles: readonly NPCTrafficVehicle[]): void {
   live = vehicles;
 }
 
-/** Kotak badan kenderaan (1.6 x 3) pada satah XZ; trafik sentiasa sejajar paksi. */
+/** Kotak badan kenderaan pada satah XZ; trafik sentiasa sejajar paksi. */
 export function liveTrafficRects(): Rect[] {
-  return live.map((v) => {
-    const halfX = v.roadAxis === "z" ? 0.8 : 1.5;
-    const halfZ = v.roadAxis === "z" ? 1.5 : 0.8;
+  return live.map((v, i) => {
+    const { w, d } = trafficCarSize(carModelPath(CAR_MODELS[carModelFor(i)]));
+    const halfX = (v.roadAxis === "z" ? w : d) / 2;
+    const halfZ = (v.roadAxis === "z" ? d : w) / 2;
     return {
       minX: v.position.x - halfX,
       maxX: v.position.x + halfX,
