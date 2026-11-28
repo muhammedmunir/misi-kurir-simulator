@@ -14,8 +14,8 @@ export const LANE_OFFSET = 3;
 export const STOP_LINE = 8;
 /** Masa menunggu di garis berhenti (s). */
 export const STOP_SECONDS = 1.5;
-/** Jarak minimum ke kereta atau pemain di hadapan (m). */
-export const FOLLOW_GAP = 5;
+/** Jarak minimum pusat-ke-pusat ke kereta atau pemain di hadapan (m); kereta 4–4.8 m (Pelan 025). */
+export const FOLLOW_GAP = 7;
 /** Had pecutan (m/s²). */
 const ACCEL = 4;
 /** Had brek (m/s²). */

@@ -117,10 +117,10 @@ export function blockPlacements(): Placement[] {
           add({ model: `${SUB}/${model}`, x: x + dx, z: z + dz, ...size, solid: true, rotY: dz < 0 ? Math.PI : 0 });
         }
         for (const dx of [-8.5, 8.5]) {
-          add(prop(`${SUB}/driveway-short`, x + dx, z + 10.8, 3.6, 0.08, 5));
+          add(prop(`${SUB}/driveway-short`, x + dx, z + 11.5, 3.6, 0.08, 4.6));
           const model = pick(CAR_MODELS);
           const { w, h, d } = trafficCarSize(model);
-          add(prop(model, x + dx, z + 10.8, w, h, d, true));
+          add(prop(model, x + dx, z + 11.5, w, h, d, true));
           const fenceX = dx + (dx > 0 ? 3.25 : -3.25);
           add(prop(`${SUB}/fence-low`, x + fenceX, z + 10.8, 5.8, 0.95, 0.2, true, QUARTER));
         }

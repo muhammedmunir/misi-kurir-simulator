@@ -7,6 +7,7 @@ Semua perubahan penting dicatat di sini. Format: [Keep a Changelog 1.1.0](https:
 Vertical slice mudah alih (Pelan 004 & 005).
 
 ### Ditambah
+- **Skala dunia seragam (Pelan 025):** rumah dan bangunan mengikut nisbah model asal dengan satu faktor skala (7.8), jadi pintu setinggi kira-kira 2.1 m dan tingkap sama saiz di seluruh bandar. Kereta diparkir dan trafik bersaiz sebenar (4–4.8 m) serta sama untuk setiap jenis. Kereta trafik kini menjarakkan diri kira-kira 2 m dari bampar kereta di hadapan.
 - **Suasana malam dan hujan (Pelan 024):** lampu jalan menyinari asfalt, tingkap terpilih bercahaya dan lampu motor menyala pada malam atau ketika hujan. Langit bertukar warna pada senja dan subuh. Hujan menambah garisan titis, kabus yang lebih dekat, asfalt lebih gelap dan bunyi yang mengikut tetapan Bunyi. Pilihan Kurangkan Gerakan menyembunyikan garisan tanpa mengubah cuaca.
 - **Isi dunia (Pelan 023):** deretan rumah dengan jiran, pagar dan kereta diparkir; kedai berkanopi, tiang berwayar, lampu isyarat serta papan tanda jalan dalam Bahasa Melayu. Gudang pos mendapat dinding zink, pintu gulung dan van penghantaran tanpa mengubah ruang laluan.
 - **Kamera berjalan kaki (Pelan 019):** kamera mengekalkan jarak asal berhampiran dinding. Hanya bangunan atau rumah yang menghalang pandangan antara kamera dan kurier menjadi separa lutsinar. Kamera motor dan serah terima tidak berubah.
